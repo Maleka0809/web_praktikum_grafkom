@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="praktikum.css">
+    <title>Praktikum 1 - Interactive Canvas</title>
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="../index.html" class="brand"><span class="brand-icon">✦</span>Grafika<span>Komputer</span></a>
+        <div class="nav-menu">
+            <a href="../index.html">Home</a>
+            <a href="halaman_praktikum.html" class="active">Praktikum</a>
+            <a href="kontak_kami.html">Kontak Kami</a>
+        </div>
+    </div>
+</nav>
+
+<section class="page-header">
+    <span class="section-label">PRAKTIKUM 01</span>
+    <h1>Interactive Canvas</h1>
+    <p>Eksperimen objek 2D, animasi, transformasi, mouse, keyboard, State-Based, dan Event-Based.</p>
+</section>
+
+<section class="canvas-page">
+    <div class="mode-selector">
+        <button class="mode-btn active" data-mode="state">State-Based</button>
+        <button class="mode-btn" data-mode="event">Event-Based</button>
+    </div>
+
+    <div id="stateSection" class="experiment">
+        <div class="experiment-header">
+            <div><span class="section-label">STATE-BASED</span><h2>State-Based Translation</h2><p>Posisi player diperbarui berdasarkan state keyboard pada setiap frame.</p></div>
+            <div id="mode" class="status running">RUNNING</div>
+        </div>
+        <div class="canvas-layout">
+            <div class="canvas-wrapper"><canvas id="graphicsCanvas" width="960" height="600"></canvas></div>
+            <aside class="control-panel">
+                <h3>Controls</h3>
+                <label>Speed <strong id="speedText">5</strong></label>
+                <input id="speed" type="range" min="1" max="15" value="5">
+                <label class="switch-row"><span>Trail Effect</span><input type="checkbox" id="trail"></label>
+                <button id="pause" class="control-btn">Pause (P)</button>
+                <button id="reset" class="control-btn">Reset (R)</button>
+                <button id="clear" class="control-btn danger">Clear Objects</button>
+                <div class="stats">
+                    <div><span>Frame</span><strong id="frameText">0</strong></div>
+                    <div><span>Mouse</span><strong id="mouseText">(0, 0)</strong></div>
+                    <div><span>Player</span><strong id="playerText">(600, 360)</strong></div>
+                    <div><span>Keys</span><strong id="keysText">none</strong></div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <div id="eventSection" class="experiment hidden">
+        <div class="experiment-header">
+            <div><span class="section-label">EVENT-BASED</span><h2>Event-Based Translation</h2><p>Pergerakan player terjadi melalui event keyboard dan interaksi mouse.</p></div>
+            <div id="eventMode" class="status running">EVENT MODE</div>
+        </div>
+        <div class="canvas-layout">
+            <div class="canvas-wrapper"><canvas id="eventCanvas" width="960" height="600"></canvas></div>
+            <aside class="control-panel">
+                <h3>Event Controls</h3>
+                <p class="control-description">Gunakan W A S D atau tombol Arrow untuk menggerakkan kotak.</p>
+                <div class="keyboard"><span>W</span><div><span>A</span><span>S</span><span>D</span></div></div>
+                <button id="eventPause" class="control-btn">Pause (P)</button>
+                <button id="eventReset" class="control-btn">Reset (R)</button>
+                <button id="eventClear" class="control-btn danger">Clear Objects</button>
+                <div class="stats">
+                    <div><span>Events</span><strong id="eventText">0 keydown</strong></div>
+                    <div><span>Mouse</span><strong id="eventMouseText">(0, 0)</strong></div>
+                    <div><span>Keys</span><strong id="eventKeysText">none</strong></div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</section>
+
+<footer><div class="footer-content"><div><strong>Grafika Komputer A</strong><p>Interactive Computer Graphics Laboratory</p></div><p>© 2026 Kelompok Grafika Komputer</p></div></footer>
+
+<script>
+const modeButtons = document.querySelectorAll(".mode-btn");
+const stateSection = document.getElementById("stateSection");
+const eventSection = document.getElementById("eventSection");
+
+modeButtons.forEach(button => {
+    button.addEventListener("click", () => {
+        modeButtons.forEach(b => b.classList.remove("active"));
+        button.classList.add("active");
+        const mode = button.dataset.mode;
+        stateSection.classList.toggle("hidden", mode !== "state");
+        eventSection.classList.toggle("hidden", mode !== "event");
+    });
+});
+</script>
+
+<script src="state-based.js"></script>
+<script src="event-based.js"></script>
+</body>
+</html>
