@@ -44,7 +44,9 @@
       <button class="soal-tab" data-tab="warna">🎨 Warna</button>
       <button class="soal-tab" data-tab="animasi">🎬 Animasi</button>
       <button class="soal-tab" data-tab="interaksi">🖱️ Interaksi</button>
+      <button class="soal-tab" data-tab="canvas">🖼️ HTML Canvas</button>
       <button class="soal-tab" data-tab="challenge">⚡ Challenge</button>
+      <button class="soal-tab" data-tab="demo">🎮 Challenge Demo</button>
     </div>
 
     <!-- ── TAB 1: PRIMITIF ─────────────────────────────────── -->
@@ -848,6 +850,262 @@ ctx.stroke();   <span class="cm">// ← ring cyan mengikuti kursor</span></pre>
       </div>
     </div><!-- /tab-challenge -->
 
+    <!-- ── TAB: HTML CANVAS ──────────────────────────────── -->
+    <div class="soal-tab-content" id="tab-canvas">
+
+      <div class="soal-intro">
+        <strong>HTML Canvas</strong> adalah elemen HTML yang menyediakan area gambar berbasis piksel.<br>
+        Semua rendering dilakukan via <em>JavaScript</em> menggunakan <em>Canvas 2D API</em>.
+      </div>
+
+      <div class="soal-cards">
+
+        <!-- Elemen Canvas -->
+        <div class="soal-card wide">
+          <div class="soal-card-head purple">
+            <span class="soal-icon">📦</span>
+            <div><div class="soal-tag">ELEMEN HTML</div><div class="soal-title">Tag &lt;canvas&gt; dan Atributnya</div></div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Penjelasan</div>
+<pre>- &lt;canvas&gt; hanyalah WADAH kosong (tidak menggambar sendiri)
+- Atribut width & height = ukuran canvas dalam PIKSEL
+  (bukan ukuran CSS — hati-hati bedakan!)
+- Isi dikendalikan 100% oleh JavaScript
+- Tanpa JS → canvas hanya kotak transparan</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode HTML</div>
+<pre><span class="cm">&lt;!-- Deklarasi canvas di HTML --&gt;</span>
+&lt;<span class="kw">canvas</span>
+  id=<span class="str">"graphicsCanvas"</span>
+  width=<span class="num">960</span>
+  height=<span class="num">600</span>&gt;
+  Teks fallback (browser lama)
+&lt;/<span class="kw">canvas</span>&gt;
+
+<span class="cm">// Ambil referensi di JavaScript</span>
+<span class="kw">const</span> canvas = document.getElementById(<span class="str">"graphicsCanvas"</span>);
+<span class="kw">const</span> ctx    = canvas.getContext(<span class="str">"2d"</span>); <span class="cm">// konteks 2D</span></pre>
+            </div>
+            <p class="soal-note"><code>getContext("2d")</code> mengembalikan objek <code>CanvasRenderingContext2D</code> — ini yang dipakai untuk semua operasi menggambar.</p>
+          </div>
+        </div>
+
+        <!-- Sistem Koordinat -->
+        <div class="soal-card wide">
+          <div class="soal-card-head cyan">
+            <span class="soal-icon">📐</span>
+            <div><div class="soal-tag">SISTEM KOORDINAT</div><div class="soal-title">Asal (0,0) di Pojok Kiri Atas</div></div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Penjelasan</div>
+<pre>Sistem koordinat Canvas 2D:
+
+  (0,0) ──────────────→  X bertambah ke KANAN
+    │   ·  ·  ·  ·
+    │   ·  ·  ·  ·
+    │   ·  ·  ·  ·
+    ↓
+  Y bertambah ke BAWAH
+
+Contoh:
+  (0,0)   = pojok kiri atas
+  (960,0) = pojok kanan atas
+  (0,600) = pojok kiri bawah
+  (480,300) = tengah canvas 960×600</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Contoh Koordinat</div>
+<pre><span class="cm">// Titik di tengah canvas 960×600</span>
+<span class="kw">const</span> cx = canvas.width  / <span class="num">2</span>; <span class="cm">// = 480</span>
+<span class="kw">const</span> cy = canvas.height / <span class="num">2</span>; <span class="cm">// = 300</span>
+
+<span class="cm">// Gambar titik merah di tengah</span>
+ctx.fillStyle = <span class="str">"red"</span>;
+ctx.fillRect(cx - <span class="num">5</span>, cy - <span class="num">5</span>, <span class="num">10</span>, <span class="num">10</span>);</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- API Utama — Tabel -->
+        <div class="soal-card wide">
+          <div class="soal-card-head orange">
+            <span class="soal-icon">📚</span>
+            <div><div class="soal-tag">CANVAS 2D API</div><div class="soal-title">Method & Property Penting</div></div>
+          </div>
+          <div class="soal-card-body">
+            <table class="canvas-api-table">
+              <thead>
+                <tr><th>Method / Property</th><th>Fungsi</th><th>Contoh</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>fillStyle</code></td><td>Warna isian</td><td><code>ctx.fillStyle = "#f00"</code></td></tr>
+                <tr><td><code>strokeStyle</code></td><td>Warna garis</td><td><code>ctx.strokeStyle = "#0f0"</code></td></tr>
+                <tr><td><code>lineWidth</code></td><td>Ketebalan garis</td><td><code>ctx.lineWidth = 3</code></td></tr>
+                <tr><td><code>fillRect(x,y,w,h)</code></td><td>Kotak berisi warna</td><td><code>ctx.fillRect(10,10,100,50)</code></td></tr>
+                <tr><td><code>strokeRect(x,y,w,h)</code></td><td>Kotak outline</td><td><code>ctx.strokeRect(10,10,100,50)</code></td></tr>
+                <tr><td><code>clearRect(x,y,w,h)</code></td><td>Hapus area canvas</td><td><code>ctx.clearRect(0,0,W,H)</code></td></tr>
+                <tr><td><code>beginPath()</code></td><td>Mulai path baru</td><td><code>ctx.beginPath()</code></td></tr>
+                <tr><td><code>moveTo(x,y)</code></td><td>Angkat pena ke titik</td><td><code>ctx.moveTo(100,100)</code></td></tr>
+                <tr><td><code>lineTo(x,y)</code></td><td>Tarik garis ke titik</td><td><code>ctx.lineTo(200,200)</code></td></tr>
+                <tr><td><code>arc(cx,cy,r,a0,a1)</code></td><td>Busur / lingkaran</td><td><code>ctx.arc(200,200,50,0,Math.PI*2)</code></td></tr>
+                <tr><td><code>closePath()</code></td><td>Tutup path ke awal</td><td><code>ctx.closePath()</code></td></tr>
+                <tr><td><code>fill()</code></td><td>Isi path dengan warna</td><td><code>ctx.fill()</code></td></tr>
+                <tr><td><code>stroke()</code></td><td>Gambar outline path</td><td><code>ctx.stroke()</code></td></tr>
+                <tr><td><code>fillText(t,x,y)</code></td><td>Tulis teks berisi</td><td><code>ctx.fillText("Hello",50,50)</code></td></tr>
+                <tr><td><code>font</code></td><td>Font teks</td><td><code>ctx.font = "20px monospace"</code></td></tr>
+                <tr><td><code>shadowBlur</code></td><td>Radius blur bayangan</td><td><code>ctx.shadowBlur = 20</code></td></tr>
+                <tr><td><code>shadowColor</code></td><td>Warna bayangan/glow</td><td><code>ctx.shadowColor = "#f00"</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Siklus Render -->
+        <div class="soal-card wide">
+          <div class="soal-card-head pink">
+            <span class="soal-icon">🔄</span>
+            <div><div class="soal-tag">SIKLUS RENDER</div><div class="soal-title">Cara Animasi Bekerja di Canvas</div></div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Alur Animasi Canvas</div>
+<pre>┌─────────────────────────────────────────────┐
+│  requestAnimationFrame(loop)                │
+│                                             │
+│  SETIAP FRAME (~60x per detik):             │
+│    1. clearRect() atau fillRect transparan  │  ← hapus frame lama
+│    2. Update posisi semua objek             │  ← logika gerak
+│    3. Gambar ulang semua objek              │  ← render baru
+│    4. requestAnimationFrame(loop) lagi      │  ← jadwalkan frame berikutnya
+└─────────────────────────────────────────────┘
+
+Kenapa requestAnimationFrame?
+→ Sinkron dengan refresh rate layar (60/120 Hz)
+→ Otomatis berhenti saat tab tidak aktif (hemat baterai)
+→ Lebih halus dari setInterval()</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Template Animasi Canvas</div>
+<pre><span class="kw">const</span> canvas = document.getElementById(<span class="str">"myCanvas"</span>);
+<span class="kw">const</span> ctx    = canvas.getContext(<span class="str">"2d"</span>);
+
+<span class="kw">let</span> x = <span class="num">100</span>;          <span class="cm">// posisi bola</span>
+<span class="kw">let</span> vx = <span class="num">3</span>;          <span class="cm">// kecepatan</span>
+
+<span class="kw">function</span> loop() {
+  <span class="cm">// 1. Hapus canvas</span>
+  ctx.clearRect(<span class="num">0</span>, <span class="num">0</span>, canvas.width, canvas.height);
+
+  <span class="cm">// 2. Update</span>
+  x += vx;
+  <span class="kw">if</span> (x &gt; canvas.width) x = <span class="num">0</span>; <span class="cm">// wrap around</span>
+
+  <span class="cm">// 3. Gambar</span>
+  ctx.fillStyle = <span class="str">"#8b5cf6"</span>;
+  ctx.beginPath();
+  ctx.arc(x, <span class="num">100</span>, <span class="num">20</span>, <span class="num">0</span>, Math.PI*<span class="num">2</span>);
+  ctx.fill();
+
+  <span class="cm">// 4. Jadwalkan frame berikutnya</span>
+  requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop); <span class="cm">// mulai!</span></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Perbedaan CSS px vs Canvas px -->
+        <div class="soal-card wide">
+          <div class="soal-card-head orange">
+            <span class="soal-icon">⚠️</span>
+            <div><div class="soal-tag">GOTCHA PENTING</div><div class="soal-title">CSS Pixel vs Canvas Pixel</div></div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Masalah Umum</div>
+<pre>Canvas berukuran 960×600 piksel (atribut HTML)
+tapi ditampilkan dengan CSS: width: 100%
+
+→ CSS men-SCALE canvas ke ukuran berbeda
+→ Koordinat mouse dari event pakai CSS pixel
+→ Harus DIKONVERSI ke canvas pixel!
+
+Rumus konversi:
+  canvasX = (mouseClientX - rect.left) * (canvasWidth  / rect.width)
+  canvasY = (mouseClientY - rect.top)  * (canvasHeight / rect.height)</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode Konversi (dipakai di state-based.js)</div>
+<pre>canvas.addEventListener(<span class="str">"mousemove"</span>, e => {
+  <span class="kw">const</span> rect = canvas.getBoundingClientRect();
+
+  <span class="cm">// Koordinat mouse dalam CANVAS PIKSEL (bukan CSS)</span>
+  mouse.x = (e.clientX - rect.left)
+            * canvas.width  / rect.width;
+  mouse.y = (e.clientY - rect.top)
+            * canvas.height / rect.height;
+});</pre>
+            </div>
+            <p class="soal-note">Tanpa konversi ini, klik/mouse akan meleset jika canvas di-scale oleh CSS. Ini salah satu bug paling umum saat belajar Canvas!</p>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /tab-canvas -->
+
+    <!-- ── TAB: CHALLENGE DEMO ───────────────────────────── -->
+    <div class="soal-tab-content" id="tab-demo">
+
+      <div class="soal-intro">
+        Canvas interaktif di bawah mendemonstrasikan <strong>semua 5 challenge</strong> secara langsung.<br>
+        <em>Gerakkan mouse, klik, dan tekan keyboard untuk mencoba!</em>
+      </div>
+
+      <!-- Demo Canvas Layout -->
+      <div class="demo-layout">
+
+        <!-- Canvas -->
+        <div class="demo-canvas-wrap">
+          <canvas id="demoCanvas" width="780" height="440"></canvas>
+          <div class="demo-hud" id="demoHud">Mouse: (0, 0)</div>
+        </div>
+
+        <!-- Panel kontrol -->
+        <aside class="demo-panel">
+          <h3>🎮 Challenge Demo</h3>
+
+          <div class="demo-badge-list">
+            <div class="demo-badge" id="badge-bounce">🏓 Memantul</div>
+            <div class="demo-badge" id="badge-mouse">🎯 Ikuti Mouse</div>
+            <div class="demo-badge" id="badge-click">🖱️ Klik Warna</div>
+            <div class="demo-badge" id="badge-key">⌨️ Keyboard</div>
+            <div class="demo-badge" id="badge-coord">📍 Koordinat</div>
+          </div>
+
+          <div class="demo-info-box">
+            <div class="demo-info-row"><span>Mouse</span><strong id="demoMouseTxt">(0, 0)</strong></div>
+            <div class="demo-info-row"><span>Player</span><strong id="demoPlayerTxt">(390, 220)</strong></div>
+            <div class="demo-info-row"><span>Warna Bola</span><strong id="demoBallColor">#8b5cf6</strong></div>
+            <div class="demo-info-row"><span>Tombol</span><strong id="demoKeyTxt">–</strong></div>
+          </div>
+
+          <div class="demo-controls">
+            <p>🕹️ <strong>WASD / Arrow</strong> → gerakkan kotak</p>
+            <p>🖱️ <strong>Klik canvas</strong> → ganti warna bola</p>
+            <p>✨ <strong>Arahkan mouse</strong> → ring mengikuti</p>
+          </div>
+
+          <button id="demoPauseBtn" class="control-btn" style="margin-top:12px">⏸ Pause</button>
+          <button id="demoResetBtn" class="control-btn" style="margin-top:6px">↺ Reset</button>
+        </aside>
+      </div>
+
+    </div><!-- /tab-demo -->
 
   </div><!-- /soal-inner -->
 </section>
@@ -1042,6 +1300,101 @@ ctx.stroke();   <span class="cm">// ← ring cyan mengikuti kursor</span></pre>
   .color-swatches{gap:10px}
   .swatch{width:75px;height:58px;font-size:10px}
 }
+
+/* ── Canvas API Table ───────────────────────────────── */
+.canvas-api-table{
+  width:100%;border-collapse:collapse;font-size:12.5px;
+}
+.canvas-api-table th{
+  padding:10px 14px;text-align:left;
+  background:rgba(139,92,246,.15);color:#a78bfa;
+  font-size:10px;font-weight:800;letter-spacing:1px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.canvas-api-table td{
+  padding:9px 14px;
+  border-bottom:1px solid rgba(255,255,255,.05);
+  color:#cbd5e1;
+  vertical-align:middle;
+}
+.canvas-api-table tr:hover td{background:rgba(255,255,255,.03)}
+.canvas-api-table td code{
+  background:rgba(139,92,246,.12);
+  padding:2px 6px;border-radius:5px;
+  color:#a78bfa;font-size:11.5px;
+  white-space:nowrap;
+}
+
+/* ── Challenge Demo ─────────────────────────────────── */
+.demo-layout{
+  display:grid;
+  grid-template-columns:1fr 220px;
+  gap:18px;
+  align-items:start;
+}
+.demo-canvas-wrap{
+  position:relative;
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.09);
+  background:#07111f;
+  box-shadow:inset 0 0 30px rgba(0,0,0,.3);
+}
+.demo-canvas-wrap canvas{
+  display:block;width:100%;height:auto;
+  cursor:crosshair;
+}
+.demo-hud{
+  position:absolute;bottom:10px;left:14px;
+  font-size:12px;font-family:monospace;
+  color:#22d3ee;pointer-events:none;
+  text-shadow:0 0 8px rgba(34,211,238,.6);
+}
+.demo-panel{
+  padding:20px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:16px;
+  background:rgba(10,16,32,.85);
+}
+.demo-panel h3{font-size:16px;margin-bottom:16px}
+.demo-badge-list{
+  display:flex;flex-direction:column;gap:7px;
+  margin-bottom:18px;
+}
+.demo-badge{
+  padding:8px 12px;
+  border-radius:8px;
+  font-size:12px;font-weight:700;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  color:#64748b;
+  transition:.3s;
+}
+.demo-badge.active{
+  background:rgba(34,197,94,.12);
+  border-color:rgba(34,197,94,.3);
+  color:#86efac;
+}
+.demo-info-box{
+  display:grid;gap:8px;
+  padding:14px;
+  border-radius:10px;
+  background:rgba(0,0,0,.25);
+  margin-bottom:16px;
+}
+.demo-info-row{
+  display:flex;justify-content:space-between;
+  font-size:11px;
+}
+.demo-info-row span{color:#64748b}
+.demo-info-row strong{color:#22d3ee;font-family:monospace}
+.demo-controls p{
+  font-size:12px;color:#64748b;
+  margin-bottom:6px;line-height:1.5;
+}
+@media(max-width:900px){
+  .demo-layout{grid-template-columns:1fr}
+}
 </style>
 
 <!-- JS untuk tab switching Soal -->
@@ -1135,5 +1488,209 @@ modeButtons.forEach(button => {
 
 <script src="state-based.js"></script>
 <script src="event-based.js"></script>
+</body>
+<!-- ═══ CHALLENGE DEMO CANVAS SCRIPT ══════════════════ -->
+<script>
+(function(){
+  /* ── Setup ─────────────────────────────────────── */
+  const dc  = document.getElementById('demoCanvas');
+  const dctx= dc ? dc.getContext('2d') : null;
+  if (!dctx) return;
+  const DW  = dc.width;
+  const DH  = dc.height;
+
+  /* ── State ─────────────────────────────────────── */
+  const dColors = ['#8b5cf6','#f43f5e','#22c55e','#facc15','#22d3ee'];
+  let dColorIdx = 0;
+  const dBall   = {x:200, y:150, r:22, vx:3.2, vy:2.4, color:dColors[0]};
+  const dPlayer = {x:350, y:180, w:48, h:48, color:'#f97316'};
+  const dMouse  = {x:-100, y:-100};
+  const dKeys   = {};
+  let dPaused   = false;
+  let dMouseActive = false;
+
+  /* ── DOM refs ───────────────────────────────────── */
+  const dMouseTxt  = document.getElementById('demoMouseTxt');
+  const dPlayerTxt = document.getElementById('demoPlayerTxt');
+  const dBallColor = document.getElementById('demoBallColor');
+  const dKeyTxt    = document.getElementById('demoKeyTxt');
+  const dHud       = document.getElementById('demoHud');
+  const badges     = {
+    bounce: document.getElementById('badge-bounce'),
+    mouse:  document.getElementById('badge-mouse'),
+    click:  document.getElementById('badge-click'),
+    key:    document.getElementById('badge-key'),
+    coord:  document.getElementById('badge-coord')
+  };
+
+  /* ── Draw ───────────────────────────────────────── */
+  function dDraw() {
+    /* Background */
+    dctx.fillStyle = '#07111f';
+    dctx.fillRect(0,0,DW,DH);
+
+    /* Grid */
+    dctx.strokeStyle='rgba(255,255,255,.04)';dctx.lineWidth=1;
+    for(let x=0;x<DW;x+=40){dctx.beginPath();dctx.moveTo(x,0);dctx.lineTo(x,DH);dctx.stroke();}
+    for(let y=0;y<DH;y+=40){dctx.beginPath();dctx.moveTo(0,y);dctx.lineTo(DW,y);dctx.stroke();}
+
+    /* ── Primitif: Rectangle ── */
+    dctx.fillStyle='#3b82f6';
+    dctx.fillRect(40,30,120,75);
+    dctx.fillStyle='rgba(59,130,246,.15)';
+    dctx.fillRect(40,30,120,75);
+    dctx.fillStyle='#3b82f6';
+    dctx.fillRect(40,30,120,75);
+
+    /* ── Primitif: Line ── */
+    dctx.beginPath();dctx.moveTo(200,50);dctx.lineTo(360,120);
+    dctx.strokeStyle='#f43f5e';dctx.lineWidth=3;dctx.stroke();
+
+    /* ── Primitif: Circle (statis) ── */
+    dctx.beginPath();dctx.arc(500,80,42,0,Math.PI*2);
+    dctx.fillStyle='#22c55e';dctx.fill();
+
+    /* ── Primitif: Triangle ── */
+    dctx.beginPath();
+    dctx.moveTo(90,260);dctx.lineTo(40,360);dctx.lineTo(140,360);
+    dctx.closePath();dctx.fillStyle='#facc15';dctx.fill();
+
+    /* ── CHALLENGE #1: Bola Memantul (glow) ── */
+    dctx.beginPath();
+    dctx.arc(dBall.x, dBall.y, dBall.r, 0, Math.PI*2);
+    dctx.fillStyle  = dBall.color;
+    dctx.shadowBlur = 28;
+    dctx.shadowColor= dBall.color;
+    dctx.fill();
+    dctx.shadowBlur = 0;
+
+    /* ── CHALLENGE #4: Koordinat mouse di HUD ── */
+    dctx.fillStyle='#22d3ee';
+    dctx.font='13px monospace';
+    dctx.fillText(`Mouse: (${Math.round(dMouse.x)}, ${Math.round(dMouse.y)})`,12,DH-10);
+
+    /* ── CHALLENGE #2: Ring ikuti mouse ── */
+    if (dMouseActive) {
+      dctx.beginPath();
+      dctx.arc(dMouse.x, dMouse.y, 20, 0, Math.PI*2);
+      dctx.strokeStyle='#22d3ee';dctx.lineWidth=2.5;
+      dctx.shadowBlur=12;dctx.shadowColor='#22d3ee';
+      dctx.stroke();
+      dctx.shadowBlur=0;
+      /* inner dot */
+      dctx.beginPath();
+      dctx.arc(dMouse.x, dMouse.y, 4, 0, Math.PI*2);
+      dctx.fillStyle='#22d3ee';dctx.fill();
+    }
+
+    /* ── CHALLENGE #3 / #5: Player (keyboard) ── */
+    dctx.fillStyle  = dPlayer.color;
+    dctx.shadowBlur = 18;
+    dctx.shadowColor= dPlayer.color;
+    dctx.fillRect(dPlayer.x, dPlayer.y, dPlayer.w, dPlayer.h);
+    dctx.shadowBlur = 0;
+
+    /* Label on player */
+    dctx.fillStyle='#fff';
+    dctx.font='bold 10px monospace';
+    dctx.textAlign='center';
+    dctx.fillText('WASD', dPlayer.x+dPlayer.w/2, dPlayer.y+dPlayer.h/2+4);
+    dctx.textAlign='left';
+
+    /* Label primitif */
+    dctx.fillStyle='rgba(255,255,255,.5)';dctx.font='11px monospace';
+    dctx.fillText('rect',48,24);
+    dctx.fillText('line',260,46);
+    dctx.fillText('circle',476,30);
+    dctx.fillText('triangle',44,258);
+    dctx.fillText('ball (bouncing)',dBall.x-10,dBall.y-dBall.r-6);
+
+    /* Canvas info */
+    dctx.fillStyle='rgba(255,255,255,.3)';
+    dctx.font='12px monospace';
+    dctx.fillText(`Canvas ${DW}×${DH} · CHALLENGE DEMO`, 12, 18);
+  }
+
+  /* ── Update ─────────────────────────────────────── */
+  function dUpdate() {
+    /* Challenge #1: Bola memantul */
+    dBall.x += dBall.vx; dBall.y += dBall.vy;
+    if (dBall.x < dBall.r || dBall.x > DW-dBall.r) dBall.vx *= -1;
+    if (dBall.y < dBall.r || dBall.y > DH-dBall.r) dBall.vy *= -1;
+
+    /* Challenge #3: Player keyboard */
+    const spd = 4;
+    if (dKeys.ArrowLeft ||dKeys.a) dPlayer.x -= spd;
+    if (dKeys.ArrowRight||dKeys.d) dPlayer.x += spd;
+    if (dKeys.ArrowUp   ||dKeys.w) dPlayer.y -= spd;
+    if (dKeys.ArrowDown ||dKeys.s) dPlayer.y += spd;
+    dPlayer.x = Math.max(0, Math.min(DW-dPlayer.w, dPlayer.x));
+    dPlayer.y = Math.max(0, Math.min(DH-dPlayer.h, dPlayer.y));
+  }
+
+  /* ── Loop ───────────────────────────────────────── */
+  function dLoop() {
+    if (!dPaused) { dUpdate(); dDraw(); }
+    requestAnimationFrame(dLoop);
+  }
+
+  /* ── Events ─────────────────────────────────────── */
+  dc.addEventListener('mousemove', e => {
+    const r = dc.getBoundingClientRect();
+    dMouse.x = (e.clientX-r.left)*DW/r.width;
+    dMouse.y = (e.clientY-r.top )*DH/r.height;
+    dMouseActive = true;
+    if(dMouseTxt) dMouseTxt.textContent=`(${Math.round(dMouse.x)}, ${Math.round(dMouse.y)})`;
+    if(dHud)      dHud.textContent=`Mouse: (${Math.round(dMouse.x)}, ${Math.round(dMouse.y)})`;
+    /* Flash badge */
+    if(badges.mouse) { badges.mouse.classList.add('active'); badges.coord.classList.add('active'); }
+  });
+  dc.addEventListener('mouseleave', () => { dMouseActive = false; });
+
+  /* Challenge #2: click → ganti warna bola */
+  dc.addEventListener('click', () => {
+    dColorIdx = (dColorIdx+1) % dColors.length;
+    dBall.color = dColors[dColorIdx];
+    if(dBallColor) dBallColor.textContent = dColors[dColorIdx];
+    if(badges.click) badges.click.classList.add('active');
+    setTimeout(()=>{ if(badges.click) badges.click.classList.remove('active'); }, 600);
+  });
+
+  /* Challenge #3: keyboard */
+  window.addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    dKeys[e.key] = true; dKeys[k] = true;
+    if(dKeyTxt) dKeyTxt.textContent = e.key;
+    if(badges.key) badges.key.classList.add('active');
+    if(dPlayerTxt) dPlayerTxt.textContent=`(${Math.round(dPlayer.x)}, ${Math.round(dPlayer.y)})`;
+  });
+  window.addEventListener('keyup', e => {
+    const k = e.key.toLowerCase();
+    dKeys[e.key] = false; dKeys[k] = false;
+    if(dKeyTxt) dKeyTxt.textContent='–';
+    if(badges.key) badges.key.classList.remove('active');
+  });
+
+  /* Pause / Reset */
+  const pauseBtn = document.getElementById('demoPauseBtn');
+  const resetBtn = document.getElementById('demoResetBtn');
+  if(pauseBtn) pauseBtn.addEventListener('click', ()=>{
+    dPaused = !dPaused;
+    pauseBtn.textContent = dPaused ? '▶ Resume' : '⏸ Pause';
+  });
+  if(resetBtn) resetBtn.addEventListener('click', ()=>{
+    dPlayer.x=350; dPlayer.y=180;
+    dBall.x=200; dBall.y=150; dBall.vx=3.2; dBall.vy=2.4;
+    dColorIdx=0; dBall.color=dColors[0];
+    dPaused=false; if(pauseBtn) pauseBtn.textContent='⏸ Pause';
+  });
+
+  /* Always-on badges */
+  if(badges.bounce) badges.bounce.classList.add('active');
+  if(badges.coord)  badges.coord.classList.add('active');
+
+  requestAnimationFrame(dLoop);
+})();
+</script>
 </body>
 </html>
