@@ -28,8 +28,8 @@
   <div class="soal-inner">
     <div class="soal-header">
       <span class="section-label">SOAL PRAKTIKUM</span>
-      <h2>Penjelasan Pseudocode &amp; Kode</h2>
-      <p>Setiap topik dijelaskan dengan <strong>pseudocode</strong> (bahasa sederhana) lalu <strong>kode nyata</strong> dari file JS.</p>
+      <h2>Penjelasan Logika &amp; Pseudocode</h2>
+      <p>Setiap topik dijelaskan menggunakan <strong>bahasa sehari-hari yang sangat mudah dipahami</strong> (seperti sedang bercerita) beserta fungsinya, lalu diikuti dengan implementasi kodenya.</p>
     </div>
     <div class="soal-tabs">
       <button class="soal-tab active" data-tab="canvas">&#128444;&#65039; HTML Canvas</button>
@@ -43,32 +43,37 @@
 
 <!-- TAB 1: HTML CANVAS -->
 <div class="soal-tab-content active" id="tab-canvas">
-<p class="tab-intro"><strong>HTML Canvas</strong> adalah elemen HTML yang berfungsi sebagai <em>papan gambar digital</em>. Canvas tidak bisa menggambar sendiri &mdash; semua dikerjakan JavaScript via <strong>Canvas 2D API</strong>.</p>
+<p class="tab-intro"><strong>HTML Canvas</strong> ibarat sebuah <em>selembar kertas kosong digital</em> di halaman web. Kertas ini tidak bisa menggambar dirinya sendiri &mdash; kita harus menggunakan JavaScript sebagai "tangan" dan "kuas" untuk mencoret-coret di atasnya.</p>
 
 <div class="exp-card">
   <div class="exp-head purple">
     <div class="exp-icon">&#128230;</div>
-    <div><div class="exp-tag">KONSEP DASAR</div><div class="exp-title">Tag &lt;canvas&gt; dan Cara Membuatnya</div></div>
+    <div><div class="exp-tag">KONSEP DASAR</div><div class="exp-title">Cara Menyiapkan Kertas dan Alat Gambar</div></div>
   </div>
   <div class="exp-body">
-    <div class="exp-desc">Tag <code>&lt;canvas&gt;</code> hanya menyediakan <strong>area gambar kosong</strong>. Atribut <code>width</code> dan <code>height</code> menentukan ukuran piksel. Untuk menggambar, kita ambil <strong>konteks (ctx)</strong> menggunakan JavaScript. Konteks ini berisi semua perintah menggambar.</div>
+    <div class="exp-desc">Sebelum menggambar, kita butuh dua hal: <strong>1. Kertasnya (Canvas)</strong> dan <strong>2. Alat gambarnya (Context)</strong>. Context 2D ini ibarat kotak pensil ajaib yang berisi kuas, cat warna, dan penggaris. Semua perintah menggambar akan menyuruh alat ini.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode</div>
-<pre>LANGKAH 1: Buat elemen canvas di HTML
-  Tentukan id, lebar (width), tinggi (height)
+        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+<pre>// TAHAP 1: Menyiapkan Tempat Menggambar di HTML
+Kita buat elemen &lt;canvas&gt; dan tentukan ukuran panjang &amp; lebarnya.
+Ini seperti memotong kertas sesuai ukuran yang kita mau.
 
-LANGKAH 2: Di JavaScript, ambil referensi canvas
-  canvas = document.getElementById("id-canvas")
+// TAHAP 2: Menghubungkan Kertas ke JavaScript
+Kita panggil kertas tadi ke dalam JavaScript menggunakan 'getElementById'.
+Tujuannya agar JavaScript tahu kertas mana yang mau digambar.
 
-LANGKAH 3: Minta konteks 2D dari canvas
-  ctx = canvas.getContext("2d")
+// TAHAP 3: Mengambil Alat Gambar (Konteks 2D)
+Kertas saja tidak cukup, kita butuh alat tulis!
+Perintah getContext("2d") ibarat mengambil sekotak alat lukis.
+Kita simpan alat lukis ini di variabel bernama 'ctx'.
 
-SEKARANG ctx siap dipakai untuk menggambar:
-  ctx.fillRect(...)    &larr; gambar kotak berisi warna
-  ctx.arc(...)         &larr; gambar lingkaran
-  ctx.lineTo(...)      &larr; gambar garis
-  ctx.stroke()         &larr; cetak garis ke canvas</pre>
+// TAHAP 4: Mulai Menggambar!
+Sekarang kita bisa menyuruh 'ctx' menggambar apa saja:
+- ctx.fillRect : "Tolong gambarkan kotak langsung dengan warnanya"
+- ctx.arc      : "Tolong buatkan garis melengkung atau lingkaran"
+- ctx.lineTo   : "Tolong tarik garis lurus"
+- ctx.stroke   : "Tolong tebalkan garis yang barusan saya minta"</pre>
       </div>
       <div class="code-block">
         <div class="code-label">&#128187; Kode HTML + JavaScript (state-based.js)</div>
@@ -91,1303 +96,870 @@ SEKARANG ctx siap dipakai untuk menggambar:
 <span class="kw">const</span> SH = stateCanvas.height; <span class="cm">// = 600</span></pre>
       </div>
     </div>
-    <div class="exp-note">&#128161; <code>getContext("2d")</code> mengembalikan objek <code>CanvasRenderingContext2D</code> yang berisi semua perintah menggambar. Simpan ke variabel <code>ctx</code> agar tidak perlu menulis ulang terus.</div>
+    <div class="exp-note">&#128161; Fungsi <code>getContext("2d")</code> sangat penting karena tanpa ini, kita tidak punya akses ke perintah-perintah seperti menggambar kotak atau lingkaran. Selalu simpan di variabel pendek seperti <code>ctx</code> agar mudah diketik berulang-ulang.</div>
   </div>
 </div>
 
 <div class="exp-card">
   <div class="exp-head cyan">
     <div class="exp-icon">&#128208;</div>
-    <div><div class="exp-tag">SISTEM KOORDINAT</div><div class="exp-title">Titik (0,0) Ada di Pojok Kiri Atas</div></div>
+    <div><div class="exp-tag">SISTEM KOORDINAT</div><div class="exp-title">Cara Komputer Menentukan Posisi (X dan Y)</div></div>
   </div>
   <div class="exp-body">
-    <div class="exp-desc">Berbeda dengan matematika biasa, di Canvas titik awal <strong>(0,0) ada di pojok kiri atas</strong>. Semakin ke kanan, nilai X bertambah. Semakin ke bawah, nilai Y bertambah. Pahami ini agar objek digambar di posisi yang tepat.</div>
+    <div class="exp-desc">Di pelajaran matematika sekolah, titik tengah (0,0) biasanya ada di tengah. <strong>Di komputer, titik (0,0) selalu ada di pojok KIRI ATAS layar.</strong> Semakin ke kanan, nilai X bertambah. Semakin ke BAWAH, nilai Y bertambah. Memahami ini penting agar gambar kita tidak nyasar.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode &mdash; Sistem Koordinat</div>
-<pre>  (0,0) &mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&rarr;  X+ (ke kanan)
-    |
-    |   (80, 90)   &larr; 80 dari kiri, 90 dari atas
-    |
-    |   (700, 135) &larr; 700 dari kiri, 135 dari atas
-    |
-   Y+ (ke bawah)
+        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+<pre>Pojok Kiri Atas adalah Titik Nol (0, 0).
 
-Canvas 960 x 600:
-  Pojok kiri atas   = (0, 0)
-  Pojok kanan atas  = (960, 0)
-  Pojok kiri bawah  = (0, 600)
-  Pojok kanan bawah = (960, 600)
-  Tengah canvas     = (480, 300)</pre>
+&rarr; Jika kita ingin geser ke KANAN, kita tambah nilai X-nya.
+&darr; Jika kita ingin geser ke BAWAH, kita tambah nilai Y-nya.
+
+Contoh Peta Canvas ukuran 960 x 600:
+- (0, 0)       : Pojok kiri atas (Mulai)
+- (960, 0)     : Pojok kanan atas
+- (0, 600)     : Pojok kiri bawah
+- (960, 600)   : Pojok kanan bawah
+- (480, 300)   : Tepat di tengah-tengah canvas!
+
+BAGAIMANA JIKA INGIN MENGGAMBAR DI TENGAH?
+Kita tinggal membagi lebar canvas dengan 2 (untuk X) 
+dan membagi tinggi canvas dengan 2 (untuk Y).</pre>
       </div>
       <div class="code-block">
         <div class="code-label">&#128187; Kode &mdash; Contoh Posisi</div>
-<pre><span class="cm">// SW = 960, SH = 600</span>
+<pre><span class="cm">// Lebar total (960), Tinggi total (600)</span>
 <span class="kw">const</span> SW = stateCanvas.width;
 <span class="kw">const</span> SH = stateCanvas.height;
 
-<span class="cm">// Gambar di pojok kiri atas</span>
+<span class="cm">// Gambar nempel di pojok kiri atas</span>
 ctx.fillRect(<span class="num">0</span>, <span class="num">0</span>, <span class="num">100</span>, <span class="num">50</span>);
 
-<span class="cm">// Gambar di tengah canvas</span>
+<span class="cm">// Menggambar persis di tengah canvas</span>
+<span class="cm">// SW/2 = 480, SH/2 = 300</span>
+<span class="cm">// Dikurangi setengah ukuran kotak agar benar-benar di tengah</span>
 ctx.fillRect(
-  SW/<span class="num">2</span> - <span class="num">50</span>,  <span class="cm">// = 430</span>
-  SH/<span class="num">2</span> - <span class="num">25</span>,  <span class="cm">// = 275</span>
+  SW/<span class="num">2</span> - <span class="num">50</span>,  
+  SH/<span class="num">2</span> - <span class="num">25</span>,  
   <span class="num">100</span>, <span class="num">50</span>
-);
-
-<span class="cm">// Kotak biru di (80,90) ukuran 170x105</span>
-ctx.fillStyle = <span class="str">"#3b82f6"</span>;
-ctx.fillRect(<span class="num">80</span>, <span class="num">90</span>, <span class="num">170</span>, <span class="num">105</span>);</pre>
+);</pre>
       </div>
     </div>
-    <div class="exp-note">&#128161; Selalu simpan <code>canvas.width</code> dan <code>canvas.height</code> ke variabel (<code>SW</code>, <code>SH</code>) agar mudah dipakai saat menghitung batas dan posisi tengah canvas.</div>
+    <div class="exp-note">&#128161; Fungsi menyimpan <code>canvas.width</code> ke dalam variabel <code>SW</code> adalah agar kita tidak perlu mengingat angka 960 terus-menerus. Jika suatu saat ukuran canvas di HTML diubah, kode JavaScript kita akan otomatis menyesuaikan tanpa perlu diedit ulang!</div>
   </div>
 </div>
 
 <div class="exp-card">
   <div class="exp-head orange">
     <div class="exp-icon">&#128218;</div>
-    <div><div class="exp-tag">URUTAN MENGGAMBAR</div><div class="exp-title">Style Dulu, Gambar Kemudian &mdash; Aturan Wajib</div></div>
+    <div><div class="exp-tag">URUTAN MENGGAMBAR</div><div class="exp-title">Aturan Wajib: Celup Cat Dulu, Baru Melukis!</div></div>
   </div>
   <div class="exp-body">
-    <div class="exp-desc">Aturan penting Canvas: <strong>atur style/warna DULU, baru gambar</strong>. Untuk rectangle, cukup satu fungsi. Untuk bentuk lain (garis, lingkaran, segitiga), gunakan <strong>path</strong>: beginPath &rarr; definisikan bentuk &rarr; fill/stroke.</div>
+    <div class="exp-desc">Di dunia nyata, kita harus mencelupkan kuas ke cat warna dulu sebelum menyapukannya ke kertas. Canvas bekerja dengan cara yang sama: <strong>Atur warnanya (style) DULU, baru perintah menggambarnya.</strong></div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode &mdash; Dua Cara Menggambar</div>
-<pre>CARA 1 &mdash; Rectangle (langsung, tanpa path):
-  SET fillStyle = warna
-  fillRect(x, y, lebar, tinggi)
-  &rarr; Tidak perlu beginPath()!
+        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+<pre>// ATURAN DASAR MENGGAMBAR
 
-CARA 2 &mdash; Path (untuk garis, lingkaran, segitiga):
-  SET strokeStyle atau fillStyle = warna
-  beginPath()     &larr; mulai path baru (WAJIB!)
-  moveTo(x1, y1)  &larr; pindah pena ke awal
-  lineTo(x2, y2)  &larr; tarik garis ke tujuan
-  arc(cx, cy, r, 0, 2*PI)  &larr; atau buat busur
-  closePath()     &larr; tutup path (opsional)
-  fill()          &larr; isi dengan warna
-  stroke()        &larr; atau gambar garis</pre>
+1. Untuk Persegi Panjang (Sangat Mudah):
+   Pilih warna cat &rarr; Langsung tempelkan bentuk kotaknya!
+   (Tidak perlu ribet menggambar garis satu-satu)
+
+2. Untuk Bentuk Lain (Garis, Lingkaran, Segitiga):
+   Kita harus membuat "Jalur Sketsa" (Path) terlebih dahulu.
+
+   - SIAPKAN SKETSA BARU (beginPath) : Hapus coretan sebelumnya.
+   - PINDAHKAN PENSIL  (moveTo)    : Angkat pensil ke titik awal.
+   - TARIK GARIS       (lineTo)    : Geser pensil membentuk jalur.
+   - BERI WARNA/TEBALKAN (fill/stroke) : Warnai bagian dalam sketsa 
+                                         atau tebalkan garis luarnya.</pre>
       </div>
       <div class="code-block">
         <div class="code-label">&#128187; Kode &mdash; Perbandingan (state-based.js)</div>
-<pre><span class="cm">// Cara 1: Rectangle (langsung)</span>
+<pre><span class="cm">// Cara 1: Kotak (Langsung)</span>
+<span class="cm">// Celup ke cat biru, lalu cetak kotak!</span>
 stateCtx.fillStyle = <span class="str">"#3b82f6"</span>;
 stateCtx.fillRect(<span class="num">80</span>, <span class="num">90</span>, <span class="num">170</span>, <span class="num">105</span>);
 
-<span class="cm">// Cara 2: Path (garis merah)</span>
-stateCtx.beginPath();       <span class="cm">// WAJIB!</span>
-stateCtx.moveTo(<span class="num">310</span>, <span class="num">110</span>);
-stateCtx.lineTo(<span class="num">500</span>, <span class="num">185</span>);
-stateCtx.strokeStyle = <span class="str">"#f43f5e"</span>;
-stateCtx.lineWidth   = <span class="num">4</span>;
-stateCtx.stroke();
-
-<span class="cm">// Cara 2: Path (lingkaran hijau)</span>
-stateCtx.beginPath();       <span class="cm">// WAJIB!</span>
-stateCtx.arc(<span class="num">700</span>, <span class="num">135</span>, <span class="num">58</span>,
-             <span class="num">0</span>, Math.PI*<span class="num">2</span>);
-stateCtx.fillStyle = <span class="str">"#22c55e"</span>;
-stateCtx.fill();</pre>
+<span class="cm">// Cara 2: Sketsa Garis (Path)</span>
+stateCtx.beginPath();       <span class="cm">// Kertas sketsa baru!</span>
+stateCtx.moveTo(<span class="num">310</span>, <span class="num">110</span>);  <span class="cm">// Taruh pensil di awal</span>
+stateCtx.lineTo(<span class="num">500</span>, <span class="num">185</span>);  <span class="cm">// Seret pensil ke tujuan</span>
+stateCtx.strokeStyle = <span class="str">"#f43f5e"</span>; <span class="cm">// Pilih cat merah</span>
+stateCtx.lineWidth   = <span class="num">4</span>;         <span class="cm">// Kuas tebal</span>
+stateCtx.stroke();          <span class="cm">// Tebalkan garisnya!</span></pre>
       </div>
     </div>
-    <div class="exp-note">&#128161; <code>beginPath()</code> WAJIB sebelum path baru. Tanpanya, path lama akan ikut tergambar dan menghasilkan bentuk yang tidak diinginkan.</div>
-  </div>
-</div>
-
-<div class="exp-card">
-  <div class="exp-head pink">
-    <div class="exp-icon">&#9888;&#65039;</div>
-    <div><div class="exp-tag">GOTCHA PENTING</div><div class="exp-title">CSS Pixel vs Canvas Pixel &mdash; Bug Paling Umum</div></div>
-  </div>
-  <div class="exp-body">
-    <div class="exp-desc">Canvas punya dua ukuran berbeda: ukuran <em>internal</em> (dari atribut HTML) dan ukuran <em>tampilan</em> (dari CSS). Jika canvas di-scale oleh CSS, koordinat mouse dari event harus <strong>dikonversi</strong> agar tidak meleset dari target yang dituju.</div>
-    <div class="exp-blocks">
-      <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode &mdash; Konversi Koordinat</div>
-<pre>MASALAH:
-  Canvas asli = 960 x 600 piksel (atribut HTML)
-  CSS membuat canvas tampil 480px di layar
-  Event mouse &rarr; koordinat CSS (piksel layar)
-  Menggambar &rarr; koordinat canvas (piksel canvas)
-  &rarr; Perlu DIKONVERSI!
-
-RUMUS:
-  rect = posisi + ukuran canvas di layar
-
-  canvasX = (clientX - rect.left)
-            x (lebarCanvas / lebarLayar)
-
-  canvasY = (clientY - rect.top)
-            x (tinggiCanvas / tinggiLayar)
-
-CONTOH:
-  Canvas = 960px, tampil = 480px (skala 2x)
-  Klik di layar X = 120
-  canvasX = 120 x (960/480) = 240</pre>
-      </div>
-      <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js &mdash; mousemove)</div>
-<pre>stateCanvas.addEventListener(<span class="str">"mousemove"</span>, e => {
-  <span class="cm">// Posisi dan ukuran canvas di layar</span>
-  <span class="kw">const</span> r =
-    stateCanvas.getBoundingClientRect();
-
-  <span class="cm">// Konversi CSS pixel &rarr; canvas pixel</span>
-  stateMouse.x =
-    (e.clientX - r.left) * SW / r.width;
-  stateMouse.y =
-    (e.clientY - r.top)  * SH / r.height;
-
-  <span class="cm">// Tampilkan di panel sidebar</span>
-  sid(<span class="str">"mouseText"</span>).textContent =
-    `(${Math.round(stateMouse.x)},
-       ${Math.round(stateMouse.y)})`;
-});</pre>
-      </div>
-    </div>
-    <div class="exp-note">&#128161; <code>getBoundingClientRect()</code> mengembalikan posisi dan ukuran elemen di layar. Pembagian <code>SW / r.width</code> adalah faktor skala konversi dari koordinat CSS ke koordinat canvas internal.</div>
+    <div class="exp-note">&#128161; Kenapa <code>beginPath()</code> sangat wajib? Jika kita lupa, garis yang kita buat sebelumnya akan ikut tersambung dan diwarnai lagi bersama garis yang baru. Akibatnya gambar kita akan terlihat acak-acakan tersambung satu sama lain.</div>
   </div>
 </div>
 </div><!-- /tab-canvas -->
 
 <!-- TAB 2: PRIMITIF -->
 <div class="soal-tab-content" id="tab-primitif">
-<p class="tab-intro">Minimal <strong>3 jenis primitif</strong> harus digambar di canvas: <em>Rectangle, Line, Circle, dan Triangle</em>. Setiap bentuk punya cara menggambar yang berbeda menggunakan Canvas 2D API.</p>
+<p class="tab-intro">Primitif adalah <strong>bentuk-bentuk dasar</strong> pembangun grafis. Ibarat lego, dengan menggabungkan kotak, garis, lingkaran, dan segitiga, kita bisa membuat gambar apapun. Berikut cara Canvas menggambar bentuk-bentuk dasar ini.</p>
 
 <div class="exp-card">
   <div class="exp-head purple">
     <div class="exp-icon">&#9644;</div>
-    <div><div class="exp-tag">PRIMITIF #1</div><div class="exp-title">Rectangle &mdash; Kotak / Persegi Panjang</div></div>
+    <div><div class="exp-tag">BENTUK 1</div><div class="exp-title">Kotak (Rectangle) &mdash; Paling Cepat dan Mudah</div></div>
   </div>
   <div class="exp-body">
-    <div class="exp-desc">Rectangle adalah bentuk paling dasar di Canvas. Satu fungsi <code>fillRect(x, y, lebar, tinggi)</code> langsung menggambar kotak berisi warna. Parameter (x,y) adalah sudut kiri atas kotak. Tidak perlu <code>beginPath</code>!</div>
+    <div class="exp-desc">Kotak adalah anak emas di Canvas. Dia punya perintah khusus <code>fillRect</code> yang bisa langsung mencetak kotak solid hanya dalam satu baris perintah tanpa perlu membuat sketsa (path).</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode</div>
-<pre>SET warna isian = biru (#3b82f6)
+        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+<pre>// BAGAIMANA CARA KERJANYA?
+Kita hanya perlu memberitahu komputer 4 hal:
+1. Posisi X (Kiri-Kanan)
+2. Posisi Y (Atas-Bawah)
+3. Berapa lebarnya
+4. Berapa tingginya
 
-GAMBAR kotak persegi panjang:
-  titik sudut kiri atas = (80, 90)
-  lebar   = 170 piksel
-  tinggi  = 105 piksel
-
-  fillRect(80, 90, 170, 105)
-           |   |   |     |
-           x   y   lebar tinggi
-
-&rarr; Canvas langsung mengisi area dengan warna biru
-&rarr; Tidak perlu beginPath() untuk rectangle!</pre>
+// ANALOGI SEHARI-HARI
+Bayangkan kita punya stempel berbentuk kotak.
+Kita arahkan stempel ke koordinat (X=80, Y=90).
+Lalu kita tekan stempel yang berukuran lebar 170 dan tinggi 105.
+Jadilah sebuah kotak persegi panjang secara instan!</pre>
       </div>
       <div class="code-block">
         <div class="code-label">&#128187; Kode (state-based.js &mdash; stateDraw)</div>
-<pre><span class="cm">// Set warna isian terlebih dahulu</span>
+<pre><span class="cm">// Set warna cat biru</span>
 stateCtx.fillStyle = <span class="str">"#3b82f6"</span>;
 
-<span class="cm">// fillRect(x, y, lebar, tinggi)</span>
+<span class="cm">// Stempel kotak langsung: fillRect(X, Y, Lebar, Tinggi)</span>
 stateCtx.fillRect(<span class="num">80</span>, <span class="num">90</span>, <span class="num">170</span>, <span class="num">105</span>);
 
-<span class="cm">// Alternatif: kotak outline saja</span>
+<span class="cm">// Kalau hanya mau garis tepinya saja (tanpa isi):</span>
 stateCtx.strokeStyle = <span class="str">"#3b82f6"</span>;
 stateCtx.lineWidth   = <span class="num">2</span>;
-stateCtx.strokeRect(<span class="num">80</span>, <span class="num">90</span>, <span class="num">170</span>, <span class="num">105</span>);
-
-<span class="cm">// Player: kotak oranye yang bisa bergerak</span>
-stateCtx.fillStyle = statePlayer.color;
-stateCtx.fillRect(
-  statePlayer.x, statePlayer.y,
-  statePlayer.w, statePlayer.h
-);</pre>
+stateCtx.strokeRect(<span class="num">80</span>, <span class="num">90</span>, <span class="num">170</span>, <span class="num">105</span>);</pre>
       </div>
     </div>
-    <div class="exp-note">&#128161; <code>fillRect</code> = kotak berisi warna. <code>strokeRect</code> = kotak hanya outline/garis. <code>clearRect</code> = hapus area (jadikan transparan). Tidak perlu <code>beginPath()</code> untuk ketiganya!</div>
+    <div class="exp-note">&#128161; Fungsi <code>fillRect</code> sangat cepat dieksekusi komputer. Oleh karena itu, background game atau elemen kotak dalam game 2D biasanya digambar menggunakan fungsi ini.</div>
   </div>
 </div>
 
 <div class="exp-card">
   <div class="exp-head pink">
     <div class="exp-icon">&#9585;</div>
-    <div><div class="exp-tag">PRIMITIF #2</div><div class="exp-title">Line &mdash; Garis Lurus</div></div>
+    <div><div class="exp-tag">BENTUK 2</div><div class="exp-title">Garis (Line) &mdash; Menyambungkan Titik A ke Titik B</div></div>
   </div>
   <div class="exp-body">
-    <div class="exp-desc">Garis dibuat menggunakan <strong>path</strong>. Path adalah jalur tak terlihat yang kita definisikan, lalu Canvas menggambar garis mengikutinya. Urutan wajib: <code>beginPath</code> &rarr; <code>moveTo</code> &rarr; <code>lineTo</code> &rarr; <code>stroke</code>.</div>
+    <div class="exp-desc">Untuk membuat garis, kita bermain "hubungkan titik-titik". Kita taruh pensil di satu titik, seret ke titik lain, lalu tebalkan dengan spidol.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode</div>
-<pre>LANGKAH 1: Mulai path baru (hapus path lama)
-  beginPath()
-
-LANGKAH 2: Angkat pena ke titik awal
-  moveTo(310, 110)
-  x=310 dari kiri, y=110 dari atas
-  (pena berpindah, tidak meninggalkan jejak)
-
-LANGKAH 3: Turunkan pena, seret ke tujuan
-  lineTo(500, 185)
-  x=500, y=185
-  (pena meninggalkan jejak path)
-
-LANGKAH 4: Atur tampilan garis
-  strokeStyle = merah (#f43f5e)
-  lineWidth   = 4 piksel
-
-LANGKAH 5: Cetak garis mengikuti path
-  stroke()
-  &rarr; Garis merah dari (310,110) ke (500,185)</pre>
+        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+<pre>// PROSES MENGGAMBAR GARIS:
+1. "Siapkan kertas kosong!" (beginPath)
+2. "Angkat pensil, taruh di titik A(310, 110)." (moveTo)
+   *Pensil belum menyentuh kertas, jadi tidak ada bekas coretan*
+3. "Tekan pensil dan seret lurus ke titik B(500, 185)." (lineTo)
+   *Sekarang ada sketsa garis tipis yang belum kelihatan*
+4. "Ambil spidol warna merah bata, ukuran 4mm." (strokeStyle &amp; lineWidth)
+5. "Tebalkan sketsa tadi pakai spidol!" (stroke)
+   *Garis akhirnya muncul di layar*</pre>
       </div>
       <div class="code-block">
         <div class="code-label">&#128187; Kode (state-based.js &mdash; stateDraw)</div>
-<pre><span class="cm">// Langkah 1: Mulai path baru</span>
+<pre><span class="cm">// Siapkan kertas sketsa</span>
 stateCtx.beginPath();
 
-<span class="cm">// Langkah 2: Pindah pena ke titik awal</span>
+<span class="cm">// Taruh pensil di titik A</span>
 stateCtx.moveTo(<span class="num">310</span>, <span class="num">110</span>);
 
-<span class="cm">// Langkah 3: Seret pena ke titik tujuan</span>
+<span class="cm">// Seret pensil ke titik B</span>
 stateCtx.lineTo(<span class="num">500</span>, <span class="num">185</span>);
 
-<span class="cm">// Langkah 4: Set tampilan garis</span>
+<span class="cm">// Siapkan spidol merah</span>
 stateCtx.strokeStyle = <span class="str">"#f43f5e"</span>;
 stateCtx.lineWidth   = <span class="num">4</span>;
 
-<span class="cm">// Langkah 5: Cetak garis!</span>
+<span class="cm">// Tebalkan garisnya!</span>
 stateCtx.stroke();</pre>
       </div>
     </div>
-    <div class="exp-note">&#128161; Analogi: <code>moveTo</code> = angkat pena dan pindah (tidak menggambar). <code>lineTo</code> = tekan pena dan seret ke posisi baru (meninggalkan jejak). <code>stroke()</code> = cetak semua jejak jadi garis nyata di canvas.</div>
+    <div class="exp-note">&#128161; Kita bisa memanggil <code>lineTo</code> berulang kali untuk membuat garis zigzag yang panjang sebelum memanggil <code>stroke()</code>. Komputer akan menggambar semuanya sekaligus dengan sangat efisien.</div>
   </div>
 </div>
 
 <div class="exp-card">
   <div class="exp-head cyan">
     <div class="exp-icon">&#11044;</div>
-    <div><div class="exp-tag">PRIMITIF #3</div><div class="exp-title">Circle &mdash; Lingkaran</div></div>
+    <div><div class="exp-tag">BENTUK 3</div><div class="exp-title">Lingkaran (Circle) &mdash; Menggunakan Busur Derajat (Arc)</div></div>
   </div>
   <div class="exp-body">
-    <div class="exp-desc">Lingkaran dibuat dengan fungsi <code>arc()</code> yang artinya "busur". Dengan sudut 0 hingga 2&pi; (= 360 derajat), terbentuklah lingkaran penuh. Parameter: titik pusat (cx, cy), radius (r), sudut awal dan akhir.</div>
+    <div class="exp-desc">Komputer menganggap lingkaran sebagai "garis lengkung yang berputar 360 derajat". Kita menggunakan fungsi <code>arc()</code> (busur) dengan menentukan titik tengahnya seperti memegang jangka.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode</div>
-<pre>LANGKAH 1: Mulai path &rarr; beginPath()
+        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+<pre>// CARA KERJA JANGKA KOMPUTER (arc):
+1. Tancapkan jarum jangka di tengah (cx, cy).
+2. Lebarkan pensil jangka sepanjang jarak Radius (r).
+3. Putar jangka dari sudut Awal sampai sudut Akhir.
 
-LANGKAH 2: Buat busur lingkaran
-  arc(cx, cy, r, sudutAwal, sudutAkhir)
-  arc(700, 135, 58, 0, 2*PI)
-       |    |   |   |    |
-      cx   cy   r  0 deg  360 deg
+// TENTANG SUDUT DI KOMPUTER (RADIAN):
+Komputer tidak paham "360 derajat". Komputer menggunakan "Radian".
+- Setengah lingkaran = Nilai PI (3.14)
+- Satu lingkaran penuh = 2 dikali PI (Math.PI * 2)
 
-  2*PI radian = 360 derajat = lingkaran penuh
-
-LANGKAH 3: Isi dengan warna
-  fillStyle = "#22c55e" (hijau)
-  fill()
-
-Referensi sudut radian:
-  0     = posisi kanan   (arah jam 3)
-  PI/2  = posisi bawah   (arah jam 6)
-  PI    = posisi kiri    (arah jam 9)
-  3PI/2 = posisi atas    (arah jam 12)
-  2PI   = penuh (balik ke kanan)</pre>
+// LOGIKA KODE:
+"Mulai sketsa baru."
+"Tancapkan jangka di (700, 135), rentangkan 58 piksel."
+"Putar penuh dari 0 sampai 2*PI."
+"Warnai bagian dalamnya dengan warna hijau."</pre>
       </div>
       <div class="code-block">
         <div class="code-label">&#128187; Kode (state-based.js &mdash; stateDraw)</div>
-<pre><span class="cm">// Lingkaran hijau statis</span>
+<pre><span class="cm">// Mulai sketsa</span>
 stateCtx.beginPath();
-stateCtx.arc(
-  <span class="num">700</span>, <span class="num">135</span>,       <span class="cm">// pusat (cx, cy)</span>
-  <span class="num">58</span>,              <span class="cm">// radius</span>
-  <span class="num">0</span>, Math.PI * <span class="num">2</span>  <span class="cm">// 0 sampai 360deg</span>
-);
-stateCtx.fillStyle = <span class="str">"#22c55e"</span>;
-stateCtx.fill();
 
-<span class="cm">// Bola bergerak dengan efek glow</span>
-stateCtx.beginPath();
+<span class="cm">// arc(TengahX, TengahY, Radius, SudutAwal, SudutAkhir)</span>
 stateCtx.arc(
-  stateBall.x, stateBall.y, stateBall.r,
-  <span class="num">0</span>, Math.PI * <span class="num">2</span>
+  <span class="num">700</span>, <span class="num">135</span>,       <span class="cm">// Titik tengah</span>
+  <span class="num">58</span>,              <span class="cm">// Jarak radius</span>
+  <span class="num">0</span>, Math.PI * <span class="num">2</span>  <span class="cm">// Putar satu putaran penuh</span>
 );
-stateCtx.fillStyle   = stateBall.color;
-stateCtx.shadowBlur  = <span class="num">25</span>;
-stateCtx.shadowColor = stateBall.color;
-stateCtx.fill();
-stateCtx.shadowBlur  = <span class="num">0</span>;</pre>
+
+<span class="cm">// Isi warnanya</span>
+stateCtx.fillStyle = <span class="str">"#22c55e"</span>;
+stateCtx.fill();</pre>
       </div>
     </div>
-    <div class="exp-note">&#128161; <code>Math.PI</code> = 3.14159... = 180 derajat. Jadi <code>Math.PI * 2</code> = 360 derajat. Dalam pemrograman grafis, sudut dihitung dalam satuan <em>radian</em>, bukan derajat biasa.</div>
+    <div class="exp-note">&#128161; Fungsi <code>fill()</code> bertugas seperti tool "Cat Tumpah (Paint Bucket)" di Photoshop. Ia akan mencari area tertutup yang kita buat dari sketsa, lalu mengisi bagian dalamnya dengan warna yang kita pilih.</div>
   </div>
 </div>
 
 <div class="exp-card">
   <div class="exp-head orange">
     <div class="exp-icon">&#9650;</div>
-    <div><div class="exp-tag">PRIMITIF #4</div><div class="exp-title">Triangle &mdash; Segitiga</div></div>
+    <div><div class="exp-tag">BENTUK 4</div><div class="exp-title">Segitiga &mdash; Menutup Jalur (Close Path)</div></div>
   </div>
   <div class="exp-body">
-    <div class="exp-desc">Canvas tidak punya fungsi segitiga bawaan. Kita buat sendiri menggunakan <strong>path</strong>: hubungkan 3 titik sudut dengan garis, lalu tutup path agar sisi ketiga terbentuk otomatis. Teknik ini bisa dipakai untuk membuat <em>poligon apapun</em>.</div>
+    <div class="exp-desc">Tidak ada rumus instan pembuat segitiga di Canvas! Kita harus menggunakan teknik menggambar 3 garis yang saling terhubung. Bagian terpentingnya adalah menutup garis terakhir agar segitiganya rapat.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode</div>
-<pre>3 titik sudut segitiga kita:
-  Puncak (atas)      = (130, 360)
-  Sudut kiri bawah   = (65, 490)
-  Sudut kanan bawah  = (195, 490)
+        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+<pre>// LANGKAH MEMBUAT SEGITIGA:
+1. Mulai sketsa baru (beginPath).
+2. Taruh pensil di Puncak Segitiga (moveTo).
+3. Tarik garis turun ke Kiri Bawah (lineTo).
+4. Tarik garis geser ke Kanan Bawah (lineTo).
 
-LANGKAH 1: Mulai path &rarr; beginPath()
+// LANGKAH KRUSIAL: Menutup bentuk
+Saat ini bentuknya masih seperti huruf 'V' terbuka.
+Kita bisa saja repot-repot menarik garis lagi ke puncak,
+TAPI, ada perintah ajaib bernama closePath()!
 
-LANGKAH 2: Pindah ke puncak
-  moveTo(130, 360)
-
-LANGKAH 3: Garis ke sudut kiri bawah
-  lineTo(65, 490)
-
-LANGKAH 4: Garis ke sudut kanan bawah
-  lineTo(195, 490)
-
-LANGKAH 5: TUTUP path &rarr; closePath()
-  Canvas otomatis tarik garis dari (195,490)
-  kembali ke moveTo pertama (130,360)
-  &rarr; Segitiga tertutup sempurna!
-
-LANGKAH 6: Isi &rarr; fillStyle + fill()</pre>
+Perintah closePath() artinya: "Tarik garis lurus dari titik terakhirmu
+kembali langsung ke titik saat kamu pertama menaruh pensil (moveTo)."
+Otomatis segitiga akan tertutup rapat!
+Setelah rapat, kita tumpahkan cat ke dalamnya (fill).</pre>
       </div>
       <div class="code-block">
         <div class="code-label">&#128187; Kode (state-based.js &amp; event-based.js)</div>
-<pre><span class="cm">// Segitiga oranye</span>
-stateCtx.beginPath();
+<pre>stateCtx.beginPath();
 
-stateCtx.moveTo(<span class="num">130</span>, <span class="num">360</span>); <span class="cm">// puncak</span>
-stateCtx.lineTo(<span class="num">65</span>,  <span class="num">490</span>); <span class="cm">// kiri bawah</span>
-stateCtx.lineTo(<span class="num">195</span>, <span class="num">490</span>); <span class="cm">// kanan bawah</span>
+<span class="cm">// Taruh pensil di puncak</span>
+stateCtx.moveTo(<span class="num">130</span>, <span class="num">360</span>); 
 
-<span class="cm">// closePath: tarik garis ke moveTo pertama</span>
+<span class="cm">// Tarik ke kiri bawah</span>
+stateCtx.lineTo(<span class="num">65</span>,  <span class="num">490</span>); 
+
+<span class="cm">// Tarik ke kanan bawah</span>
+stateCtx.lineTo(<span class="num">195</span>, <span class="num">490</span>); 
+
+<span class="cm">// Otomatis tarik garis kembali ke puncak (130, 360)</span>
 stateCtx.closePath();
 
+<span class="cm">// Tumpahkan cat oranye</span>
 stateCtx.fillStyle = <span class="str">"#f97316"</span>;
-stateCtx.fill();
-
-<span class="cm">// Bisa juga hanya outline:</span>
-<span class="cm">// stateCtx.strokeStyle = "#f97316";</span>
-<span class="cm">// stateCtx.stroke();</span></pre>
+stateCtx.fill();</pre>
       </div>
     </div>
-    <div class="exp-note">&#128161; <code>closePath()</code> menarik garis dari titik terakhir kembali ke <code>moveTo</code> pertama. Ini yang membuat segitiga tertutup rapat. Tanpa <code>closePath()</code>, sisi ketiga segitiga akan terbuka.</div>
+    <div class="exp-note">&#128161; Teknik <code>closePath()</code> ini adalah rahasia untuk membuat poligon (segi banyak) apa saja. Mulai dari segi lima, segi delapan, atau bentuk bintang sekalipun, kita tinggal menghubungkan titik-titiknya lalu memanggil closePath().</div>
   </div>
 </div>
 </div><!-- /tab-primitif -->
 
 <!-- TAB 3: WARNA -->
 <div class="soal-tab-content" id="tab-warna">
-<p class="tab-intro">Warna di Canvas bisa berupa solid, transparan, palet berganti, hingga efek <em>shadow glow</em>. Di praktikum ini warna dikelola via <strong>array palet</strong> dengan indeks berputar menggunakan operator <em>modulo</em>.</p>
+<p class="tab-intro">Memberi warna di Canvas tidak sekadar cat padat. Kita bisa menggunakan <strong>transparansi</strong>, mengganti-ganti warna dengan <strong>pola perputaran</strong>, dan bahkan memberikan <strong>efek cahaya (glow)</strong> agar objek terlihat hidup.</p>
 
 <div class="exp-card">
   <div class="exp-head purple">
     <div class="exp-icon">&#127912;</div>
-    <div><div class="exp-tag">WARNA #1</div><div class="exp-title">fillStyle dan strokeStyle &mdash; Cara Set Warna</div></div>
+    <div><div class="exp-tag">TRANSPARANSI</div><div class="exp-title">Warna RGBA &mdash; Membuat Efek "Kaca Pudar"</div></div>
   </div>
   <div class="exp-body">
-    <div class="exp-desc"><code>fillStyle</code> mengatur warna isian, <code>strokeStyle</code> mengatur warna garis/outline. Nilai bisa berupa hex (#rrggbb), RGB, RGBA (dengan transparansi), atau nama warna CSS. Warna berlaku sampai diubah lagi.</div>
+    <div class="exp-desc">Selain kode Hex (seperti <code>#3b82f6</code>), kita bisa menggunakan <strong>RGBA</strong> (Red, Green, Blue, Alpha). Bagian yang spesial adalah 'Alpha' &mdash; ini menentukan tingkat seberapa "tembus pandang" warnanya.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode &mdash; Format Warna</div>
-<pre>Format warna yang diterima Canvas:
-  Hex         &rarr; "#8b5cf6"             (ungu)
-  Hex pendek  &rarr; "#f00"                (merah)
-  RGB         &rarr; "rgb(34, 211, 238)"
-  RGBA        &rarr; "rgba(7, 17, 31, 0.13)"
-              &uarr; 0.13 = 13% opak (87% transparan)
-  Nama CSS    &rarr; "red", "blue", "green"
+        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+<pre>// MEMAHAMI TINGKAT KETEMBUSPANDANGAN (ALPHA)
+Nilai Alpha berkisar dari 0.0 sampai 1.0.
+- Alpha 1.0 = Cat warna padat (tidak tembus sama sekali).
+- Alpha 0.0 = Kaca bening 100% (tidak terlihat sama sekali).
+- Alpha 0.5 = Semi-transparan (seperti kacamata hitam).
 
-ATURAN PENTING:
-  Warna berlaku untuk SEMUA gambar setelah diset
-  sampai diubah lagi!
+// KASUS PENGGUNAAN DI PRAKTIKUM: EFEK TRAIL
+Alih-alih menghapus seluruh canvas menjadi putih bersih tiap frame,
+kita mengecat ulang seluruh canvas dengan warna hitam tapi 
+Alpha-nya hanya 0.13 (sangat tipis / tembus pandang).
 
-  SET fillStyle = merah
-  GAMBAR A   &larr; pakai merah
-  GAMBAR B   &larr; masih merah!
-  SET fillStyle = biru
-  GAMBAR C   &larr; baru pakai biru</pre>
+Apa akibatnya? Gambar bola dari detik sebelumnya tidak langsung hilang, 
+tapi tertimpa selapis demi selapis cat hitam tipis. 
+Lama-lama gambar lama memudar &rarr; Terciptalah efek ekor berbayang (trail)!</pre>
       </div>
       <div class="code-block">
         <div class="code-label">&#128187; Kode (state-based.js &mdash; stateDraw)</div>
-<pre><span class="cm">// Kotak biru: hex color</span>
+<pre><span class="cm">// Warna padat biasa (Hex)</span>
 stateCtx.fillStyle = <span class="str">"#3b82f6"</span>;
-stateCtx.fillRect(<span class="num">80</span>, <span class="num">90</span>, <span class="num">170</span>, <span class="num">105</span>);
 
-<span class="cm">// Garis merah: hex color</span>
-stateCtx.strokeStyle = <span class="str">"#f43f5e"</span>;
-
-<span class="cm">// Latar semi-transparan (trail effect)</span>
-<span class="cm">// rgba(r, g, b, alpha)</span>
+<span class="cm">// Warna hitam kebiruan dengan transparansi 13%</span>
+<span class="cm">// format: rgba(merah, hijau, biru, alpha)</span>
 stateCtx.fillStyle =
   <span class="str">"rgba(7, 17, 31, 0.13)"</span>;
-<span class="cm">// 0.13 = 13% opak = gambar lama memudar</span>
-stateCtx.fillRect(<span class="num">0</span>, <span class="num">0</span>, SW, SH);
 
-<span class="cm">// Teks warna cyan di HUD</span>
-stateCtx.fillStyle = <span class="str">"#22d3ee"</span>;
-stateCtx.fillText(<span class="str">"Mouse: ..."</span>, <span class="num">18</span>, <span class="num">575</span>);</pre>
+<span class="cm">// Cat seluruh canvas dengan warna tembus pandang ini</span>
+stateCtx.fillRect(<span class="num">0</span>, <span class="num">0</span>, SW, SH);</pre>
       </div>
     </div>
-    <div class="exp-note">&#128161; RGBA: nilai ke-4 (alpha) dari 0 (transparan total) sampai 1 (penuh opak). Alpha 0.13 (13%) cocok untuk trail effect karena gambar lama memudar perlahan, tidak hilang sepenuhnya.</div>
+    <div class="exp-note">&#128161; Efek transparan <code>rgba</code> adalah trik rahasia di balik animasi yang terasa mulus dan sinematik. Tanpa ini, pergerakan bola di layar akan terlihat sangat kaku dan kering.</div>
   </div>
 </div>
 
 <div class="exp-card">
   <div class="exp-head cyan">
     <div class="exp-icon">&#127752;</div>
-    <div><div class="exp-tag">WARNA #2</div><div class="exp-title">Palet Warna &mdash; Array + Rotasi dengan Modulo</div></div>
+    <div><div class="exp-tag">GANTI WARNA</div><div class="exp-title">Rotasi Palet Warna dengan Rumus Modulo (%)</div></div>
   </div>
   <div class="exp-body">
-    <div class="exp-desc">Semua warna disimpan dalam <strong>array palet</strong>. Sebuah indeks menunjuk warna aktif. Setiap klik, indeks bertambah. Operator <strong>modulo (%)</strong> memastikan indeks kembali ke 0 setelah melewati warna terakhir &mdash; berputar tanpa henti.</div>
+    <div class="exp-desc">Bagaimana cara membuat warna berubah berurutan setiap diklik, lalu <strong>kembali lagi ke awal</strong> saat warnanya sudah habis? Jawabannya adalah menggunakan "Rak Warna" (Array) dan rumus sisa bagi "Modulo" (%).</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode</div>
-<pre>DEKLARASI:
-  palet = [warna0, warna1, warna2, warna3, warna4]
-    &rarr; 5 warna, indeks 0 sampai 4
-  indeks = 0   &larr; mulai dari warna pertama
+        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+<pre>// PERSIAPAN RAK WARNA:
+Kita punya rak (Array) berisi 5 botol warna.
+Urutannya: 0(Ungu), 1(Merah), 2(Hijau), 3(Kuning), 4(Biru)
+Kita catat nomor botol yang sedang dipakai, misal mulai dari = 0.
 
-SAAT canvas diklik:
-  indeks = (indeks + 1) MOD 5
+// LOGIKA SAAT DIKLIK:
+Tiap klik, kita ingin geser ke botol berikutnya (nomor + 1).
+Tapi kalau sudah sampai botol nomor 4, kita ingin balik ke 0!
 
-Simulasi 6 klik berturut-turut:
-  Awal  : 0 &rarr; "#8b5cf6" (ungu)
-  Klik 1: (0+1)%5 = 1 &rarr; "#f43f5e" (merah)
-  Klik 2: (1+1)%5 = 2 &rarr; "#22c55e" (hijau)
-  Klik 3: (2+1)%5 = 3 &rarr; "#facc15" (kuning)
-  Klik 4: (3+1)%5 = 4 &rarr; "#3b82f6" (biru)
-  Klik 5: (4+1)%5 = 0 &rarr; "#8b5cf6" (ungu lagi!)
-  &rarr; Berputar tanpa henti!</pre>
+// KEAJAIBAN RUMUS MODULO (SISA BAGI):
+(Nomor + 1) dibagi 5, ambil sisanya!
+- Klik 1: (0+1) / 5 = Sisa 1 &rarr; Pakai Merah
+- Klik 2: (1+1) / 5 = Sisa 2 &rarr; Pakai Hijau
+- Klik 3: (2+1) / 5 = Sisa 3 &rarr; Pakai Kuning
+- Klik 4: (3+1) / 5 = Sisa 4 &rarr; Pakai Biru
+- Klik 5: (4+1) / 5 = Tepat habis! Sisa 0 &rarr; Balik ke Ungu!
+
+Hasilnya? Warnanya berputar terus tanpa pernah error karena kehabisan botol.</pre>
       </div>
       <div class="code-block">
         <div class="code-label">&#128187; Kode (state-based.js)</div>
-<pre><span class="cm">// Array palet 5 warna</span>
+<pre><span class="cm">// Rak botol warna (Array)</span>
 <span class="kw">const</span> stateColors = [
-  <span class="str">"#8b5cf6"</span>, <span class="cm">// ungu</span>
-  <span class="str">"#f43f5e"</span>, <span class="cm">// merah</span>
-  <span class="str">"#22c55e"</span>, <span class="cm">// hijau</span>
-  <span class="str">"#facc15"</span>, <span class="cm">// kuning</span>
-  <span class="str">"#3b82f6"</span>  <span class="cm">// biru</span>
+  <span class="str">"#8b5cf6"</span>, <span class="cm">// 0: ungu</span>
+  <span class="str">"#f43f5e"</span>, <span class="cm">// 1: merah</span>
+  <span class="str">"#22c55e"</span>, <span class="cm">// 2: hijau</span>
+  <span class="str">"#facc15"</span>, <span class="cm">// 3: kuning</span>
+  <span class="str">"#3b82f6"</span>  <span class="cm">// 4: biru</span>
 ];
-<span class="kw">let</span> stateColorIndex = <span class="num">0</span>;
+<span class="kw">let</span> stateColorIndex = <span class="num">0</span>; <span class="cm">// Botol saat ini</span>
 
-<span class="cm">// Saat canvas diklik</span>
 stateCanvas.addEventListener(<span class="str">"click"</span>, () => {
-  <span class="cm">// Modulo: kembali ke 0 setelah indeks 4</span>
+  <span class="cm">// Rumus Modulo: Maju 1, balik ke 0 kalau mentok</span>
   stateColorIndex =
     (stateColorIndex + <span class="num">1</span>) % stateColors.length;
+    
+  <span class="cm">// Pakai warna dari botol yang baru dipilih</span>
   stateBall.color = stateColors[stateColorIndex];
-
-  <span class="cm">// Spawn lingkaran warna berbeda (+2)</span>
-  stateCircles.push({
-    color: stateColors[
-      (stateColorIndex+<span class="num">2</span>) % stateColors.length
-    ]
-  });
 });</pre>
       </div>
     </div>
-    <div class="exp-note">&#128161; Operator <code>%</code> (modulo) = sisa bagi. <code>5 % 5 = 0</code>. Teknik ini disebut <em>circular indexing</em> dan sangat umum dalam pemrograman game untuk membuat animasi atau pilihan yang berputar.</div>
+    <div class="exp-note">&#128161; Trik Modulo ini sangat sering dipakai dalam pembuatan Game. Contohnya untuk mengganti giliran pemain (Player 1, Player 2, Player 3 &rarr; Balik ke Player 1) atau animasi sprite karakter yang berjalan (Frame 1, 2, 3 &rarr; Balik 1).</div>
   </div>
 </div>
 
 <div class="exp-card">
   <div class="exp-head orange">
     <div class="exp-icon">&#10024;</div>
-    <div><div class="exp-tag">WARNA #3</div><div class="exp-title">Shadow Glow &mdash; Efek Cahaya di Canvas</div></div>
+    <div><div class="exp-tag">EFEK CAHAYA</div><div class="exp-title">Membuat Objek Bersinar (Shadow Glow)</div></div>
   </div>
   <div class="exp-body">
-    <div class="exp-desc">Canvas mendukung efek shadow yang bisa dipakai sebagai <em>glow (cahaya)</em>. Dengan mengatur <code>shadowColor</code> sama dengan warna objek, objek terlihat bersinar. <strong>WAJIB reset <code>shadowBlur = 0</code> setelah menggambar!</strong></div>
+    <div class="exp-desc">Di Canvas, fitur "bayangan" (shadow) bisa disulap menjadi efek <strong>cahaya neon (glow)</strong>. Caranya adalah dengan membuat warna bayangan tersebut sama persis dengan warna objeknya, lalu memberikan nilai blur (pendaran) yang tinggi.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode</div>
-<pre>UNTUK EFEK GLOW:
-  SET shadowBlur  = 25   &larr; radius cahaya
-  SET shadowColor = warna_objek
-  GAMBAR objek           &larr; otomatis bercahaya
-  RESET shadowBlur = 0   &larr; WAJIB!
+        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+<pre>// CARA MENGHIDUPKAN LAMPU NEON:
+1. Tentukan seberapa terang pendarannya (shadowBlur).
+   Semakin besar angkanya, cahayanya makin menyebar luas.
+2. Tentukan warna pendarannya (shadowColor).
+   Buat sama dengan warna objek agar terlihat bersinar dari dalam.
+3. Gambar objeknya! (Tiba-tiba objeknya bercahaya)
 
-KENAPA HARUS DIRESET?
-  Canvas bersifat "stateful": pengaturan berlaku
-  sampai diubah. Tanpa reset:
+// PERINGATAN KERAS: MATIKAN LAMPU JIKA SUDAH SELESAI!
+Kuas Canvas itu sangat pelupa. Jika kamu menyalakan 'shadowBlur', 
+kuas akan terus menggambar SEMUA objek selanjutnya dengan efek cahaya!
 
-  shadowBlur = 25
-  Gambar bola (glow)
-  Gambar kotak player ... (ikut glow!) &larr; BUG!
-
-  Dengan reset:
-  shadowBlur = 25
-  Gambar bola (glow)
-  shadowBlur = 0           &larr; matikan
-  Gambar kotak player (normal) &larr; aman!</pre>
+Oleh karena itu, ada aturan emas:
+- Nyalakan shadowBlur = 25
+- Gambar Bola (Bola jadi bersinar)
+- MATIKAN shadowBlur = 0  &lt;--- WAJIB!
+- Gambar kotak Player (Kotak tergambar normal, tidak ikut bersinar)</pre>
       </div>
       <div class="code-block">
         <div class="code-label">&#128187; Kode (state-based.js &mdash; stateDraw)</div>
-<pre><span class="cm">// Gambar bola dengan efek glow</span>
+<pre><span class="cm">// Siapkan sketsa bola</span>
 stateCtx.beginPath();
-stateCtx.arc(
-  stateBall.x, stateBall.y, stateBall.r,
-  <span class="num">0</span>, Math.PI * <span class="num">2</span>
-);
+stateCtx.arc(stateBall.x, stateBall.y, stateBall.r, <span class="num">0</span>, Math.PI * <span class="num">2</span>);
 stateCtx.fillStyle   = stateBall.color;
-stateCtx.shadowBlur  = <span class="num">25</span>;          <span class="cm">// aktifkan</span>
-stateCtx.shadowColor = stateBall.color; <span class="cm">// warna cahaya</span>
-stateCtx.fill();
-stateCtx.shadowBlur  = <span class="num">0</span>;           <span class="cm">// &larr; RESET!</span>
 
-<span class="cm">// Gambar player (kotak + glow oranye)</span>
-stateCtx.fillStyle   = statePlayer.color;
-stateCtx.shadowBlur  = <span class="num">20</span>;
-stateCtx.shadowColor = statePlayer.color;
-stateCtx.fillRect(
-  statePlayer.x, statePlayer.y,
-  statePlayer.w, statePlayer.h
-);
-stateCtx.shadowBlur  = <span class="num">0</span>;           <span class="cm">// &larr; RESET!</span></pre>
+<span class="cm">// 1. Nyalakan Lampu Neon!</span>
+stateCtx.shadowBlur  = <span class="num">25</span>;          
+stateCtx.shadowColor = stateBall.color; 
+
+<span class="cm">// 2. Gambar Bolanya</span>
+stateCtx.fill();
+
+<span class="cm">// 3. MATIKAN LAMPU NEON! (Wajib)</span>
+stateCtx.shadowBlur  = <span class="num">0</span>;           
+
+<span class="cm">// Lanjut menggambar objek lain dengan aman...</span></pre>
       </div>
     </div>
-    <div class="exp-note">&#128161; Jadikan kebiasaan: setiap <code>shadowBlur = N</code> selalu diikuti <code>shadowBlur = 0</code> setelah menggambar. Ini mencegah bug visual yang sulit didiagnosis karena efeknya menyebar ke semua objek berikutnya.</div>
+    <div class="exp-note">&#128161; Efek shadow di Canvas cukup membebani kerja komputer karena butuh perhitungan grafis yang kompleks. Jangan pakai terlalu banyak glow di puluhan objek sekaligus jika tidak ingin animasinya menjadi lag!</div>
   </div>
 </div>
 </div><!-- /tab-warna -->
 
 <!-- TAB 4: ANIMASI -->
 <div class="soal-tab-content" id="tab-animasi">
-<p class="tab-intro">Animasi Canvas bekerja dengan siklus <strong>hapus &rarr; update &rarr; gambar</strong> yang diulang ~60x per detik menggunakan <code>requestAnimationFrame</code>. Inilah yang disebut <em>game loop</em>.</p>
+<p class="tab-intro">Sebuah gambar diam bisa hidup menjadi animasi jika kita <strong>menggambarnya berulang-ulang dengan posisi yang sedikit bergeser</strong>. Jika kita melakukannya sangat cepat (60 kali per detik), mata kita akan tertipu dan melihatnya sebagai gerakan yang mulus. Inilah yang disebut <em>Game Loop</em>.</p>
 
 <div class="exp-card">
   <div class="exp-head purple">
     <div class="exp-icon">&#128260;</div>
-    <div><div class="exp-tag">ANIMASI #1</div><div class="exp-title">requestAnimationFrame &mdash; Mesin Animasi Canvas</div></div>
+    <div><div class="exp-tag">MESIN WAKTU</div><div class="exp-title">Jantung Animasi (requestAnimationFrame)</div></div>
   </div>
   <div class="exp-body">
-    <div class="exp-desc"><code>requestAnimationFrame(fn)</code> meminta browser memanggil fungsi <code>fn</code> pada frame layar berikutnya (~60x/detik). Dengan memanggil dirinya sendiri di akhir fungsi, terciptalah <strong>loop animasi yang berjalan terus</strong>.</div>
+    <div class="exp-desc">Kita butuh sebuah mesin yang terus berdetak memanggil fungsi gambar kita tiada henti. Di browser web, mesin terbaik untuk ini adalah <code>requestAnimationFrame</code>. Mesin ini super cerdas karena dia sinkron dengan layar monitor kita.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode &mdash; Game Loop</div>
-<pre>FUNGSI stateFrame():
-  JIKA tidak pause:
+        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+<pre>// BAGAIMANA MESIN ANIMASI BEKERJA?
 
-    LANGKAH 1 &mdash; BERSIHKAN canvas
-      Hapus semua gambar dari frame sebelumnya
+Kita buat satu Fungsi Utama (Siklus), isinya 3 langkah baku:
+1. HAPUS: "Tolong bersihkan seluruh coretan di kanvas."
+2. HITUNG: "Bola tadi di X=100. Sekarang geser ke X=105 ya."
+3. GAMBAR: "Sekarang gambar bolanya di posisi X=105 yang baru."
 
-    LANGKAH 2 &mdash; UPDATE posisi
-      Perbarui posisi bola, player, semua objek
+// TRIK SIKLUS TIADA HENTI (REKURSIF)
+Di bagian paling akhir dari fungsi tersebut, kita berteriak ke browser:
+"Hei Browser, kalau layarmu sudah siap berkedip lagi, 
+ tolong panggil fungsi ini dari awal ya!" 
+(Inilah peran requestAnimationFrame)
 
-    LANGKAH 3 &mdash; GAMBAR ulang
-      Render semua objek di posisi baru
-
-    frameCount += 1   &larr; hitung frame
-
-  DAFTARKAN ke frame berikutnya:
-  &rarr; requestAnimationFrame(stateFrame)
-
-MULAI: requestAnimationFrame(stateFrame)
-
-Timeline yang terjadi:
-  Mulai &rarr; stateFrame &rarr; frame 1 selesai
-           &rarr; stateFrame &rarr; frame 2 selesai
-           &rarr; stateFrame &rarr; frame 3 selesai
-           &rarr; ... (terus sampai dihentikan)</pre>
+Alur Kejadiannya:
+- Panggil Fungsi &rarr; Hapus &rarr; Hitung &rarr; Gambar &rarr; Minta dipanggil lagi
+- (1/60 detik kemudian) Browser memanggil fungsi lagi
+- Hapus &rarr; Hitung &rarr; Gambar &rarr; Minta dipanggil lagi
+- Terus berulang secepat kedipan monitor (biasanya 60x sebdetik).</pre>
       </div>
       <div class="code-block">
         <div class="code-label">&#128187; Kode (state-based.js)</div>
 <pre><span class="kw">function</span> stateFrame() {
+  <span class="cm">// Jika game sedang tidak di-pause</span>
   <span class="kw">if</span> (!statePaused) {
-    stateClear();   <span class="cm">// Langkah 1: hapus</span>
-    stateUpdate();  <span class="cm">// Langkah 2: update</span>
-    stateDraw();    <span class="cm">// Langkah 3: gambar</span>
+    stateClear();   <span class="cm">// Langkah 1: Hapus layar</span>
+    stateUpdate();  <span class="cm">// Langkah 2: Hitung posisi baru</span>
+    stateDraw();    <span class="cm">// Langkah 3: Gambar ulang</span>
+    
+    <span class="cm">// Catat sudah berapa kali layar digambar</span>
     stateFrames++;
-    sid(<span class="str">"frameText"</span>).textContent
-      = stateFrames;
   }
-  <span class="cm">// Jadwalkan frame berikutnya</span>
+  
+  <span class="cm">// Trik: Minta browser memanggil fungsi ini lagi </span>
+  <span class="cm">// di frame berikutnya! (Siklus tak berujung)</span>
   requestAnimationFrame(stateFrame);
 }
 
-<span class="cm">// Gambar frame pertama, lalu mulai loop</span>
-stateDraw();
+<span class="cm">// Pemicu pertama kali untuk menghidupkan mesin</span>
 requestAnimationFrame(stateFrame);</pre>
       </div>
     </div>
-    <div class="exp-note">&#128161; <code>requestAnimationFrame</code> lebih baik dari <code>setInterval</code>: (1) sinkron dengan refresh rate layar, (2) otomatis berhenti saat tab tidak aktif &mdash; hemat baterai laptop, (3) animasi lebih halus dan konsisten.</div>
-  </div>
-</div>
-
-<div class="exp-card">
-  <div class="exp-head cyan">
-    <div class="exp-icon">&#129529;</div>
-    <div><div class="exp-tag">ANIMASI #2</div><div class="exp-title">Clear Canvas &mdash; Normal vs Trail Effect</div></div>
-  </div>
-  <div class="exp-body">
-    <div class="exp-desc">Sebelum frame baru, canvas perlu dibersihkan. Ada dua cara: <code>clearRect</code> (hapus total, animasi bersih) atau <code>fillRect semi-transparan</code> (hapus sebagian) yang menciptakan efek <strong>trail / jejak bercahaya</strong>.</div>
-    <div class="exp-blocks">
-      <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode &mdash; Dua Mode Hapus</div>
-<pre>MODE NORMAL (trail = OFF):
-  clearRect(0, 0, lebar, tinggi)
-  &rarr; Hapus canvas sepenuhnya, frame baru bersih
-
-MODE TRAIL (trail = ON):
-  fillStyle = "rgba(7, 17, 31, 0.13)"  &larr; 13% gelap
-  fillRect(0, 0, lebar, tinggi)
-  &rarr; Gambar penutup gelap semi-transparan
-  &rarr; Gambar lama memudar, tidak hilang total
-
-SIMULASI TRAIL (bola bergerak):
-  Frame 1: bola di x=100 (warna 100%)
-  Frame 2: overlay 13% &rarr; gambar lama 87%
-  Frame 3: overlay lagi &rarr; gambar lama 76%
-  Frame 10: gambar lama ~25% tersisa
-  &rarr; Terlihat seperti ekor yang memudar!</pre>
-      </div>
-      <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js &mdash; stateClear)</div>
-<pre><span class="kw">function</span> stateClear() {
-  <span class="kw">if</span> (!stateTrail) {
-    <span class="cm">// Mode normal: hapus total</span>
-    stateCtx.clearRect(<span class="num">0</span>, <span class="num">0</span>, SW, SH);
-  } <span class="kw">else</span> {
-    <span class="cm">// Mode trail: overlay semi-transparan</span>
-    stateCtx.fillStyle =
-      <span class="str">"rgba(7,17,31,.13)"</span>;
-    stateCtx.fillRect(<span class="num">0</span>, <span class="num">0</span>, SW, SH);
-  }
-}
-
-<span class="cm">// Checkbox di panel mengontrol mode trail</span>
-sid(<span class="str">"trail"</span>).onchange =
-  e => stateTrail = e.target.checked;</pre>
-      </div>
-    </div>
-    <div class="exp-note">&#128161; Alpha 0.13 (13%) dipilih agar ekor terlihat cukup panjang dan indah. Semakin kecil alpha, semakin lama ekor tersisa. Coba aktifkan "Trail Effect" di panel State-Based untuk melihat perbedaannya!</div>
+    <div class="exp-note">&#128161; Kecerdasan <code>requestAnimationFrame</code> adalah: jika kamu pindah ke tab YouTube atau tab web lain, mesin ini akan <strong>otomatis berhenti sementara (pause)</strong>. Ini menghemat daya baterai laptop sangat besar dibanding menggunakan <code>setInterval</code> model lama!</div>
   </div>
 </div>
 
 <div class="exp-card">
   <div class="exp-head pink">
     <div class="exp-icon">&#9917;</div>
-    <div><div class="exp-tag">ANIMASI #3</div><div class="exp-title">Satu Objek Bergerak &mdash; Bola dengan Velocity</div></div>
+    <div><div class="exp-tag">GERAKAN FISIKA</div><div class="exp-title">Menggerakkan Bola dengan Kecepatan (Velocity)</div></div>
   </div>
   <div class="exp-body">
-    <div class="exp-desc">Bola bergerak dengan menambahkan <strong>kecepatan (velocity)</strong> ke posisi setiap frame. Bola punya <code>vx</code> (horizontal) dan <code>vy</code> (vertikal). Positif = kanan/bawah, negatif = kiri/atas. Saat menyentuh tepi, kecepatan dibalik.</div>
+    <div class="exp-desc">Untuk membuat benda bergerak, benda itu harus punya <strong>Kecepatan (Velocity)</strong>. Kecepatan ini ibarat "bensin" yang ditambahkan ke posisinya setiap kali layar menggambar ulang.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode &mdash; Bola Bergerak</div>
-<pre>DEKLARASI bola:
-  ball = {
-    x:  420,   &larr; posisi horizontal
-    y:  270,   &larr; posisi vertikal
-    r:  25,    &larr; radius (jari-jari)
-    vx: 3,     &larr; kecepatan horizontal (kanan)
-    vy: 2.5    &larr; kecepatan vertikal (bawah)
-  }
+        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+<pre>// MEMBERIKAN BENSIN (KECEPATAN) KE BOLA
+Bola butuh dua jenis bensin:
+- Kecepatan Mendatar (vx) : untuk maju/mundur (Kiri-Kanan)
+- Kecepatan Menurun (vy)  : untuk naik/turun (Atas-Bawah)
 
-SETIAP frame (dalam stateUpdate):
-  1. GERAKKAN bola:
-     ball.x = ball.x + ball.vx
-     ball.y = ball.y + ball.vy
+Nilainya menentukan arah:
++ (Positif) = Bergerak ke Kanan / Bawah
+- (Negatif) = Bergerak ke Kiri / Atas
 
-  2. CEK dan PANTULKAN:
-     JIKA ball.x menyentuh kiri atau kanan:
-       ball.vx = -ball.vx   &larr; balik arah!
-     JIKA ball.y menyentuh atas atau bawah:
-       ball.vy = -ball.vy   &larr; balik arah!
+// BAGAIMANA BOLA BISA MAJU?
+Di setiap frame (1/60 detik), kita lakukan matematika sederhana:
+1. Posisi X Bola = Posisi X Bola + Kecepatan vx
+   (Contoh: Posisi awal 100, Kecepatan +3 &rarr; Sekarang jadi 103)
+2. Posisi Y Bola = Posisi Y Bola + Kecepatan vy
 
-MENGAPA CEK DENGAN RADIUS?
-  Bola = lingkaran, pusatnya di (ball.x, ball.y)
-  Tepi kiri bola = ball.x - ball.r
-  Saat tepi kiri = 0, maka ball.x = ball.r</pre>
+Kalau langkah ini diulang 60 kali sebdetik, bola X yang awalnya di 100 
+akan meluncur mulus sampai X=280! Mata kita melihatnya sebagai gerakan nyata.</pre>
       </div>
       <div class="code-block">
         <div class="code-label">&#128187; Kode (state-based.js &mdash; stateUpdate)</div>
 <pre><span class="kw">function</span> stateUpdate() {
-  stateUpdatePlayer(); <span class="cm">// update player juga</span>
-
-  <span class="cm">// Gerakkan bola sesuai kecepatan</span>
+  <span class="cm">// Tambahkan "bensin kecepatan" ke posisi X</span>
+  <span class="cm">// Penulisan singkat dari: stateBall.x = stateBall.x + stateBall.vx</span>
   stateBall.x += stateBall.vx;
+  
+  <span class="cm">// Tambahkan "bensin kecepatan" ke posisi Y</span>
   stateBall.y += stateBall.vy;
 
-  <span class="cm">// Pantulkan di batas kiri/kanan canvas</span>
-  <span class="kw">if</span> (stateBall.x &lt; stateBall.r ||
-      stateBall.x &gt; SW - stateBall.r)
-    stateBall.vx *= <span class="num">-1</span>; <span class="cm">// balik arah!</span>
-
-  <span class="cm">// Pantulkan di batas atas/bawah canvas</span>
-  <span class="kw">if</span> (stateBall.y &lt; stateBall.r ||
-      stateBall.y &gt; SH - stateBall.r)
-    stateBall.vy *= <span class="num">-1</span>; <span class="cm">// balik arah!</span>
+  <span class="cm">// (Catatan: Kode untuk memantul ada di bagian Challenge!)</span>
 }</pre>
       </div>
     </div>
-    <div class="exp-note">&#128161; <code>*= -1</code> adalah cara ringkas membalik tanda: vx = +3 &rarr; vx = -3 (ke kiri). vx = -3 &rarr; vx = +3 (ke kanan). Setara dengan <code>vx = vx * -1</code> atau <code>vx = -vx</code>.</div>
+    <div class="exp-note">&#128161; Konsep menambahkan <code>Kecepatan</code> ke <code>Posisi</code> setiap frame ini adalah hukum fisika paling mendasar di setiap pembuatan video game di dunia. Semua game 2D maupun 3D memakai prinsip matematika yang sama persis seperti ini!</div>
   </div>
 </div>
 </div><!-- /tab-animasi -->
 
 <!-- TAB 5: INTERAKSI -->
 <div class="soal-tab-content" id="tab-interaksi">
-<p class="tab-intro">Interaksi pengguna diimplementasikan via <strong>event listener</strong>. Dua pendekatan: <em>State-Based</em> (tombol dicek setiap frame &rarr; gerakan mulus) dan <em>Event-Based</em> (gerak saat event &rarr; diskrit).</p>
-
-<div class="exp-card">
-  <div class="exp-head cyan">
-    <div class="exp-icon">&#128433;&#65039;</div>
-    <div><div class="exp-tag">INTERAKSI #1</div><div class="exp-title">Mouse Tracking &mdash; Koordinat Mouse Real-Time</div></div>
-  </div>
-  <div class="exp-body">
-    <div class="exp-desc">Event <code>mousemove</code> dipancarkan setiap mouse bergerak. Koordinat diambil dan dikonversi ke canvas pixel, lalu ditampilkan di panel sidebar dan di HUD canvas (digambar langsung di dalam canvas).</div>
-    <div class="exp-blocks">
-      <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode</div>
-<pre>DAFTARKAN listener "mousemove" di canvas
-
-SAAT mouse bergerak di atas canvas:
-  LANGKAH 1: Dapatkan rect = posisi canvas di layar
-  LANGKAH 2: Konversi koordinat
-    mouseX = (clientX - rect.kiri) x (W/layar-W)
-    mouseY = (clientY - rect.atas)  x (H/layar-H)
-  LANGKAH 3: Simpan ke variabel global
-    stateMouse.x = mouseX
-    stateMouse.y = mouseY
-  LANGKAH 4: Update panel HTML sidebar
-    elemen#mouseText.teks = "(x, y)"
-
-SETIAP frame (dalam stateDraw):
-  GAMBAR teks di pojok kiri bawah canvas:
-    fillStyle = "#22d3ee"    (cyan)
-    font = "16px monospace"
-    fillText("Mouse: (x, y)", 18, 575)</pre>
-      </div>
-      <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js)</div>
-<pre>stateCanvas.addEventListener(
-  <span class="str">"mousemove"</span>, e => {
-  <span class="kw">const</span> r =
-    stateCanvas.getBoundingClientRect();
-
-  <span class="cm">// Konversi CSS &rarr; canvas pixel</span>
-  stateMouse.x =
-    (e.clientX - r.left) * SW / r.width;
-  stateMouse.y =
-    (e.clientY - r.top)  * SH / r.height;
-
-  <span class="cm">// Update panel sidebar</span>
-  sid(<span class="str">"mouseText"</span>).textContent =
-    `(${Math.round(stateMouse.x)},
-       ${Math.round(stateMouse.y)})`;
-});
-
-<span class="cm">// Dalam stateDraw(): tampilkan di HUD</span>
-stateCtx.fillStyle = <span class="str">"#22d3ee"</span>;
-stateCtx.font = <span class="str">"16px monospace"</span>;
-stateCtx.fillText(
-  `Mouse: (${Math.round(stateMouse.x)},
-           ${Math.round(stateMouse.y)})`,
-  <span class="num">18</span>, <span class="num">575</span>);</pre>
-      </div>
-    </div>
-    <div class="exp-note">&#128161; <code>Math.round()</code> membulatkan ke bilangan bulat. Tanpanya, koordinat akan tampil dengan desimal panjang seperti <code>234.5333...</code> yang tidak rapi untuk ditampilkan.</div>
-  </div>
-</div>
+<p class="tab-intro">Tugas JavaScript adalah mendengarkan <strong>"Kejadian" (Event)</strong> yang dilakukan oleh manusia. Entah itu manusia menggeser mouse, menekan tombol keyboard, atau mengklik layar. JavaScript bertugas menangkap kejadian itu dan mengubahnya menjadi reaksi di layar.</p>
 
 <div class="exp-card">
   <div class="exp-head purple">
     <div class="exp-icon">&#9000;&#65039;</div>
-    <div><div class="exp-tag">INTERAKSI #2</div><div class="exp-title">Keyboard State-Based &mdash; Gerakan Mulus Setiap Frame</div></div>
+    <div><div class="exp-tag">METODE 1 (MULUS)</div><div class="exp-title">Keyboard State-Based &mdash; Rahasia Pergerakan Game Mulus</div></div>
   </div>
   <div class="exp-body">
-    <div class="exp-desc">Simpan status tombol (ditekan/dilepas) ke objek <code>stateKeys</code>. Setiap frame, cek statusnya. Jika tombol masih ditekan, player terus bergerak. Hasilnya: gerakan <strong>sangat mulus</strong> &mdash; berbeda dengan event-based yang diskrit.</div>
+    <div class="exp-desc">Pernah main game di mana karakternya jalan sangat mulus selama tombol ditahan? Itu karena gamenya menggunakan metode <strong>State-Based</strong>. Gamenya tidak menyuruh karakter gerak saat tombol ditekan, tapi game "Mengingat" tombol apa yang sedang ditahan, dan menggerakkan karakter terus menerus.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode &mdash; State-Based Keyboard</div>
-<pre>DEKLARASI stateKeys = {}   &larr; objek kosong
+        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+<pre>// LOGIKA BUKU CATATAN (STATE):
+Kita siapkan sebuah buku catatan kosong.
 
-EVENT keydown:
-  stateKeys["ArrowLeft"] = true   &larr; tandai ditekan
-  stateKeys["a"]         = true   &larr; versi huruf kecil
+Saat manusia menekan tombol "W" (Event keydown):
+- Kita tulis di catatan: "Tombol W sedang DITAHAN"
 
-EVENT keyup:
-  stateKeys["ArrowLeft"] = false  &larr; tandai dilepas
-  stateKeys["a"]         = false
+Saat manusia melepas tombol "W" (Event keyup):
+- Kita hapus catatannya: "Tombol W sudah DILEPAS"
 
-FUNGSI updatePlayer() dipanggil SETIAP FRAME:
-  speed = nilai dari slider kecepatan
-
-  JIKA stateKeys["ArrowLeft"] ATAU stateKeys["a"]:
-    player.x -= speed        &larr; gerak kiri
-  JIKA stateKeys["ArrowRight"] ATAU stateKeys["d"]:
-    player.x += speed        &larr; gerak kanan
-  JIKA stateKeys["ArrowUp"] ATAU stateKeys["w"]:
-    player.y -= speed        &larr; gerak atas
-  JIKA stateKeys["ArrowDown"] ATAU stateKeys["s"]:
-    player.y += speed        &larr; gerak bawah
-
-  CLAMP player &rarr; jangan boleh keluar canvas</pre>
+// MESIN ANIMASI BERTINDAK:
+Di dalam game loop (yang berjalan 60x sebdetik), 
+mesin selalu mengecek buku catatan tersebut:
+- "Halo buku, apakah tombol W sedang ditahan?"
+- Jika IYA: "Oke, dorong karakter ke atas sedikit!"
+- Karena mesin mengecek 60x sebdetik, karakter akan
+  bergerak ke atas 60 langkah kecil setiap detiknya.
+&rarr; Hasilnya: Pergerakan yang super duper mulus tanpa macet!</pre>
       </div>
       <div class="code-block">
         <div class="code-label">&#128187; Kode (state-based.js)</div>
-<pre><span class="kw">const</span> stateKeys = {};
-<span class="kw">const</span> sclamp =
-  (v,a,b) => Math.max(a, Math.min(b, v));
+<pre><span class="cm">// 1. Siapkan "Buku Catatan" (Object kosong)</span>
+<span class="kw">const</span> stateKeys = {};
 
+<span class="cm">// 2. Manusia Menekan Tombol &rarr; Catat!</span>
 window.addEventListener(<span class="str">"keydown"</span>, e => {
-  stateKeys[e.key]               = <span class="kw">true</span>;
-  stateKeys[e.key.toLowerCase()] = <span class="kw">true</span>;
-});
-window.addEventListener(<span class="str">"keyup"</span>, e => {
-  stateKeys[e.key]               = <span class="kw">false</span>;
-  stateKeys[e.key.toLowerCase()] = <span class="kw">false</span>;
+  stateKeys[e.key] = <span class="kw">true</span>; <span class="cm">// DITAHAN</span>
 });
 
+<span class="cm">// 3. Manusia Melepas Tombol &rarr; Hapus Catatan!</span>
+window.addEventListener(<span class="str">"keyup"</span>, e => {
+  stateKeys[e.key] = <span class="kw">false</span>; <span class="cm">// DILEPAS</span>
+});
+
+<span class="cm">// 4. Mesin Animasi Bertindak (Dicek tiap frame)</span>
 <span class="kw">function</span> stateUpdatePlayer() {
-  <span class="kw">const</span> s = Number(sid(<span class="str">"speed"</span>).value);
-  <span class="kw">if</span>(stateKeys.ArrowLeft ||stateKeys.a)
-    statePlayer.x -= s;
-  <span class="kw">if</span>(stateKeys.ArrowRight||stateKeys.d)
-    statePlayer.x += s;
-  <span class="kw">if</span>(stateKeys.ArrowUp   ||stateKeys.w)
-    statePlayer.y -= s;
-  <span class="kw">if</span>(stateKeys.ArrowDown ||stateKeys.s)
-    statePlayer.y += s;
-  statePlayer.x =
-    sclamp(statePlayer.x, <span class="num">0</span>, SW-statePlayer.w);
-  statePlayer.y =
-    sclamp(statePlayer.y, <span class="num">0</span>, SH-statePlayer.h);
+  <span class="kw">const</span> s = <span class="num">5</span>; <span class="cm">// Kecepatan dorong</span>
+  
+  <span class="cm">// Jika di buku tercatat "d" ditahan, dorong ke kanan!</span>
+  <span class="kw">if</span> (stateKeys.d) { statePlayer.x += s; }
+  
+  <span class="cm">// Jika "a" ditahan, dorong ke kiri!</span>
+  <span class="kw">if</span> (stateKeys.a) { statePlayer.x -= s; }
 }</pre>
       </div>
     </div>
-    <div class="exp-note">&#128161; Kenapa simpan dua versi (e.key dan lowercase)? "ArrowLeft" &ne; "arrowleft". Menyimpan keduanya memastikan pengecekan <code>stateKeys.a</code> bekerja untuk huruf besar dan kecil.</div>
+    <div class="exp-note">&#128161; Metode ini memungkinkan kita <strong>berjalan serong (diagonal)</strong>! Kenapa? Karena saat kita menahan tombol Atas(W) dan Kanan(D) bersamaan, buku catatan akan mengingat keduanya 'true'. Mesin pun akan mendorong karakter ke atas DAN ke kanan di frame yang sama.</div>
   </div>
 </div>
 
 <div class="exp-card">
   <div class="exp-head pink">
     <div class="exp-icon">&#9889;</div>
-    <div><div class="exp-tag">INTERAKSI #3</div><div class="exp-title">Keyboard Event-Based &mdash; Gerakan Diskrit per Keydown</div></div>
+    <div><div class="exp-tag">METODE 2 (PATAH)</div><div class="exp-title">Keyboard Event-Based &mdash; Cocok Untuk Ketikan &amp; Menu</div></div>
   </div>
   <div class="exp-body">
-    <div class="exp-desc">Player langsung bergerak saat event <code>keydown</code> terjadi &mdash; tidak ada cek per-frame. Hasilnya: gerakan <strong>melompat-lompat (diskrit)</strong>. Cocok untuk game RPG atau UI berbasis keyboard. Gerakan terasa &ldquo;patah-patah&rdquo; dibanding state-based.</div>
+    <div class="exp-desc">Metode <strong>Event-Based</strong> adalah kebalikan dari cara di atas. Karakter tidak digerakkan oleh mesin animasi, melainkan <em>hanya bergerak pasca tombol dipencet</em>. Karena keyboard komputer punya jeda (delay) saat tombol ditahan, gerakannya akan terasa macet di awal lalu patah-patah.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode &mdash; Event-Based</div>
-<pre>PERBANDINGAN:
-  State-Based: cek tombol SETIAP FRAME
-    &rarr; gerakan MULUS (smooth)
-  Event-Based: gerak SAAT EVENT keydown
-    &rarr; gerakan DISKRIT (patah-patah)
+        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+<pre>// LOGIKA REAKSI INSTAN:
+Tidak ada buku catatan. Tidak menunggu mesin animasi.
 
-EVENT keydown:
-  eventCount += 1
-  UPDATE counter di panel
+SAAT tombol "W" ditekan:
+- SECARA INSTAN, paksa karakter geser ke atas 5 langkah.
+- Selesai. Tugas selesai.
 
-  key = event.key.toLowerCase()
-  speed = player.speed  (= 5)
+// KENAPA GERAKANNYA PATAH-PATAH SAAT DITAHAN?
+Ini karena sistem operasi komputer (Windows/Mac) punya sifat:
+"Jika tombol ditahan, ketik satu huruf.. tunggu sejenak.. 
+baru ketik huruf berulang-ulang."
+(Coba tahan tombol W di Notepad, pasti w.....wwwww)
 
-  JIKA ArrowRight ATAU "d": player.x += speed
-  JIKA ArrowLeft  ATAU "a": player.x -= speed
-  JIKA ArrowUp    ATAU "w": player.y -= speed
-  JIKA ArrowDown  ATAU "s": player.y += speed
-
-  CLAMP player dalam batas canvas
-  UPDATE tampilan tombol di panel</pre>
+Akibatnya di layar:
+Karakter gerak 1 kali... (diam menunggu jeda OS)... baru gerak cepat.
+Ini tidak enak untuk game Action, tapi SANGAT COCOK untuk:
+- Game Catur (Kursor gerak per kotak)
+- Memilih Menu / Inventori
+- Game turn-based RPG kuno</pre>
       </div>
       <div class="code-block">
         <div class="code-label">&#128187; Kode (event-based.js)</div>
-<pre>window.addEventListener(<span class="str">"keydown"</span>, e => {
-  eventCount++;
-  eid(<span class="str">"eventText"</span>).textContent =
-    `${eventCount} keydown`;
-
+<pre><span class="cm">// Reaksi Instan saat tombol ditekan</span>
+window.addEventListener(<span class="str">"keydown"</span>, e => {
   <span class="kw">const</span> k = e.key.toLowerCase();
-  <span class="kw">const</span> s = eventPlayer.speed; <span class="cm">// = 5</span>
+  <span class="kw">const</span> s = <span class="num">5</span>; <span class="cm">// jarak lompat</span>
 
-  <span class="kw">if</span>(e.key===<span class="str">"ArrowRight"</span>||k===<span class="str">"d"</span>)
-    eventPlayer.x += s;
-  <span class="kw">if</span>(e.key===<span class="str">"ArrowLeft"</span> ||k===<span class="str">"a"</span>)
-    eventPlayer.x -= s;
-  <span class="kw">if</span>(e.key===<span class="str">"ArrowUp"</span>   ||k===<span class="str">"w"</span>)
-    eventPlayer.y -= s;
-  <span class="kw">if</span>(e.key===<span class="str">"ArrowDown"</span> ||k===<span class="str">"s"</span>)
-    eventPlayer.y += s;
-
-  eventPlayer.x = Math.max(<span class="num">0</span>, Math.min(
-    EW - eventPlayer.w, eventPlayer.x));
-  eventPlayer.y = Math.max(<span class="num">0</span>, Math.min(
-    EH - eventPlayer.h, eventPlayer.y));
-  eid(<span class="str">"eventKeysText"</span>).textContent = e.key;
+  <span class="cm">// Langsung paksa ubah koordinat saat itu juga</span>
+  <span class="kw">if</span> (k === <span class="str">"d"</span>) eventPlayer.x += s;
+  <span class="kw">if</span> (k === <span class="str">"a"</span>) eventPlayer.x -= s;
+  <span class="kw">if</span> (k === <span class="str">"w"</span>) eventPlayer.y -= s;
+  <span class="kw">if</span> (k === <span class="str">"s"</span>) eventPlayer.y += s;
+  
+  <span class="cm">// Layar baru digambar ulang NANTI oleh game loop,</span>
+  <span class="cm">// tapi angkanya sudah dipaksa berubah sekarang.</span>
 });</pre>
       </div>
     </div>
-    <div class="exp-note">&#128161; <code>Math.max(0, Math.min(max, nilai))</code> adalah implementasi clamp: nilai tidak kurang dari 0 dan tidak lebih dari max. Ini mencegah player menembus batas canvas.</div>
+    <div class="exp-note">&#128161; Coba rasakan sendiri perbedaannya! Klik tombol "Event-Based" di panel atas, lalu tahan tombol D untuk bergerak ke kanan. Bandingkan rasanya dengan saat kamu menggunakan mode "State-Based".</div>
   </div>
 </div>
 </div><!-- /tab-interaksi -->
 
-<!-- TAB 6: CHALLENGE -->
+<!-- TAB 6: tantangan -->
 <div class="soal-tab-content" id="tab-challenge">
-<p class="tab-intro">Semua <strong>5 fitur challenge</strong> sudah diimplementasikan. Berikut penjelasan lengkap pseudocode dan kode dari file JS untuk masing-masing challenge.</p>
+<p class="tab-intro">Di praktikum ini, diberikan tantangan untuk membuat fitur-fitur khusus. Bukannya memilih salah satu, <strong>kita babat habis semua kelima tantangannya!</strong> Mari kita bedah bagaimana cara setiap tantangan diselesaikan secara elegan.</p>
 <div class="challenge-list">
-  <div class="ch-row done"><span class="ch-num">&#9989; #1</span><div><strong>Objek memantul di batas canvas</strong><p>Bola berbalik arah saat menyentuh tepi via pembalikan kecepatan (vx/vy &times; -1).</p></div></div>
-  <div class="ch-row done"><span class="ch-num">&#9989; #2</span><div><strong>Objek mengikuti mouse</strong><p>Ring cyan digambar di posisi mouse setiap frame menciptakan efek mengikuti kursor.</p></div></div>
-  <div class="ch-row done"><span class="ch-num">&#9989; #3</span><div><strong>Warna berubah saat diklik</strong><p>Klik canvas &rarr; warna bola berganti via rotasi indeks pada array palet warna.</p></div></div>
-  <div class="ch-row done"><span class="ch-num">&#9989; #4</span><div><strong>Objek digerakkan keyboard</strong><p>WASD / Arrow Keys menggerakkan player di kedua mode.</p></div></div>
-  <div class="ch-row done"><span class="ch-num">&#9989; #5</span><div><strong>Koordinat mouse ditampilkan</strong><p>Koordinat (x,y) real-time di HUD canvas dan panel sidebar.</p></div></div>
+  <div class="ch-row done"><span class="ch-num">&#9989; #1</span><div><strong>Objek memantul di batas canvas</strong><p>Hukum pantulan fisika: Balikkan arah kecepatan jika membentur tembok.</p></div></div>
+  <div class="ch-row done"><span class="ch-num">&#9989; #2</span><div><strong>Objek mengikuti mouse</strong><p>Lingkaran pelacak yang selalu melukis dirinya di posisi panah mouse terakhir.</p></div></div>
+  <div class="ch-row done"><span class="ch-num">&#9989; #3</span><div><strong>Warna berubah saat diklik</strong><p>Memanfaatkan putaran botol warna (Array &amp; Modulo) setiap ada bunyi klik.</p></div></div>
+  <div class="ch-row done"><span class="ch-num">&#9989; #4</span><div><strong>Objek digerakkan keyboard</strong><p>Sudah diimplementasikan dengan sempurna via teknik State-Based yang super mulus.</p></div></div>
+  <div class="ch-row done"><span class="ch-num">&#9989; #5</span><div><strong>Koordinat mouse ditampilkan</strong><p>Menempelkan teks berisi angka X dan Y persis di layar bak kacamata canggih (HUD).</p></div></div>
 </div>
 
 <div class="exp-card">
   <div class="exp-head purple">
     <div class="exp-icon">&#127955;</div>
-    <div><div class="exp-tag">CHALLENGE #1</div><div class="exp-title">Objek Memantul di Batas Canvas</div></div>
+    <div><div class="exp-tag">TANTANGAN #1</div><div class="exp-title">Bola Biliar: Memantul di Dinding Layar</div></div>
   </div>
   <div class="exp-body">
-    <div class="exp-desc">Pantulan disimulasikan dengan membalik tanda kecepatan (<code>*= -1</code>) saat objek menyentuh tepi canvas. Pengecekan menggunakan radius agar tepi lingkaran (bukan pusatnya) yang menyentuh dinding.</div>
+    <div class="exp-desc">Bagaimana membuat bola tidak tembus menghilang keluar layar? Jawabannya sederhana: kita pasang <strong>"Penjaga Dinding" (Kondisi If)</strong>. Jika penjaga melihat bola melewati garis pinggir, penjaga akan memaksa bola <strong>Berbalik Arah secara ekstrem!</strong>.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode</div>
-<pre>INISIALISASI:
-  ball.vx = +3    &larr; bergerak ke kanan
-  ball.vy = +2.5  &larr; bergerak ke bawah
+        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+<pre>// LOGIKA PENJAGA DINDING KANAN-KIRI (SUMBU X)
+Bola sedang melaju santai ke kanan (Kecepatan X = +3).
 
-SETIAP frame:
-  GERAK:
-    ball.x += ball.vx
-    ball.y += ball.vy
+Penjaga mengecek:
+"Apakah bagian kanan bola melewati lebar maksimal canvas?"
+- Jika IYA: "Dilarang lewat! Putar balik sekarang!"
+- Cara komputer memutar balik sangat jenius: 
+  Kalikan kecepatan dengan -1!
+  Kecepatan +3 dikali -1 = Menjadi -3 (Kecepatan ke Kiri!)
+  
+Bola pun sekarang bergerak mundur teratur.
+Begitu dia menyentuh dinding kiri (0), kalikan -1 lagi!
+-3 dikali -1 = +3 (Maju ke kanan lagi!). Terus memantul selamanya.
 
-  CEK batas kiri (ball.x - r &lt; 0):
-    JIKA ball.x &lt; ball.r:
-      ball.vx = -ball.vx   &larr; balik ke kanan
-
-  CEK batas kanan (ball.x + r &gt; lebarCanvas):
-    JIKA ball.x &gt; lebarCanvas - ball.r:
-      ball.vx = -ball.vx   &larr; balik ke kiri
-
-  CEK batas atas dan bawah: sama, tapi ball.vy
-
-CONTOH pembalikan:
-  ball.vx = +3  &rarr; menyentuh kanan
-  ball.vx = -3  &larr; sekarang bergerak ke kiri
-  ball.vx = -3  &rarr; menyentuh kiri
-  ball.vx = +3  &larr; bergerak ke kanan lagi!</pre>
+// PERHATIAN SOAL JARI-JARI (RADIUS)
+Kita harus memperhitungkan pinggiran bolanya. 
+Kalau kita cuma cek 'Titik Tengah' bolanya, 
+setengah badan bola akan tembus layar sebelum dia sadar untuk memantul.</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js &amp; event-based.js)</div>
-<pre><span class="cm">// Dalam stateUpdate():</span>
-stateBall.x += stateBall.vx;
-stateBall.y += stateBall.vy;
+        <div class="code-label">&#128187; Kode (state-based.js)</div>
+<pre><span class="cm">// Posisi bola + Jari-jari (r) = Tepi Kanan Bola</span>
+<span class="cm">// SW = Lebar Canvas penuh</span>
 
-<span class="cm">// Pantulan kiri-kanan</span>
-<span class="kw">if</span> (stateBall.x &lt; stateBall.r ||
-    stateBall.x &gt; SW - stateBall.r)
-  stateBall.vx *= <span class="num">-1</span>;
+<span class="cm">// PENJAGA DINDING KIRI &amp; KANAN</span>
+<span class="kw">if</span> (stateBall.x &lt; stateBall.r || 
+    stateBall.x &gt; SW - stateBall.r) {
+  <span class="cm">// Putar Balik Arah X!</span>
+  stateBall.vx = stateBall.vx * <span class="num">-1</span>;
+}
 
-<span class="cm">// Pantulan atas-bawah</span>
-<span class="kw">if</span> (stateBall.y &lt; stateBall.r ||
-    stateBall.y &gt; SH - stateBall.r)
-  stateBall.vy *= <span class="num">-1</span>;
-
-<span class="cm">// Event-based.js: persis sama</span>
-eventBall.x += eventBall.vx;
-eventBall.y += eventBall.vy;
-<span class="kw">if</span>(eventBall.x&lt;eventBall.r||
-   eventBall.x&gt;EW-eventBall.r)
-  eventBall.vx*=<span class="num">-1</span>;
-<span class="kw">if</span>(eventBall.y&lt;eventBall.r||
-   eventBall.y&gt;EH-eventBall.r)
-  eventBall.vy*=<span class="num">-1</span>;</pre>
+<span class="cm">// PENJAGA DINDING ATAS &amp; BAWAH</span>
+<span class="kw">if</span> (stateBall.y &lt; stateBall.r || 
+    stateBall.y &gt; SH - stateBall.r) {
+  <span class="cm">// Putar Balik Arah Y!</span>
+  stateBall.vy = stateBall.vy * <span class="num">-1</span>;
+}</pre>
       </div>
     </div>
-    <div class="exp-note">&#128161; Kenapa <code>ball.x &lt; ball.r</code> (bukan 0)? Karena bola adalah lingkaran dengan pusat di ball.x. Tepi kiri bola = ball.x - ball.r. Agar tepi kiri = 0, berarti ball.x harus = ball.r.</div>
+    <div class="exp-note">&#128161; Trik mengalikan dengan <code>-1</code> adalah keajaiban matematika yang membuat pemrograman animasi sangat indah. Satu baris kode mampu menyelesaikan masalah rumit dari dua sisi dinding sekaligus (kiri dan kanan)!</div>
   </div>
 </div>
 
 <div class="exp-card">
   <div class="exp-head cyan">
     <div class="exp-icon">&#127919;</div>
-    <div><div class="exp-tag">CHALLENGE #2</div><div class="exp-title">Objek Mengikuti Mouse &mdash; Indirect Mouse Tracking</div></div>
+    <div><div class="exp-tag">TANTANGAN #2</div><div class="exp-title">Lingkaran Pelacak: Objek Mengikuti Mouse</div></div>
   </div>
   <div class="exp-body">
-    <div class="exp-desc">Koordinat mouse disimpan ke variabel. Setiap frame, sebuah ring cyan digambar di koordinat tersebut. Karena canvas dirender ulang ~60x/detik, ring terlihat selalu mengikuti mouse. Disebut <em>indirect tracking</em> karena posisi disimpan dulu, baru digambar.</div>
+    <div class="exp-desc">Kita ingin ada bayangan lingkaran yang selalu menempel di ujung panah mouse. Caranya bukan dengan menggeser lingkarannya secara harfiah. Caranya adalah dengan <strong>selalu menggambar ulang lingkaran baru persis di mana mouse sedang berada</strong> saat itu.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode</div>
-<pre>VARIABEL: mouse = { x: 0, y: 0 }
+        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+<pre>// LOGIKA SATPAM PENYADAP
+1. Pasang alat penyadap (Event Listener) di mouse manusia.
+2. Tiap kali manusia menggeser mouse 1 milimeter pun,
+   Alat penyadap diam-diam mencatat titik koordinat (X dan Y)-nya 
+   ke dalam sebuah memori.
 
-EVENT mousemove di canvas:
-  Konversi koordinat CSS &rarr; canvas pixel
-  mouse.x = koordinat x yang sudah dikonversi
-  mouse.y = koordinat y yang sudah dikonversi
+// LOGIKA PELUKIS CEPAT
+3. Di dalam mesin animasi (yang melukis 60x sebdetik),
+   Sang pelukis akan selalu melirik memori tersebut.
+   "Oh, saat ini mouse di X=150, Y=300."
+4. Pelukis menggambar lingkaran tepat di X=150, Y=300.
+5. Seperenam puluh detik kemudian, mouse geser ke X=152.
+   Pelukis menghapus layar, lalu menggambar lingkaran baru di X=152.
 
-SETIAP frame (dalam stateDraw):
-  GAMBAR ring di posisi mouse:
-    beginPath()
-    arc(mouse.x, mouse.y, 18, 0, 2*PI)
-    strokeStyle = "#22d3ee"  (cyan)
-    lineWidth   = 1
-    stroke()
-
-BAGAIMANA TERLIHAT MENGIKUTI?
-  Frame 1: mouse di (100,200) &rarr; ring di (100,200)
-  Frame 2: mouse di (108,195) &rarr; ring di (108,195)
-  Frame 3: mouse di (120,188) &rarr; ring di (120,188)
-  &rarr; Ring selalu di posisi mouse terbaru!</pre>
+Hasilnya di mata manusia: Wah, lingkarannya hidup dan membuntuti mouse!</pre>
       </div>
       <div class="code-block">
         <div class="code-label">&#128187; Kode (state-based.js)</div>
-<pre><span class="cm">// Simpan posisi mouse saat bergerak</span>
+<pre><span class="cm">// MEMORI PENYIMPAN POSISI (SATPAM)</span>
 <span class="kw">const</span> stateMouse = { x: <span class="num">0</span>, y: <span class="num">0</span> };
 
-stateCanvas.addEventListener(
-  <span class="str">"mousemove"</span>, e => {
-  <span class="kw">const</span> r =
-    stateCanvas.getBoundingClientRect();
-  stateMouse.x =
-    (e.clientX-r.left)*SW/r.width;
-  stateMouse.y =
-    (e.clientY-r.top) *SH/r.height;
+stateCanvas.addEventListener(<span class="str">"mousemove"</span>, e => {
+  <span class="cm">// Trik menyelaraskan ukuran layar Windows dan Canvas</span>
+  <span class="kw">const</span> r = stateCanvas.getBoundingClientRect();
+  
+  <span class="cm">// Simpan posisi mouse terbaru ke memori!</span>
+  stateMouse.x = (e.clientX-r.left)*SW/r.width;
+  stateMouse.y = (e.clientY-r.top) *SH/r.height;
 });
 
-<span class="cm">// Dalam stateDraw(): digambar SETIAP FRAME</span>
+<span class="cm">// TUGAS SANG PELUKIS (Dalam fungsi Draw tiap frame)</span>
 stateCtx.beginPath();
-stateCtx.arc(
-  stateMouse.x, stateMouse.y,
-  <span class="num">18</span>, <span class="num">0</span>, Math.PI * <span class="num">2</span>
-);
-stateCtx.strokeStyle = <span class="str">"#22d3ee"</span>;
-stateCtx.lineWidth   = <span class="num">1</span>;
-stateCtx.stroke(); <span class="cm">// ring mengikuti kursor!</span></pre>
+<span class="cm">// Gambar lingkaran berpusat di memori mouse</span>
+stateCtx.arc(stateMouse.x, stateMouse.y, <span class="num">18</span>, <span class="num">0</span>, Math.PI * <span class="num">2</span>);
+stateCtx.strokeStyle = <span class="str">"#22d3ee"</span>; <span class="cm">// Warna biru cyan neon</span>
+stateCtx.stroke();</pre>
       </div>
     </div>
-    <div class="exp-note">&#128161; Disebut "indirect" karena mouse tidak langsung menggerakkan objek. Mouse hanya memperbarui variabel, dan game loop yang bertugas menggambar objek di variabel tersebut setiap frame.</div>
+    <div class="exp-note">&#128161; Hal yang sering bikin pusing pemula: kenapa harus dihitung pakai <code>getBoundingClientRect()</code>? Karena koordinat mouse dari Windows itu dihitung dari pojok layar komputermu, sedangkan kita butuh koordinat dari pojok kotak Canvas saja. Rumus ini adalah alat penerjemah bahasanya.</div>
   </div>
 </div>
 
 <div class="exp-card">
   <div class="exp-head orange">
-    <div class="exp-icon">&#128433;&#65039;</div>
-    <div><div class="exp-tag">CHALLENGE #3</div><div class="exp-title">Warna Berubah Saat Diklik + Spawn Lingkaran</div></div>
-  </div>
-  <div class="exp-body">
-    <div class="exp-desc">Klik canvas melakukan dua hal sekaligus: (1) rotasi warna bola menggunakan modulo, (2) menambahkan lingkaran baru ke array di posisi klik. Lingkaran tersimpan permanen dalam array dan digambar ulang setiap frame.</div>
-    <div class="exp-blocks">
-      <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode</div>
-<pre>PERSIAPAN:
-  palet = [warna0, warna1, warna2, warna3, warna4]
-  indeks = 0
-  circles = []   &larr; array kosong
-
-SAAT canvas diklik:
-  AKSI 1: Rotasi warna bola
-    indeks = (indeks + 1) MOD 5
-    ball.warna = palet[indeks]
-
-  AKSI 2: Spawn lingkaran di posisi klik
-    warnaBaru = palet[(indeks + 2) MOD 5]
-    circles.push({
-      x: mouse.x, y: mouse.y,
-      r: 14, warna: warnaBaru
-    })
-
-SETIAP frame dalam draw():
-  UNTUK setiap c dalam circles[]:
-    GAMBAR lingkaran di (c.x, c.y)
-
-SAAT tombol Clear ditekan:
-  circles.length = 0   &larr; kosongkan array</pre>
-      </div>
-      <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js)</div>
-<pre><span class="kw">const</span> stateCircles = [];
-
-stateCanvas.addEventListener(<span class="str">"click"</span>, () => {
-  <span class="cm">// Rotasi warna bola</span>
-  stateColorIndex =
-    (stateColorIndex+<span class="num">1</span>) % stateColors.length;
-  stateBall.color = stateColors[stateColorIndex];
-
-  <span class="cm">// Spawn lingkaran warna berbeda</span>
-  stateCircles.push({
-    x: stateMouse.x, y: stateMouse.y, r: <span class="num">14</span>,
-    color: stateColors[
-      (stateColorIndex+<span class="num">2</span>)%stateColors.length
-    ]
-  });
-});
-
-<span class="cm">// Dalam stateDraw():</span>
-stateCircles.forEach(c => {
-  stateCtx.beginPath();
-  stateCtx.arc(c.x,c.y,c.r, <span class="num">0</span>,Math.PI*<span class="num">2</span>);
-  stateCtx.fillStyle = c.color;
-  stateCtx.fill();
-});</pre>
-      </div>
-    </div>
-    <div class="exp-note">&#128161; <code>circles.length = 0</code> adalah cara tercepat mengosongkan array di JavaScript. <code>array.push(item)</code> menambah ke akhir. <code>array.forEach(fn)</code> iterasi semua elemen.</div>
-  </div>
-</div>
-
-<div class="exp-card">
-  <div class="exp-head pink">
     <div class="exp-icon">&#128377;&#65039;</div>
-    <div><div class="exp-tag">CHALLENGE #4</div><div class="exp-title">Objek Digerakkan Keyboard + Fungsi Clamp</div></div>
+    <div><div class="exp-tag">TANTANGAN #4</div><div class="exp-title">Penjara Tanpa Teralis: Fungsi "Clamp" (Jepit)</div></div>
   </div>
   <div class="exp-body">
-    <div class="exp-desc">Player digerakkan WASD / Arrow Keys. Fungsi <strong>clamp</strong> memastikan player tidak keluar canvas. Clamp = &ldquo;jepit&rdquo; nilai agar selalu berada di antara minimum dan maksimum yang diizinkan.</div>
+    <div class="exp-desc">Kita sudah bisa menggerakkan kotak kuning (Player) dengan WASD. Tapi tunggu dulu, kotaknya bisa bablas keluar layar dan hilang ditelan kegelapan! Kita harus membuat "Penjara Tanpa Teralis" yang tidak membiarkan nilai posisi kotak melebihi batas layar. Teknik sakti ini bernama <strong>Clamp (Jepit)</strong>.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode &mdash; Keyboard + Clamp</div>
-<pre>FUNGSI clamp(nilai, min, max):
-  JIKA nilai &lt; min: kembalikan min
-  JIKA nilai &gt; max: kembalikan max
-  SELAIN ITU:       kembalikan nilai
+        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+<pre>// APA ITU CLAMP (JEPIT)?
+Bayangkan alat penjepit nilai. Kita punya nilai X, dan kita bilang:
+"Nilai X, kamu boleh membesar sesukamu, TAPI maksimal 900 ya.
+ Dan kamu boleh mengecil, TAPI minimal harus 0."
 
-CONTOH:
-  clamp(-10, 0, 960) = 0    &larr; dipatok ke 0
-  clamp(500, 0, 960) = 500  &larr; dalam rentang
-  clamp(999, 0, 960) = 960  &larr; dipatok ke 960
+Jika Kotak ngotot jalan terus ke kanan sampai nilai X = 950:
+Alat Clamp berteriak: "Maksimal 900!"
+Lalu alat itu dengan paksa memotong nilai X kembali menjadi 900.
+Hasilnya: Kotak tertahan seolah membentur tembok transparan!
 
-SETELAH player bergerak (WASD/Arrow):
-  player.x = clamp(player.x,
-               0,                   &larr; batas kiri
-               lebarCanvas - lebarPlayer)  &larr; batas kanan
+// RUMUS JEPIT DALAM JAVASCRIPT:
+Jepit Minimal: Gunakan Math.max(BatasMin, Nilai)
+&rarr; "Pilih mana yang lebih besar, angka 0 atau nilaimu saat ini?"
 
-  player.y = clamp(player.y,
-               0,                    &larr; batas atas
-               tinggiCanvas - tinggiPlayer) &larr; batas bawah
-
-KENAPA (lebar - lebarPlayer)?
-  Canvas lebar = 960, player lebar = 52
-  Max player.x = 960 - 52 = 908
-  &rarr; Player tidak bisa keluar dari kanan!</pre>
+Jepit Maksimal: Gunakan Math.min(BatasMax, Nilai)
+&rarr; "Pilih mana yang lebih kecil, angka Maksimal atau nilaimu saat ini?"</pre>
       </div>
       <div class="code-block">
         <div class="code-label">&#128187; Kode (state-based.js)</div>
-<pre><span class="cm">// Clamp: satu baris, tiga operasi</span>
+<pre><span class="cm">// Mesin Penjepit Ringkas (Fungsi Clamp)</span>
+<span class="cm">// Digabung dalam satu baris maut!</span>
 <span class="kw">const</span> sclamp =
-  (v, a, b) => Math.max(a, Math.min(b, v));
+  (nilai, min, max) => Math.max(min, Math.min(max, nilai));
 
 <span class="kw">function</span> stateUpdatePlayer() {
-  <span class="kw">const</span> s = Number(sid(<span class="str">"speed"</span>).value);
+  <span class="cm">// ... kode menggeser player WASD disini ...</span>
 
-  <span class="kw">if</span>(stateKeys.ArrowLeft ||stateKeys.a)
-    statePlayer.x -= s;
-  <span class="kw">if</span>(stateKeys.ArrowRight||stateKeys.d)
-    statePlayer.x += s;
-  <span class="kw">if</span>(stateKeys.ArrowUp   ||stateKeys.w)
-    statePlayer.y -= s;
-  <span class="kw">if</span>(stateKeys.ArrowDown ||stateKeys.s)
-    statePlayer.y += s;
-
-  <span class="cm">// Clamp: player tidak boleh keluar canvas</span>
+  <span class="cm">// HUKUM PENJARA: </span>
+  <span class="cm">// X tidak boleh kurang dari 0, dan </span>
+  <span class="cm">// tidak boleh lebih dari Lebar Layar dikurangi Lebar Kotaknya.</span>
   statePlayer.x = sclamp(
-    statePlayer.x, <span class="num">0</span>, SW - statePlayer.w);
+    statePlayer.x, <span class="num">0</span>, SW - statePlayer.w
+  );
+  
+  <span class="cm">// Y tidak boleh kurang dari 0, dll.</span>
   statePlayer.y = sclamp(
-    statePlayer.y, <span class="num">0</span>, SH - statePlayer.h);
+    statePlayer.y, <span class="num">0</span>, SH - statePlayer.h
+  );
 }</pre>
       </div>
     </div>
-    <div class="exp-note">&#128161; <code>Math.max(a, Math.min(b, v))</code>: <code>Math.min(b, v)</code> = tidak lebih dari max. <code>Math.max(a, ...)</code> = tidak kurang dari min. Dua operasi proteksi dalam satu baris yang elegan!</div>
-  </div>
-</div>
-
-<div class="exp-card">
-  <div class="exp-head purple">
-    <div class="exp-icon">&#128205;</div>
-    <div><div class="exp-tag">CHALLENGE #5</div><div class="exp-title">Menampilkan Koordinat Mouse Real-Time</div></div>
-  </div>
-  <div class="exp-body">
-    <div class="exp-desc">Koordinat mouse ditampilkan di dua tempat secara bersamaan: <em>panel sidebar</em> (elemen HTML) dan <em>HUD canvas</em> (teks yang digambar di dalam canvas). Panel diupdate saat mousemove, HUD diperbarui otomatis setiap frame render.</div>
-    <div class="exp-blocks">
-      <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Pseudocode</div>
-<pre>VARIABEL: mouse = { x: 0, y: 0 }
-
-SAAT mousemove:
-  Konversi koordinat CSS &rarr; canvas pixel
-  mouse.x = hasil konversi X
-  mouse.y = hasil konversi Y
-
-  UPDATE TEMPAT 1 &mdash; Panel HTML:
-    elemen#mouseText.teks = "(mouse.x, mouse.y)"
-    &rarr; Update langsung, tanpa menunggu frame
-
-SETIAP frame (dalam stateDraw):
-  UPDATE TEMPAT 2 &mdash; HUD Canvas:
-    fillStyle = "#22d3ee"        (cyan)
-    font      = "16px monospace"
-    fillText("Mouse: (x, y)", 18, 575)
-    &rarr; Koordinat terbaru selalu tergambar
-
-KENAPA DUA TEMPAT?
-  Panel HTML  = mudah dibaca, tidak tertutup gambar
-  HUD Canvas  = terlihat langsung di area menggambar
-                berguna untuk debug posisi objek</pre>
-      </div>
-      <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js)</div>
-<pre><span class="cm">// Update panel saat mouse bergerak</span>
-stateCanvas.addEventListener(
-  <span class="str">"mousemove"</span>, e => {
-  <span class="kw">const</span> r =
-    stateCanvas.getBoundingClientRect();
-  stateMouse.x =
-    (e.clientX - r.left) * SW / r.width;
-  stateMouse.y =
-    (e.clientY - r.top)  * SH / r.height;
-
-  sid(<span class="str">"mouseText"</span>).textContent =
-    `(${Math.round(stateMouse.x)},
-       ${Math.round(stateMouse.y)})`;
-});
-
-<span class="cm">// Update HUD canvas setiap frame</span>
-stateCtx.fillStyle = <span class="str">"#22d3ee"</span>;
-stateCtx.font      = <span class="str">"16px monospace"</span>;
-stateCtx.fillText(
-  `Mouse: (${Math.round(stateMouse.x)},` +
-  ` ${Math.round(stateMouse.y)})`,
-  <span class="num">18</span>, <span class="num">575</span>
-);</pre>
-      </div>
-    </div>
-    <div class="exp-note">&#128161; Template literal (backtick `) dengan <code>${ekspresi}</code> lebih ringkas dari penggabungan string biasa. Ini adalah fitur ES6 JavaScript modern yang wajib dikenal.</div>
+    <div class="exp-note">&#128161; Rumus <code>Clamp</code> adalah dewa penolong di semua video game. Fungsi ini digunakan untuk apa saja: membatasi batas nyawa (HP) agar tidak minus, membatasi kecepatan maksimal mobil balap, hingga mencegah karakter keluar dari peta (Map).</div>
   </div>
 </div>
 </div><!-- /tab-challenge -->
 
 <!-- TAB 7: DEMO -->
 <div class="soal-tab-content" id="tab-demo">
-<p class="tab-intro">Canvas interaktif di bawah mendemonstrasikan <strong>semua 5 challenge</strong> secara langsung. Gerakkan mouse, klik canvas, dan tekan WASD / Arrow Keys!</p>
+<p class="tab-intro">Jangan cuma baca teorinya! Canvas interaktif di bawah mendemonstrasikan <strong>semua 5 fitur tantangan</strong> sekaligus di satu tempat. Gerakkan mouse untuk melihat kursor pelacak, klik sembarang tempat, dan tekan tombol WASD!</p>
 <div class="demo-layout">
   <div class="demo-canvas-wrap">
     <canvas id="demoCanvas" width="780" height="440"></canvas>
     <div class="demo-hud" id="demoHud">Mouse: (0, 0)</div>
   </div>
   <aside class="demo-panel">
-    <h3>&#127918; Challenge Demo</h3>
+    <h3>&#127918; Panel Kontrol Demo</h3>
     <div class="demo-badge-list">
-      <div class="demo-badge active" id="badge-bounce">&#127955; #1 Bola Memantul</div>
-      <div class="demo-badge" id="badge-mouse">&#127919; #2 Ikuti Mouse</div>
-      <div class="demo-badge" id="badge-click">&#128433;&#65039; #3 Klik Warna</div>
-      <div class="demo-badge" id="badge-key">&#9000;&#65039; #4 Keyboard</div>
-      <div class="demo-badge active" id="badge-coord">&#128205; #5 Koordinat</div>
+      <div class="demo-badge active" id="badge-bounce">&#127955; #1 Fisika Pantulan Aktif</div>
+      <div class="demo-badge" id="badge-mouse">&#127919; #2 Sensor Tracking Aktif</div>
+      <div class="demo-badge" id="badge-click">&#128433;&#65039; #3 Klik Untuk Spawn</div>
+      <div class="demo-badge" id="badge-key">&#9000;&#65039; #4 Siap Merespon WASD</div>
+      <div class="demo-badge active" id="badge-coord">&#128205; #5 GPS HUD Aktif</div>
     </div>
     <div class="demo-info-box">
-      <div class="demo-info-row"><span>Mouse</span><strong id="demoMouseTxt">(0, 0)</strong></div>
-      <div class="demo-info-row"><span>Player</span><strong id="demoPlayerTxt">(350, 180)</strong></div>
-      <div class="demo-info-row"><span>Warna Bola</span><strong id="demoBallColor">#8b5cf6</strong></div>
-      <div class="demo-info-row"><span>Tombol</span><strong id="demoKeyTxt">&ndash;</strong></div>
+      <div class="demo-info-row"><span>Sensor Mouse</span><strong id="demoMouseTxt">(0, 0)</strong></div>
+      <div class="demo-info-row"><span>Posisi Kotak</span><strong id="demoPlayerTxt">(350, 180)</strong></div>
+      <div class="demo-info-row"><span>Warna Target</span><strong id="demoBallColor">#8b5cf6</strong></div>
+      <div class="demo-info-row"><span>Tombol Ditekan</span><strong id="demoKeyTxt">&ndash;</strong></div>
     </div>
     <div class="demo-controls">
-      <p>&#127919; <strong>WASD / Arrow</strong> &rarr; gerakkan kotak oranye</p>
-      <p>&#128433;&#65039; <strong>Klik canvas</strong> &rarr; ganti warna bola</p>
-      <p>&#10024; <strong>Arahkan mouse</strong> &rarr; ring mengikuti</p>
+      <p>&#127919; Gunakan <strong>WASD / Panah</strong> untuk menyetir kotak oranye.</p>
+      <p>&#128433;&#65039; <strong>Klik di mana saja</strong> untuk mengganti baju si bola yang memantul dan meninggalkan jejak.</p>
+      <p>&#10024; Coba diamkan mouse, dan perhatikan cincin birunya.</p>
     </div>
-    <button id="demoPauseBtn" class="control-btn" style="margin-top:14px">&#9208; Pause</button>
-    <button id="demoResetBtn" class="control-btn" style="margin-top:6px">&#8635; Reset</button>
+    <button id="demoPauseBtn" class="control-btn" style="margin-top:14px">&#9208; Bekukan Waktu (Pause)</button>
+    <button id="demoResetBtn" class="control-btn" style="margin-top:6px">&#8635; Ulangi Simulasi (Reset)</button>
   </aside>
 </div>
 </div><!-- /tab-demo -->
@@ -1400,7 +972,7 @@ stateCtx.fillText(
 .soal-inner{border:1px solid rgba(255,255,255,.09);border-radius:28px;padding:50px 44px;background:rgba(255,255,255,.02);backdrop-filter:blur(10px)}
 .soal-header{text-align:center;margin-bottom:42px}
 .soal-header h2{margin-top:14px;font-size:clamp(28px,4vw,42px)}
-.soal-header p{color:#94a3b8;margin-top:12px;font-size:15px}
+.soal-header p{color:#94a3b8;margin-top:12px;font-size:15px;line-height:1.6}
 .soal-header strong{color:#f8fafc}
 .soal-tabs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:40px}
 .soal-tab{border:1px solid rgba(255,255,255,.1);border-radius:100px;padding:10px 22px;background:rgba(255,255,255,.04);color:#94a3b8;cursor:pointer;font-weight:700;font-size:13px;transition:.25s}
@@ -1409,7 +981,7 @@ stateCtx.fillText(
 .soal-tab-content{display:none}
 .soal-tab-content.active{display:block}
 .tab-intro{text-align:center;color:#94a3b8;margin-bottom:36px;font-size:15px;line-height:1.8;padding:0 8%}
-.tab-intro strong{color:#f8fafc}.tab-intro em{color:#a78bfa}
+.tab-intro strong{color:#f8fafc}.tab-intro em{color:#a78bfa;font-style:normal;font-weight:600}
 .exp-card{border:1px solid rgba(255,255,255,.08);border-radius:20px;overflow:hidden;margin-bottom:24px;background:rgba(7,17,31,.65);transition:.3s}
 .exp-card:hover{border-color:rgba(139,92,246,.3);box-shadow:0 16px 48px rgba(0,0,0,.3);transform:translateY(-2px)}
 .exp-head{display:flex;align-items:center;gap:16px;padding:18px 26px}
@@ -1419,40 +991,41 @@ stateCtx.fillText(
 .exp-head.orange{background:linear-gradient(135deg,rgba(249,115,22,.25),rgba(251,191,36,.08))}
 .exp-icon{font-size:32px;flex-shrink:0;line-height:1}
 .exp-tag{font-size:10px;font-weight:900;letter-spacing:1.6px;color:#a78bfa;margin-bottom:4px}
-.exp-title{font-size:16px;font-weight:700;color:#f8fafc}
+.exp-title{font-size:17px;font-weight:700;color:#f8fafc}
 .exp-body{padding:26px}
-.exp-desc{font-size:14px;color:#94a3b8;line-height:1.85;margin-bottom:22px;border-left:3px solid rgba(139,92,246,.4);padding-left:16px}
+.exp-desc{font-size:14.5px;color:#94a3b8;line-height:1.85;margin-bottom:22px;border-left:4px solid rgba(139,92,246,.5);padding-left:18px}
 .exp-desc code,.exp-desc strong{color:#f8fafc}
-.exp-desc code{background:rgba(139,92,246,.15);padding:1px 6px;border-radius:5px;color:#a78bfa}
+.exp-desc code{background:rgba(139,92,246,.15);padding:2px 7px;border-radius:6px;color:#a78bfa;font-family:monospace}
 .exp-blocks{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
-.pseudo-block{border-radius:12px;overflow:hidden}
-.pseudo-label{padding:9px 16px;font-size:11px;font-weight:800;letter-spacing:.9px;background:rgba(99,102,241,.22);color:#a5b4fc}
-.pseudo-block pre{margin:0;padding:18px;font-size:12.5px;line-height:1.75;font-family:"Fira Code","Cascadia Code","Courier New",monospace;background:rgba(0,0,0,.4);color:#e2e8f0;overflow-x:auto;white-space:pre}
-.code-block{border-radius:12px;overflow:hidden}
-.code-label{padding:9px 16px;font-size:11px;font-weight:800;letter-spacing:.9px;background:rgba(34,211,238,.14);color:#67e8f9}
-.code-block pre{margin:0;padding:18px;font-size:12.5px;line-height:1.75;font-family:"Fira Code","Cascadia Code","Courier New",monospace;background:rgba(0,0,0,.4);color:#e2e8f0;overflow-x:auto;white-space:pre}
-.kw{color:#93c5fd}.str{color:#86efac}.num{color:#fcd34d}.cm{color:#6b7280;font-style:italic}
-.exp-note{font-size:13px;color:#94a3b8;line-height:1.7;background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:12px 16px}
-.exp-note code{background:rgba(139,92,246,.18);padding:1px 6px;border-radius:4px;color:#a78bfa}
-.challenge-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:30px}
-.ch-row{display:flex;align-items:flex-start;gap:14px;padding:16px 20px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025)}
-.ch-row.done{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.06)}
-.ch-num{font-size:14px;font-weight:900;color:#86efac;white-space:nowrap;margin-top:2px;flex-shrink:0}
-.ch-row strong{display:block;font-size:14px;color:#f8fafc;margin-bottom:4px}
-.ch-row p{font-size:12px;color:#64748b;margin:0;line-height:1.5}
-.demo-layout{display:grid;grid-template-columns:1fr 220px;gap:18px;align-items:start}
-.demo-canvas-wrap{position:relative;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.09);background:#07111f;box-shadow:inset 0 0 30px rgba(0,0,0,.3)}
+.pseudo-block{border-radius:12px;overflow:hidden;border:1px solid rgba(99,102,241,.2)}
+.pseudo-label{padding:10px 16px;font-size:12px;font-weight:800;letter-spacing:1px;background:rgba(99,102,241,.22);color:#a5b4fc}
+.pseudo-block pre{margin:0;padding:20px;font-size:13.5px;line-height:1.8;font-family:"Fira Code","Cascadia Code","Courier New",monospace;background:rgba(0,0,0,.4);color:#e2e8f0;overflow-x:auto;white-space:pre}
+.code-block{border-radius:12px;overflow:hidden;border:1px solid rgba(34,211,238,.2)}
+.code-label{padding:10px 16px;font-size:12px;font-weight:800;letter-spacing:1px;background:rgba(34,211,238,.14);color:#67e8f9}
+.code-block pre{margin:0;padding:20px;font-size:13.5px;line-height:1.8;font-family:"Fira Code","Cascadia Code","Courier New",monospace;background:rgba(0,0,0,.4);color:#e2e8f0;overflow-x:auto;white-space:pre}
+.kw{color:#93c5fd;font-weight:bold}.str{color:#86efac}.num{color:#fcd34d}.cm{color:#94a3b8;font-style:italic}
+.exp-note{font-size:14px;color:#cbd5e1;line-height:1.7;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.25);border-radius:12px;padding:14px 18px;position:relative}
+.exp-note code{background:rgba(139,92,246,.2);padding:2px 7px;border-radius:5px;color:#d8b4fe}
+.challenge-list{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:34px}
+.ch-row{display:flex;align-items:flex-start;gap:16px;padding:18px 22px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025)}
+.ch-row.done{border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.08)}
+.ch-num{font-size:15px;font-weight:900;color:#86efac;white-space:nowrap;margin-top:2px;flex-shrink:0}
+.ch-row strong{display:block;font-size:15px;color:#f8fafc;margin-bottom:6px}
+.ch-row p{font-size:13px;color:#94a3b8;margin:0;line-height:1.6}
+.demo-layout{display:grid;grid-template-columns:1fr 240px;gap:20px;align-items:start}
+.demo-canvas-wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,.1);background:#07111f;box-shadow:inset 0 0 40px rgba(0,0,0,.4)}
 .demo-canvas-wrap canvas{display:block;width:100%;height:auto;cursor:crosshair}
-.demo-hud{position:absolute;bottom:10px;left:14px;font-size:12px;font-family:monospace;color:#22d3ee;pointer-events:none;text-shadow:0 0 8px rgba(34,211,238,.6)}
-.demo-panel{padding:20px;border:1px solid rgba(255,255,255,.09);border-radius:16px;background:rgba(10,16,32,.85)}
-.demo-panel h3{font-size:16px;margin-bottom:16px}
-.demo-badge-list{display:flex;flex-direction:column;gap:7px;margin-bottom:18px}
-.demo-badge{padding:9px 13px;border-radius:8px;font-size:12px;font-weight:700;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#64748b;transition:.3s}
-.demo-badge.active{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3);color:#86efac}
-.demo-info-box{display:grid;gap:8px;padding:14px;border-radius:10px;background:rgba(0,0,0,.25);margin-bottom:16px}
-.demo-info-row{display:flex;justify-content:space-between;font-size:11px}
-.demo-info-row span{color:#64748b}.demo-info-row strong{color:#22d3ee;font-family:monospace}
-.demo-controls p{font-size:12px;color:#64748b;margin-bottom:6px;line-height:1.5}
+.demo-hud{position:absolute;bottom:12px;left:16px;font-size:13px;font-family:monospace;color:#22d3ee;pointer-events:none;text-shadow:0 0 10px rgba(34,211,238,.7)}
+.demo-panel{padding:22px;border:1px solid rgba(255,255,255,.1);border-radius:18px;background:rgba(10,16,32,.9)}
+.demo-panel h3{font-size:17px;margin-bottom:18px;color:#f8fafc}
+.demo-badge-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.demo-badge{padding:10px 14px;border-radius:10px;font-size:12px;font-weight:700;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#64748b;transition:.3s}
+.demo-badge.active{background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.4);color:#86efac;box-shadow:0 0 15px rgba(34,197,94,.1)}
+.demo-info-box{display:grid;gap:10px;padding:16px;border-radius:12px;background:rgba(0,0,0,.3);margin-bottom:20px}
+.demo-info-row{display:flex;justify-content:space-between;font-size:12px}
+.demo-info-row span{color:#94a3b8}.demo-info-row strong{color:#22d3ee;font-family:monospace;font-size:13px}
+.demo-controls p{font-size:12px;color:#94a3b8;margin-bottom:8px;line-height:1.6}
+.demo-controls strong{color:#e2e8f0}
 @media(max-width:1024px){.exp-blocks{grid-template-columns:1fr}}
 @media(max-width:900px){.soal-inner{padding:28px 18px}.challenge-list{grid-template-columns:1fr}.demo-layout{grid-template-columns:1fr}}
 </style>
@@ -1621,8 +1194,8 @@ modeButtons.forEach(function(button){
   });
   var pauseBtn=document.getElementById('demoPauseBtn');
   var resetBtn=document.getElementById('demoResetBtn');
-  if(pauseBtn)pauseBtn.addEventListener('click',function(){dPaused=!dPaused;pauseBtn.textContent=dPaused?'&#9654; Resume':'&#9208; Pause';});
-  if(resetBtn)resetBtn.addEventListener('click',function(){dPlayer.x=350;dPlayer.y=180;dBall.x=200;dBall.y=150;dBall.vx=3.2;dBall.vy=2.4;dColorIdx=0;dBall.color=dColors[0];dCircles.length=0;dPaused=false;if(pauseBtn)pauseBtn.textContent='&#9208; Pause';});
+  if(pauseBtn)pauseBtn.addEventListener('click',function(){dPaused=!dPaused;pauseBtn.textContent=dPaused?'&#9654; Lanjutkan':'&#9208; Bekukan Waktu';});
+  if(resetBtn)resetBtn.addEventListener('click',function(){dPlayer.x=350;dPlayer.y=180;dBall.x=200;dBall.y=150;dBall.vx=3.2;dBall.vy=2.4;dColorIdx=0;dBall.color=dColors[0];dCircles.length=0;dPaused=false;if(pauseBtn)pauseBtn.textContent='&#9208; Bekukan Waktu';});
   requestAnimationFrame(dLoop);
 })();
 </script>
