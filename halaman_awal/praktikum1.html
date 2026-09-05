@@ -18,11 +18,1047 @@
     </div>
 </nav>
 
+
 <section class="page-header">
     <span class="section-label">PRAKTIKUM 01</span>
     <h1>Interactive Canvas</h1>
     <p>Eksperimen objek 2D, animasi, transformasi, mouse, keyboard, State-Based, dan Event-Based.</p>
 </section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION: SOAL PRAKTIKUM — Penjelasan Kode & Pseudocode
+     ═══════════════════════════════════════════════════════════ -->
+<section class="soal-section">
+  <div class="soal-inner">
+
+    <!-- Header -->
+    <div class="soal-header">
+      <span class="section-label">SOAL PRAKTIKUM</span>
+      <h2>Penjelasan Kode &amp; Pseudocode</h2>
+      <p>Potongan kode penting dari <code>state-based.js</code> dan <code>event-based.js</code> beserta pseudocode-nya.</p>
+    </div>
+
+    <!-- Tab Navigator -->
+    <div class="soal-tabs" id="soalTabs">
+      <button class="soal-tab active" data-tab="primitif">🔷 Primitif</button>
+      <button class="soal-tab" data-tab="warna">🎨 Warna</button>
+      <button class="soal-tab" data-tab="animasi">🎬 Animasi</button>
+      <button class="soal-tab" data-tab="interaksi">🖱️ Interaksi</button>
+      <button class="soal-tab" data-tab="challenge">⚡ Challenge</button>
+    </div>
+
+    <!-- ── TAB 1: PRIMITIF ─────────────────────────────────── -->
+    <div class="soal-tab-content active" id="tab-primitif">
+
+      <!-- Intro -->
+      <div class="soal-intro">
+        Minimal <strong>3 jenis primitif</strong> digambar di canvas: <em>Rectangle</em>, <em>Line</em>, <em>Circle</em>, dan <em>Triangle</em>.
+      </div>
+
+      <div class="soal-cards">
+
+        <!-- Rectangle -->
+        <div class="soal-card">
+          <div class="soal-card-head purple">
+            <span class="soal-icon">▬</span>
+            <div>
+              <div class="soal-tag">RECTANGLE</div>
+              <div class="soal-title">Kotak / Persegi Panjang</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>SET warna isi = "#3b82f6"
+GAMBAR kotak pada (80, 90)
+  lebar = 170, tinggi = 105</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (state-based.js)</div>
+<pre><span class="kw">ctx</span>.fillStyle = <span class="str">"#3b82f6"</span>;
+<span class="kw">ctx</span>.fillRect(<span class="num">80</span>, <span class="num">90</span>, <span class="num">170</span>, <span class="num">105</span>);</pre>
+            </div>
+            <p class="soal-note">Fungsi <code>fillRect(x, y, w, h)</code> menggambar kotak berisi warna tanpa outline.</p>
+          </div>
+        </div>
+
+        <!-- Line -->
+        <div class="soal-card">
+          <div class="soal-card-head pink">
+            <span class="soal-icon">╱</span>
+            <div>
+              <div class="soal-tag">LINE</div>
+              <div class="soal-title">Garis</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>MULAI path baru
+PINDAH ke titik (310, 110)
+TARIK garis ke (500, 185)
+SET warna garis = "#f43f5e"
+SET tebal garis = 4
+GAMBAR garis</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (state-based.js)</div>
+<pre><span class="kw">ctx</span>.beginPath();
+<span class="kw">ctx</span>.moveTo(<span class="num">310</span>, <span class="num">110</span>);
+<span class="kw">ctx</span>.lineTo(<span class="num">500</span>, <span class="num">185</span>);
+<span class="kw">ctx</span>.strokeStyle = <span class="str">"#f43f5e"</span>;
+<span class="kw">ctx</span>.lineWidth   = <span class="num">4</span>;
+<span class="kw">ctx</span>.stroke();</pre>
+            </div>
+            <p class="soal-note"><code>beginPath()</code> memulai jalur baru; <code>moveTo</code> + <code>lineTo</code> mendefinisikan garis; <code>stroke()</code> menggambarnya.</p>
+          </div>
+        </div>
+
+        <!-- Circle -->
+        <div class="soal-card">
+          <div class="soal-card-head cyan">
+            <span class="soal-icon">●</span>
+            <div>
+              <div class="soal-tag">CIRCLE</div>
+              <div class="soal-title">Lingkaran</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>MULAI path baru
+GAMBAR busur di pusat (700, 135)
+  radius = 58
+  sudut  = 0 sampai 2π (lingkaran penuh)
+SET warna isi = "#22c55e"
+ISI lingkaran</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (state-based.js)</div>
+<pre><span class="kw">ctx</span>.beginPath();
+<span class="kw">ctx</span>.arc(<span class="num">700</span>, <span class="num">135</span>, <span class="num">58</span>,
+        <span class="num">0</span>, Math.PI * <span class="num">2</span>);
+<span class="kw">ctx</span>.fillStyle = <span class="str">"#22c55e"</span>;
+<span class="kw">ctx</span>.fill();</pre>
+            </div>
+            <p class="soal-note"><code>arc(cx, cy, r, startAngle, endAngle)</code> — sudut <code>2π</code> berarti lingkaran penuh (360°).</p>
+          </div>
+        </div>
+
+        <!-- Triangle -->
+        <div class="soal-card">
+          <div class="soal-card-head orange">
+            <span class="soal-icon">▲</span>
+            <div>
+              <div class="soal-tag">TRIANGLE</div>
+              <div class="soal-title">Segitiga</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>MULAI path baru
+PINDAH ke puncak    (130, 360)
+TARIK garis ke kiri bawah (65, 490)
+TARIK garis ke kanan bawah (195, 490)
+TUTUP path (kembali ke puncak)
+SET warna isi = "#f97316"
+ISI segitiga</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (state-based.js &amp; event-based.js)</div>
+<pre><span class="kw">ctx</span>.beginPath();
+<span class="kw">ctx</span>.moveTo(<span class="num">130</span>, <span class="num">360</span>);
+<span class="kw">ctx</span>.lineTo(<span class="num">65</span>,  <span class="num">490</span>);
+<span class="kw">ctx</span>.lineTo(<span class="num">195</span>, <span class="num">490</span>);
+<span class="kw">ctx</span>.closePath();
+<span class="kw">ctx</span>.fillStyle = <span class="str">"#f97316"</span>;
+<span class="kw">ctx</span>.fill();</pre>
+            </div>
+            <p class="soal-note"><code>closePath()</code> menarik garis otomatis ke titik awal sehingga segitiga tertutup.</p>
+          </div>
+        </div>
+
+      </div><!-- /soal-cards -->
+    </div><!-- /tab-primitif -->
+
+    <!-- ── TAB 2: WARNA ────────────────────────────────────── -->
+    <div class="soal-tab-content" id="tab-warna">
+
+      <div class="soal-intro">
+        Berbagai teknik pewarnaan digunakan: warna solid, <em>shadow glow</em>, palet warna berganti, dan latar grid transparan.
+      </div>
+
+      <div class="soal-cards">
+
+        <!-- Palet Warna -->
+        <div class="soal-card wide">
+          <div class="soal-card-head purple">
+            <span class="soal-icon">🎨</span>
+            <div>
+              <div class="soal-tag">PALET WARNA</div>
+              <div class="soal-title">Array Warna &amp; Rotasi Otomatis</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>DEFINISIKAN palet = [ungu, merah, hijau, kuning, biru]
+SET indeks = 0
+
+SAAT canvas diklik:
+  indeks = (indeks + 1) MOD panjang(palet)
+  ball.warna = palet[indeks]</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (state-based.js)</div>
+<pre><span class="cm">// Deklarasi palet</span>
+<span class="kw">const</span> stateColors = [
+  <span class="str">"#8b5cf6"</span>, <span class="str">"#f43f5e"</span>,
+  <span class="str">"#22c55e"</span>, <span class="str">"#facc15"</span>, <span class="str">"#3b82f6"</span>
+];
+<span class="kw">let</span> stateColorIndex = <span class="num">0</span>;
+
+<span class="cm">// Saat diklik → ganti warna</span>
+canvas.addEventListener(<span class="str">"click"</span>, () => {
+  stateColorIndex =
+    (stateColorIndex + <span class="num">1</span>) % stateColors.length;
+  stateBall.color =
+    stateColors[stateColorIndex];
+});</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shadow Glow -->
+        <div class="soal-card wide">
+          <div class="soal-card-head cyan">
+            <span class="soal-icon">✨</span>
+            <div>
+              <div class="soal-tag">SHADOW GLOW</div>
+              <div class="soal-title">Efek Cahaya pada Objek</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>SET shadowBlur  = 25       ← radius blur cahaya
+SET shadowColor = ball.warna
+GAMBAR lingkaran ball
+RESET shadowBlur = 0       ← matikan efek untuk objek lain</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (state-based.js)</div>
+<pre>ctx.beginPath();
+ctx.arc(ball.x, ball.y, ball.r, <span class="num">0</span>, Math.PI*<span class="num">2</span>);
+ctx.fillStyle   = ball.color;
+ctx.shadowBlur  = <span class="num">25</span>;
+ctx.shadowColor = ball.color; <span class="cm">// cahaya satu warna</span>
+ctx.fill();
+ctx.shadowBlur  = <span class="num">0</span>;        <span class="cm">// ← WAJIB direset</span></pre>
+            </div>
+            <p class="soal-note">Tanpa mereset <code>shadowBlur</code>, semua objek berikutnya akan ikut bercahaya.</p>
+          </div>
+        </div>
+
+        <!-- Palet visual -->
+        <div class="soal-card wide">
+          <div class="soal-card-head orange">
+            <span class="soal-icon">🌈</span>
+            <div>
+              <div class="soal-tag">PREVIEW WARNA</div>
+              <div class="soal-title">Warna yang Digunakan</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="color-swatches">
+              <div class="swatch" style="background:#8b5cf6"><span>#8b5cf6</span><small>Ungu</small></div>
+              <div class="swatch" style="background:#f43f5e"><span>#f43f5e</span><small>Merah</small></div>
+              <div class="swatch" style="background:#22c55e"><span>#22c55e</span><small>Hijau</small></div>
+              <div class="swatch" style="background:#facc15;color:#111"><span>#facc15</span><small>Kuning</small></div>
+              <div class="swatch" style="background:#3b82f6"><span>#3b82f6</span><small>Biru</small></div>
+              <div class="swatch" style="background:#f97316"><span>#f97316</span><small>Oranye</small></div>
+              <div class="swatch" style="background:#22d3ee"><span>#22d3ee</span><small>Cyan</small></div>
+              <div class="swatch" style="background:#f472b6"><span>#f472b6</span><small>Pink</small></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /tab-warna -->
+
+    <!-- ── TAB 3: ANIMASI ─────────────────────────────────── -->
+    <div class="soal-tab-content" id="tab-animasi">
+
+      <div class="soal-intro">
+        Animasi dibuat dengan loop <code>requestAnimationFrame</code>. Setiap frame: <strong>clear → update → draw</strong>.
+      </div>
+
+      <div class="soal-cards">
+
+        <!-- Game Loop -->
+        <div class="soal-card wide">
+          <div class="soal-card-head purple">
+            <span class="soal-icon">🔄</span>
+            <div>
+              <div class="soal-tag">GAME LOOP</div>
+              <div class="soal-title">requestAnimationFrame — Siklus Animasi</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>FUNGSI stateFrame():
+  JIKA tidak pause:
+    BERSIHKAN canvas          ← hapus frame lama
+    UPDATE semua posisi objek ← hitung posisi baru
+    GAMBAR semua objek        ← render ke canvas
+    frameCount += 1
+  DAFTARKAN stateFrame sebagai callback frame berikutnya
+
+PANGGIL stateFrame() ← memulai loop</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (state-based.js)</div>
+<pre><span class="kw">function</span> stateFrame() {
+  <span class="kw">if</span> (!statePaused) {
+    stateClear();   <span class="cm">// hapus / trail</span>
+    stateUpdate();  <span class="cm">// perbarui posisi</span>
+    stateDraw();    <span class="cm">// gambar ulang</span>
+    stateFrames++;
+  }
+  requestAnimationFrame(stateFrame);
+}
+
+requestAnimationFrame(stateFrame); <span class="cm">// mulai!</span></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bola Memantul -->
+        <div class="soal-card wide">
+          <div class="soal-card-head pink">
+            <span class="soal-icon">⚽</span>
+            <div>
+              <div class="soal-tag">SATU OBJEK BERGERAK</div>
+              <div class="soal-title">Bola Memantul di Batas Canvas</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>ball = { x:420, y:270, vx:3, vy:2.5, r:25 }
+
+SETIAP frame:
+  ball.x += ball.vx
+  ball.y += ball.vy
+
+  JIKA ball.x < radius ATAU ball.x > lebar - radius:
+    ball.vx = -ball.vx   ← balik arah horizontal
+
+  JIKA ball.y < radius ATAU ball.y > tinggi - radius:
+    ball.vy = -ball.vy   ← balik arah vertikal</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (state-based.js)</div>
+<pre>stateBall.x += stateBall.vx;
+stateBall.y += stateBall.vy;
+
+<span class="kw">if</span> (stateBall.x &lt; stateBall.r ||
+    stateBall.x &gt; SW - stateBall.r)
+  stateBall.vx *= <span class="num">-1</span>;
+
+<span class="kw">if</span> (stateBall.y &lt; stateBall.r ||
+    stateBall.y &gt; SH - stateBall.r)
+  stateBall.vy *= <span class="num">-1</span>;</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trail Effect -->
+        <div class="soal-card wide">
+          <div class="soal-card-head cyan">
+            <span class="soal-icon">💫</span>
+            <div>
+              <div class="soal-tag">TRAIL EFFECT</div>
+              <div class="soal-title">Efek Jejak (State-Based)</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>JIKA trail AKTIF:
+  GAMBAR persegi panjang semi-transparan
+  ← mengaburkan frame lama (bukan menghapus)
+JIKA trail NONAKTIF:
+  HAPUS canvas sepenuhnya</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (state-based.js)</div>
+<pre><span class="kw">function</span> stateClear() {
+  <span class="kw">if</span> (!stateTrail) {
+    ctx.clearRect(<span class="num">0</span>,<span class="num">0</span>, SW, SH);
+  } <span class="kw">else</span> {
+    ctx.fillStyle = <span class="str">"rgba(7,17,31,.13)"</span>;
+    ctx.fillRect(<span class="num">0</span>, <span class="num">0</span>, SW, SH);
+  }
+}</pre>
+            </div>
+            <p class="soal-note">Alpha <code>0.13</code> (13%) mengaburkan perlahan, menghasilkan efek ekor / trail pada objek bergerak.</p>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /tab-animasi -->
+
+    <!-- ── TAB 4: INTERAKSI ───────────────────────────────── -->
+    <div class="soal-tab-content" id="tab-interaksi">
+
+      <div class="soal-intro">
+        Dua jenis interaksi diterapkan: <strong>mouse</strong> (koordinat, klik) dan <strong>keyboard</strong> (WASD / Arrow).
+      </div>
+
+      <div class="soal-cards">
+
+        <!-- Koordinat Mouse -->
+        <div class="soal-card">
+          <div class="soal-card-head cyan">
+            <span class="soal-icon">🖱️</span>
+            <div>
+              <div class="soal-tag">MOUSE KOORDINAT</div>
+              <div class="soal-title">Menampilkan Posisi Mouse</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>SAAT mousemove di canvas:
+  rect = posisi canvas di layar
+  mouse.x = (clientX - rect.kiri) * (lebarCanvas / lebarRect)
+  mouse.y = (clientY - rect.atas) * (tinggiCanvas / tinggiRect)
+  TAMPILKAN koordinat di HUD dan panel</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (state-based.js)</div>
+<pre>canvas.addEventListener(<span class="str">"mousemove"</span>, e => {
+  <span class="kw">const</span> r = canvas.getBoundingClientRect();
+  mouse.x = (e.clientX - r.left)
+            * SW / r.width;
+  mouse.y = (e.clientY - r.top)
+            * SH / r.height;
+});</pre>
+            </div>
+            <p class="soal-note">Perkalian <code>SW/r.width</code> mengkonversi koordinat CSS ke koordinat canvas asli.</p>
+          </div>
+        </div>
+
+        <!-- Keyboard State-Based -->
+        <div class="soal-card">
+          <div class="soal-card-head purple">
+            <span class="soal-icon">⌨️</span>
+            <div>
+              <div class="soal-tag">KEYBOARD STATE-BASED</div>
+              <div class="soal-title">State Keyboard (Smooth Movement)</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>keys = {}  ← objek state tombol
+
+SAAT keydown:  keys[tombol] = true
+SAAT keyup:    keys[tombol] = false
+
+SETIAP frame:
+  JIKA keys[ArrowLeft] ATAU keys[a]: player.x -= speed
+  JIKA keys[ArrowRight] ATAU keys[d]: player.x += speed
+  JIKA keys[ArrowUp] ATAU keys[w]: player.y -= speed
+  JIKA keys[ArrowDown] ATAU keys[s]: player.y += speed</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (state-based.js)</div>
+<pre><span class="kw">const</span> stateKeys = {};
+
+window.addEventListener(<span class="str">"keydown"</span>, e => {
+  stateKeys[e.key] = <span class="kw">true</span>;
+});
+window.addEventListener(<span class="str">"keyup"</span>, e => {
+  stateKeys[e.key] = <span class="kw">false</span>;
+});
+
+<span class="cm">// Dipakai setiap frame:</span>
+<span class="kw">if</span> (stateKeys.ArrowLeft || stateKeys.a)
+  player.x -= speed;</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Keyboard Event-Based -->
+        <div class="soal-card">
+          <div class="soal-card-head pink">
+            <span class="soal-icon">⚡</span>
+            <div>
+              <div class="soal-tag">KEYBOARD EVENT-BASED</div>
+              <div class="soal-title">Gerakan Per-Event (Discrete)</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>SAAT keydown terjadi:
+  eventCount += 1
+  JIKA tombol = ArrowRight ATAU "d": player.x += speed
+  JIKA tombol = ArrowLeft  ATAU "a": player.x -= speed
+  JIKA tombol = ArrowUp    ATAU "w": player.y -= speed
+  JIKA tombol = ArrowDown  ATAU "s": player.y += speed
+  BATASI player dalam batas canvas</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (event-based.js)</div>
+<pre>window.addEventListener(<span class="str">"keydown"</span>, e => {
+  <span class="kw">const</span> k = e.key.toLowerCase();
+  <span class="kw">if</span> (e.key === <span class="str">"ArrowRight"</span> || k===<span class="str">"d"</span>)
+    player.x += speed;
+  <span class="kw">if</span> (e.key === <span class="str">"ArrowLeft"</span>  || k===<span class="str">"a"</span>)
+    player.x -= speed;
+  player.x = Math.max(<span class="num">0</span>,
+    Math.min(EW - player.w, player.x));
+});</pre>
+            </div>
+            <p class="soal-note"><strong>Perbedaan utama:</strong> State-based = mulus (dicek tiap frame). Event-based = diskrit (hanya saat tombol ditekan).</p>
+          </div>
+        </div>
+
+        <!-- Klik Warna -->
+        <div class="soal-card">
+          <div class="soal-card-head orange">
+            <span class="soal-icon">🖱️</span>
+            <div>
+              <div class="soal-tag">INTERAKSI KLIK</div>
+              <div class="soal-title">Spawn Objek &amp; Ganti Warna</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>SAAT canvas diklik:
+  colorIndex = (colorIndex + 1) MOD 5
+  ball.warna = palet[colorIndex]
+  TAMBAHKAN lingkaran baru di posisi mouse
+    warna = palet[(colorIndex + 2) MOD 5]</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (event-based.js)</div>
+<pre>canvas.addEventListener(<span class="str">"click"</span>, () => {
+  eventColorIndex =
+    (eventColorIndex + <span class="num">1</span>) % eventColors.length;
+  eventBall.color =
+    eventColors[eventColorIndex];
+  eventCircles.push({
+    x: mouse.x, y: mouse.y,
+    r: <span class="num">14</span>,
+    color: eventColors[
+      (eventColorIndex + <span class="num">2</span>) % eventColors.length
+    ]
+  });
+});</pre>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /tab-interaksi -->
+
+    <!-- ── TAB 5: CHALLENGE ───────────────────────────────── -->
+    <div class="soal-tab-content" id="tab-challenge">
+
+      <div class="soal-intro">
+        Implementasi fitur <strong>Challenge</strong>: objek memantul, mengikuti mouse, warna berubah saat diklik, digerakkan keyboard, dan koordinat mouse ditampilkan.
+      </div>
+
+      <!-- Checklist Challenge -->
+      <div class="challenge-checklist">
+        <div class="challenge-item done">
+          <span class="ch-icon">✅</span>
+          <div>
+            <strong>Objek memantul di batas canvas</strong>
+            <small>Bola (stateBall / eventBall) memantul saat menyentuh tepi canvas.</small>
+          </div>
+        </div>
+        <div class="challenge-item done">
+          <span class="ch-icon">✅</span>
+          <div>
+            <strong>Warna berubah ketika diklik</strong>
+            <small>Klik canvas → warna bola berganti menggunakan array palet warna.</small>
+          </div>
+        </div>
+        <div class="challenge-item done">
+          <span class="ch-icon">✅</span>
+          <div>
+            <strong>Objek digerakkan dengan keyboard</strong>
+            <small>WASD / Arrow Keys menggerakkan player di kedua mode.</small>
+          </div>
+        </div>
+        <div class="challenge-item done">
+          <span class="ch-icon">✅</span>
+          <div>
+            <strong>Menampilkan koordinat mouse</strong>
+            <small>Koordinat (x, y) ditampilkan real-time di HUD canvas dan panel samping.</small>
+          </div>
+        </div>
+        <div class="challenge-item done">
+          <span class="ch-icon">✅</span>
+          <div>
+            <strong>Objek mengikuti mouse</strong>
+            <small>Lingkaran cyan &amp; objek tracker bergerak smooth mengikuti posisi kursor di canvas.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="soal-cards" style="margin-top:24px">
+
+        <!-- Memantul -->
+        <div class="soal-card wide">
+          <div class="soal-card-head purple">
+            <span class="soal-icon">🏓</span>
+            <div>
+              <div class="soal-tag">CHALLENGE #1</div>
+              <div class="soal-title">Objek Memantul di Batas Canvas</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>INISIALISASI:
+  ball = { x, y, vx: 3, vy: 2.5, r: 25 }
+
+SETIAP frame (stateUpdate / eventAnimationUpdate):
+  ball.x += vx
+  ball.y += vy
+
+  JIKA ball.x ≤ radius   ATAU ball.x ≥ lebarCanvas - radius:
+    vx = -vx   ← balik horizontal
+
+  JIKA ball.y ≤ radius   ATAU ball.y ≥ tinggiCanvas - radius:
+    vy = -vy   ← balik vertikal</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (state-based.js — stateUpdate)</div>
+<pre>stateBall.x += stateBall.vx;
+stateBall.y += stateBall.vy;
+
+<span class="cm">// Pantulan kiri-kanan</span>
+<span class="kw">if</span> (stateBall.x &lt; stateBall.r ||
+    stateBall.x &gt; SW - stateBall.r)
+  stateBall.vx *= <span class="num">-1</span>;
+
+<span class="cm">// Pantulan atas-bawah</span>
+<span class="kw">if</span> (stateBall.y &lt; stateBall.r ||
+    stateBall.y &gt; SH - stateBall.r)
+  stateBall.vy *= <span class="num">-1</span>;</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Keyboard Movement -->
+        <div class="soal-card wide">
+          <div class="soal-card-head pink">
+            <span class="soal-icon">🕹️</span>
+            <div>
+              <div class="soal-tag">CHALLENGE #2</div>
+              <div class="soal-title">Objek Digerakkan Keyboard + Clamp</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>FUNGSI clamp(nilai, min, max):
+  KEMBALIKAN MAX(min, MIN(max, nilai))
+
+FUNGSI updatePlayer():
+  speed = nilai slider
+  JIKA ArrowLeft ATAU a ditekan: player.x -= speed
+  JIKA ArrowRight ATAU d ditekan: player.x += speed
+  JIKA ArrowUp ATAU w ditekan: player.y -= speed
+  JIKA ArrowDown ATAU s ditekan: player.y += speed
+  player.x = clamp(player.x, 0, lebarCanvas - lebar)
+  player.y = clamp(player.y, 0, tinggiCanvas - tinggi)</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (state-based.js)</div>
+<pre><span class="kw">const</span> sclamp = (v,a,b) =>
+  Math.max(a, Math.min(b, v));
+
+<span class="kw">function</span> stateUpdatePlayer() {
+  <span class="kw">const</span> s = +speedSlider.value;
+  <span class="kw">if</span>(stateKeys.ArrowLeft||stateKeys.a)
+    player.x -= s;
+  <span class="kw">if</span>(stateKeys.ArrowRight||stateKeys.d)
+    player.x += s;
+  player.x = sclamp(player.x,
+    <span class="num">0</span>, SW - player.w);
+  player.y = sclamp(player.y,
+    <span class="num">0</span>, SH - player.h);
+}</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Warna saat diklik -->
+        <div class="soal-card wide">
+          <div class="soal-card-head cyan">
+            <span class="soal-icon">🎯</span>
+            <div>
+              <div class="soal-tag">CHALLENGE #3</div>
+              <div class="soal-title">Warna Berubah Saat Diklik &amp; Spawn Lingkaran</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>circles = []     ← array lingkaran yang di-spawn
+
+SAAT canvas diklik:
+  indeks = (indeks + 1) MOD panjang(palet)
+  ball.warna = palet[indeks]
+  TAMBAHKAN { x: mouse.x, y: mouse.y, r:14,
+              warna: palet[(indeks+2) MOD 5] }
+              ke circles[]
+
+SAAT render:
+  UNTUK setiap lingkaran di circles[]:
+    GAMBAR lingkaran di posisinya</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (event-based.js)</div>
+<pre>canvas.addEventListener(<span class="str">"click"</span>, () => {
+  eventColorIndex =
+    (eventColorIndex+<span class="num">1</span>) % eventColors.length;
+  eventBall.color = eventColors[eventColorIndex];
+
+  <span class="cm">// Spawn lingkaran di posisi klik</span>
+  eventCircles.push({
+    x: mouse.x, y: mouse.y, r: <span class="num">14</span>,
+    color: eventColors[
+      (eventColorIndex+<span class="num">2</span>) % eventColors.length
+    ]
+  });
+});
+
+<span class="cm">// Gambar semua lingkaran tersimpan</span>
+eventCircles.forEach(c => {
+  ctx.beginPath();
+  ctx.arc(c.x, c.y, c.r, <span class="num">0</span>, Math.PI*<span class="num">2</span>);
+  ctx.fillStyle = c.color;
+  ctx.fill();
+});</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Koordinat Mouse -->
+        <div class="soal-card wide">
+          <div class="soal-card-head orange">
+            <span class="soal-icon">📍</span>
+            <div>
+              <div class="soal-tag">CHALLENGE #4</div>
+              <div class="soal-title">Menampilkan Koordinat Mouse Real-Time</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>SAAT mousemove di canvas:
+  Hitung (x, y) relatif terhadap canvas
+  TAMPILKAN di panel sidebar → "Mouse: (x, y)"
+  GAMBAR di HUD canvas (pojok kiri bawah)
+    → teks "Mouse: (x, y)" pada (18, 575)</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (state-based.js)</div>
+<pre><span class="cm">// 1. Update variabel saat mouse bergerak</span>
+canvas.addEventListener(<span class="str">"mousemove"</span>, e => {
+  <span class="kw">const</span> r = canvas.getBoundingClientRect();
+  mouse.x = (e.clientX - r.left) * SW / r.width;
+  mouse.y = (e.clientY - r.top) * SH / r.height;
+  <span class="cm">// Update panel</span>
+  mouseText.textContent =
+    `(${Math.round(mouse.x)}, ${Math.round(mouse.y)})`;
+});
+
+<span class="cm">// 2. Gambar di HUD canvas (dalam stateDraw)</span>
+ctx.fillStyle = <span class="str">"#22d3ee"</span>;
+ctx.font = <span class="str">"16px monospace"</span>;
+ctx.fillText(
+  `Mouse: (${Math.round(mouse.x)}, ${Math.round(mouse.y)})`,
+  <span class="num">18</span>, <span class="num">575</span>
+);</pre>
+            </div>
+            <p class="soal-note">Koordinat dikonversi dari CSS pixel ke canvas pixel agar akurat saat canvas di-scale oleh CSS.</p>
+          </div>
+        </div>
+
+        <!-- Objek Mengikuti Mouse -->
+        <div class="soal-card wide">
+          <div class="soal-card-head purple">
+            <span class="soal-icon">🎯</span>
+            <div>
+              <div class="soal-tag">CHALLENGE #5</div>
+              <div class="soal-title">Objek Mengikuti Mouse (Mouse Tracker)</div>
+            </div>
+          </div>
+          <div class="soal-card-body">
+            <div class="pseudo-block">
+              <div class="pseudo-label">📋 Pseudocode</div>
+<pre>SAAT mousemove di canvas:
+  Simpan posisi mouse → mouse.x, mouse.y
+
+SETIAP frame (dalam stateDraw):
+  GAMBAR lingkaran outline di (mouse.x, mouse.y)
+    radius = 18, warna = "#22d3ee"
+
+← Karena stateDraw dipanggil tiap frame,
+  lingkaran selalu muncul di posisi mouse terbaru
+  → efeknya: MENGIKUTI mouse secara real-time</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">💻 Kode (state-based.js — stateDraw)</div>
+<pre><span class="cm">// Variabel posisi mouse (diupdate saat mousemove)</span>
+<span class="kw">const</span> stateMouse = { x: <span class="num">0</span>, y: <span class="num">0</span> };
+
+<span class="cm">// Event: simpan posisi setiap mouse bergerak</span>
+canvas.addEventListener(<span class="str">"mousemove"</span>, e => {
+  <span class="kw">const</span> r = canvas.getBoundingClientRect();
+  stateMouse.x = (e.clientX - r.left) * SW / r.width;
+  stateMouse.y = (e.clientY - r.top)  * SH / r.height;
+});
+
+<span class="cm">// Dalam stateDraw() — digambar SETIAP FRAME:</span>
+ctx.beginPath();
+ctx.arc(stateMouse.x, stateMouse.y,
+        <span class="num">18</span>, <span class="num">0</span>, Math.PI * <span class="num">2</span>);
+ctx.strokeStyle = <span class="str">"#22d3ee"</span>;
+ctx.lineWidth   = <span class="num">2</span>;
+ctx.stroke();   <span class="cm">// ← ring cyan mengikuti kursor</span></pre>
+            </div>
+            <p class="soal-note">Teknik ini disebut <strong>indirect mouse tracking</strong> — koordinat mouse disimpan ke variabel, lalu objek digambar di koordinat tersebut setiap frame oleh game loop.</p>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /tab-challenge -->
+
+
+  </div><!-- /soal-inner -->
+</section>
+
+<!-- ─── CSS untuk section Soal ─────────────────────────── -->
+<style>
+/* ── Layout ────────────────────────────────────────────── */
+.soal-section{
+  width:min(1250px,94%);margin:0 auto 80px;
+}
+.soal-inner{
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:28px;
+  padding:48px 42px;
+  background:rgba(255,255,255,.025);
+  backdrop-filter:blur(8px);
+}
+.soal-header{text-align:center;margin-bottom:40px}
+.soal-header h2{
+  margin-top:14px;
+  font-size:clamp(28px,4vw,40px);
+}
+.soal-header p{color:#94a3b8;margin-top:12px}
+.soal-header code{
+  background:rgba(139,92,246,.15);
+  padding:2px 8px;border-radius:6px;
+  color:#a78bfa;font-size:.9em;
+}
+
+/* ── Tab ─────────────────────────────────────────────── */
+.soal-tabs{
+  display:flex;flex-wrap:wrap;justify-content:center;
+  gap:8px;margin-bottom:36px;
+}
+.soal-tab{
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:100px;
+  padding:9px 20px;
+  background:rgba(255,255,255,.04);
+  color:#94a3b8;
+  cursor:pointer;font-weight:700;font-size:13px;
+  transition:.25s;
+}
+.soal-tab:hover{color:#fff;background:rgba(255,255,255,.08)}
+.soal-tab.active{
+  color:#fff;
+  background:linear-gradient(135deg,#7c3aed,#2563eb);
+  border-color:transparent;
+  box-shadow:0 6px 24px rgba(124,58,237,.3);
+}
+.soal-tab-content{display:none}
+.soal-tab-content.active{display:block}
+
+/* ── Intro text ─────────────────────────────────────── */
+.soal-intro{
+  text-align:center;
+  color:#94a3b8;
+  margin-bottom:32px;
+  font-size:15px;
+  line-height:1.7;
+}
+.soal-intro strong{color:#f8fafc}
+.soal-intro em{color:#a78bfa}
+
+/* ── Card Grid ──────────────────────────────────────── */
+.soal-cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+  gap:20px;
+}
+.soal-card{
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:20px;
+  overflow:hidden;
+  background:rgba(7,17,31,.6);
+  transition:.3s;
+}
+.soal-card:hover{
+  transform:translateY(-4px);
+  border-color:rgba(139,92,246,.3);
+  box-shadow:0 20px 50px rgba(0,0,0,.25);
+}
+.soal-card.wide{grid-column:1/-1}
+
+/* Card head colours */
+.soal-card-head{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 22px;
+}
+.soal-card-head.purple{background:linear-gradient(135deg,rgba(139,92,246,.25),rgba(99,102,241,.12))}
+.soal-card-head.pink  {background:linear-gradient(135deg,rgba(244,114,182,.22),rgba(244,63,94,.1))}
+.soal-card-head.cyan  {background:linear-gradient(135deg,rgba(34,211,238,.18),rgba(6,182,212,.08))}
+.soal-card-head.orange{background:linear-gradient(135deg,rgba(249,115,22,.22),rgba(251,191,36,.08))}
+
+.soal-icon{font-size:28px;flex-shrink:0}
+.soal-tag{font-size:10px;font-weight:800;letter-spacing:1.4px;color:#a78bfa;margin-bottom:3px}
+.soal-title{font-size:15px;font-weight:700;color:#f8fafc}
+
+.soal-card-body{padding:22px}
+
+/* ── Code / Pseudo Blocks ──────────────────────────── */
+.pseudo-block,.code-block{
+  border-radius:12px;
+  overflow:hidden;
+  margin-bottom:16px;
+}
+.pseudo-label,.code-label{
+  padding:8px 16px;
+  font-size:11px;font-weight:800;letter-spacing:.8px;
+}
+.pseudo-label{background:rgba(99,102,241,.2);color:#a5b4fc}
+.code-label{background:rgba(34,211,238,.12);color:#67e8f9}
+
+.pseudo-block pre,.code-block pre{
+  margin:0;padding:16px;
+  font-size:12.5px;line-height:1.7;
+  font-family:"Fira Code","Cascadia Code","Courier New",monospace;
+  overflow-x:auto;
+  background:rgba(0,0,0,.35);
+  color:#e2e8f0;
+  white-space:pre;
+}
+/* Syntax highlight helpers */
+.kw{color:#93c5fd}   /* keyword / identifier */
+.str{color:#86efac}  /* string */
+.num{color:#fcd34d}  /* number */
+.cm{color:#6b7280;font-style:italic}  /* comment */
+
+.soal-note{
+  font-size:12.5px;color:#94a3b8;
+  border-left:3px solid rgba(139,92,246,.5);
+  padding-left:12px;
+  margin-top:4px;
+  line-height:1.6;
+}
+.soal-note code{
+  background:rgba(139,92,246,.15);
+  padding:1px 6px;border-radius:4px;
+  color:#a78bfa;
+}
+
+/* ── Color Swatches ─────────────────────────────────── */
+.color-swatches{
+  display:flex;flex-wrap:wrap;gap:14px;padding:8px 0;
+}
+.swatch{
+  flex:0 0 auto;
+  width:90px;height:70px;
+  border-radius:12px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;
+  border:1px solid rgba(255,255,255,.1);
+  gap:4px;
+}
+.swatch small{font-size:10px;opacity:.75;font-weight:400}
+
+/* ── Challenge Checklist ────────────────────────────── */
+.challenge-checklist{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:14px;margin-bottom:8px;
+}
+.challenge-item{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:18px 20px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.09);
+  background:rgba(255,255,255,.03);
+  transition:.25s;
+}
+.challenge-item.done{
+  border-color:rgba(34,197,94,.3);
+  background:rgba(34,197,94,.05);
+}
+.challenge-item.done:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 30px rgba(34,197,94,.1);
+}
+.ch-icon{font-size:22px;flex-shrink:0;margin-top:2px}
+.challenge-item strong{
+  display:block;font-size:14px;color:#f8fafc;margin-bottom:4px;
+}
+.challenge-item small{
+  font-size:12px;color:#64748b;line-height:1.5;
+}
+
+@media(max-width:768px){
+  .soal-inner{padding:28px 20px}
+  .soal-cards{grid-template-columns:1fr}
+  .soal-card.wide{grid-column:auto}
+  .color-swatches{gap:10px}
+  .swatch{width:75px;height:58px;font-size:10px}
+}
+</style>
+
+<!-- JS untuk tab switching Soal -->
+<script>
+(function(){
+  const tabs = document.querySelectorAll('.soal-tab');
+  const contents = document.querySelectorAll('.soal-tab-content');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      contents.forEach(c => c.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+})();
+</script>
 
 <section class="canvas-page">
     <div class="mode-selector">
