@@ -45,7 +45,7 @@
     <div class="exp-desc">Sebelum menggambar, kita butuh dua hal: <strong>1. Kertasnya (Canvas)</strong> dan <strong>2. Alat gambarnya (Context)</strong>. Context 2D ini ibarat kotak pensil ajaib yang berisi kuas, cat warna, dan penggaris. Semua perintah menggambar akan menyuruh alat ini.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+        <div class="pseudo-label">Penjelasan Logika &amp; Pseudocode</div>
 <pre>// TAHAP 1: Menyiapkan Tempat Menggambar di HTML
 Kita buat elemen &lt;canvas&gt; dan tentukan ukuran panjang &amp; lebarnya.
 Ini seperti memotong kertas sesuai ukuran yang kita mau.
@@ -67,7 +67,7 @@ Sekarang kita bisa menyuruh 'ctx' menggambar apa saja:
 - ctx.stroke   : "Tolong tebalkan garis yang barusan saya minta"</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode HTML + JavaScript (state-based.js)</div>
+        <div class="code-label">Kode HTML + JavaScript (state-based.js)</div>
 <pre><span class="cm">&lt;!-- Di file HTML: buat elemen canvas --&gt;</span>
 &lt;<span class="kw">canvas</span>
   id=<span class="str">"graphicsCanvas"</span>
@@ -100,7 +100,7 @@ Sekarang kita bisa menyuruh 'ctx' menggambar apa saja:
     <div class="exp-desc">Di pelajaran matematika sekolah, titik tengah (0,0) biasanya ada di tengah. <strong>Di komputer, titik (0,0) selalu ada di pojok KIRI ATAS layar.</strong> Semakin ke kanan, nilai X bertambah. Semakin ke BAWAH, nilai Y bertambah. Memahami ini penting agar gambar kita tidak nyasar.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+        <div class="pseudo-label">Penjelasan Logika &amp; Pseudocode</div>
 <pre>Pojok Kiri Atas adalah Titik Nol (0, 0).
 
 &rarr; Jika kita ingin geser ke KANAN, kita tambah nilai X-nya.
@@ -118,7 +118,7 @@ Kita tinggal membagi lebar canvas dengan 2 (untuk X)
 dan membagi tinggi canvas dengan 2 (untuk Y).</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode &mdash; Contoh Posisi</div>
+        <div class="code-label">Kode &mdash; Contoh Posisi</div>
 <pre><span class="cm">// Lebar total (960), Tinggi total (600)</span>
 <span class="kw">const</span> SW = stateCanvas.width;
 <span class="kw">const</span> SH = stateCanvas.height;
@@ -149,7 +149,7 @@ ctx.fillRect(
     <div class="exp-desc">Di dunia nyata, kita harus mencelupkan kuas ke cat warna dulu sebelum menyapukannya ke kertas. Canvas bekerja dengan cara yang sama: <strong>Atur warnanya (style) DULU, baru perintah menggambarnya.</strong></div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+        <div class="pseudo-label">Penjelasan Logika &amp; Pseudocode</div>
 <pre>// ATURAN DASAR MENGGAMBAR
 
 1. Untuk Persegi Panjang (Sangat Mudah):
@@ -166,7 +166,7 @@ ctx.fillRect(
                                          atau tebalkan garis luarnya.</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode &mdash; Perbandingan (state-based.js)</div>
+        <div class="code-label">Kode &mdash; Perbandingan (state-based.js)</div>
 <pre><span class="cm">// Cara 1: Kotak (Langsung)</span>
 <span class="cm">// Celup ke cat biru, lalu cetak kotak!</span>
 stateCtx.fillStyle = <span class="str">"#3b82f6"</span>;
@@ -200,7 +200,7 @@ stateCtx.stroke();          <span class="cm">// Tebalkan garisnya!</span></pre>
     <div class="exp-desc">Kotak adalah anak emas di Canvas. Dia punya perintah khusus <code>fillRect</code> yang bisa langsung mencetak kotak solid hanya dalam satu baris perintah tanpa perlu membuat sketsa (path).</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+        <div class="pseudo-label">Penjelasan Logika &amp; Pseudocode</div>
 <pre>// BAGAIMANA CARA KERJANYA?
 Kita hanya perlu memberitahu komputer 4 hal:
 1. Posisi X (Kiri-Kanan)
@@ -215,7 +215,7 @@ Lalu kita tekan stempel yang berukuran lebar 170 dan tinggi 105.
 Jadilah sebuah kotak persegi panjang secara instan!</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js &mdash; stateDraw)</div>
+        <div class="code-label">Kode (state-based.js &mdash; stateDraw)</div>
 <pre><span class="cm">// Set warna cat biru</span>
 stateCtx.fillStyle = <span class="str">"#3b82f6"</span>;
 
@@ -241,7 +241,7 @@ stateCtx.strokeRect(<span class="num">80</span>, <span class="num">90</span>, <s
     <div class="exp-desc">Untuk membuat garis, kita bermain "hubungkan titik-titik". Kita taruh pensil di satu titik, seret ke titik lain, lalu tebalkan dengan spidol.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+        <div class="pseudo-label">Penjelasan Logika &amp; Pseudocode</div>
 <pre>// PROSES MENGGAMBAR GARIS:
 1. "Siapkan kertas kosong!" (beginPath)
 2. "Angkat pensil, taruh di titik A(310, 110)." (moveTo)
@@ -253,7 +253,7 @@ stateCtx.strokeRect(<span class="num">80</span>, <span class="num">90</span>, <s
    *Garis akhirnya muncul di layar*</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js &mdash; stateDraw)</div>
+        <div class="code-label">Kode (state-based.js &mdash; stateDraw)</div>
 <pre><span class="cm">// Siapkan kertas sketsa</span>
 stateCtx.beginPath();
 
@@ -284,7 +284,7 @@ stateCtx.stroke();</pre>
     <div class="exp-desc">Komputer menganggap lingkaran sebagai "garis lengkung yang berputar 360 derajat". Kita menggunakan fungsi <code>arc()</code> (busur) dengan menentukan titik tengahnya seperti memegang jangka.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+        <div class="pseudo-label">Penjelasan Logika &amp; Pseudocode</div>
 <pre>// CARA KERJA JANGKA KOMPUTER (arc):
 1. Tancapkan jarum jangka di tengah (cx, cy).
 2. Lebarkan pensil jangka sepanjang jarak Radius (r).
@@ -302,7 +302,7 @@ Komputer tidak paham "360 derajat". Komputer menggunakan "Radian".
 "Warnai bagian dalamnya dengan warna hijau."</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js &mdash; stateDraw)</div>
+        <div class="code-label">Kode (state-based.js &mdash; stateDraw)</div>
 <pre><span class="cm">// Mulai sketsa</span>
 stateCtx.beginPath();
 
@@ -331,7 +331,7 @@ stateCtx.fill();</pre>
     <div class="exp-desc">Tidak ada rumus instan pembuat segitiga di Canvas! Kita harus menggunakan teknik menggambar 3 garis yang saling terhubung. Bagian terpentingnya adalah menutup garis terakhir agar segitiganya rapat.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+        <div class="pseudo-label">Penjelasan Logika &amp; Pseudocode</div>
 <pre>// LANGKAH MEMBUAT SEGITIGA:
 1. Mulai sketsa baru (beginPath).
 2. Taruh pensil di Puncak Segitiga (moveTo).
@@ -349,7 +349,7 @@ Otomatis segitiga akan tertutup rapat!
 Setelah rapat, kita tumpahkan cat ke dalamnya (fill).</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js &amp; event-based.js)</div>
+        <div class="code-label">Kode (state-based.js &amp; event-based.js)</div>
 <pre>stateCtx.beginPath();
 
 <span class="cm">// Taruh pensil di puncak</span>
@@ -388,7 +388,7 @@ stateCtx.fill();</pre>
     <div class="exp-desc">Selain kode Hex (seperti <code>#3b82f6</code>), kita bisa menggunakan <strong>RGBA</strong> (Red, Green, Blue, Alpha). Bagian yang spesial adalah 'Alpha' &mdash; ini menentukan tingkat seberapa "tembus pandang" warnanya.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+        <div class="pseudo-label">Penjelasan Logika &amp; Pseudocode</div>
 <pre>// MEMAHAMI TINGKAT KETEMBUSPANDANGAN (ALPHA)
 Nilai Alpha berkisar dari 0.0 sampai 1.0.
 - Alpha 1.0 = Cat warna padat (tidak tembus sama sekali).
@@ -405,7 +405,7 @@ tapi tertimpa selapis demi selapis cat hitam tipis.
 Lama-lama gambar lama memudar &rarr; Terciptalah efek ekor berbayang (trail)!</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js &mdash; stateDraw)</div>
+        <div class="code-label">Kode (state-based.js &mdash; stateDraw)</div>
 <pre><span class="cm">// Warna padat biasa (Hex)</span>
 stateCtx.fillStyle = <span class="str">"#3b82f6"</span>;
 
@@ -431,7 +431,7 @@ stateCtx.fillRect(<span class="num">0</span>, <span class="num">0</span>, SW, SH
     <div class="exp-desc">Bagaimana cara membuat warna berubah berurutan setiap diklik, lalu <strong>kembali lagi ke awal</strong> saat warnanya sudah habis? Jawabannya adalah menggunakan "Rak Warna" (Array) dan rumus sisa bagi "Modulo" (%).</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+        <div class="pseudo-label">Penjelasan Logika &amp; Pseudocode</div>
 <pre>// PERSIAPAN RAK WARNA:
 Kita punya rak (Array) berisi 5 botol warna.
 Urutannya: 0(Ungu), 1(Merah), 2(Hijau), 3(Kuning), 4(Biru)
@@ -452,7 +452,7 @@ Tapi kalau sudah sampai botol nomor 4, kita ingin balik ke 0!
 Hasilnya? Warnanya berputar terus tanpa pernah error karena kehabisan botol.</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js)</div>
+        <div class="code-label">Kode (state-based.js)</div>
 <pre><span class="cm">// Rak botol warna (Array)</span>
 <span class="kw">const</span> stateColors = [
   <span class="str">"#8b5cf6"</span>, <span class="cm">// 0: ungu</span>
@@ -486,7 +486,7 @@ stateCanvas.addEventListener(<span class="str">"click"</span>, () => {
     <div class="exp-desc">Di Canvas, fitur "bayangan" (shadow) bisa disulap menjadi efek <strong>cahaya neon (glow)</strong>. Caranya adalah dengan membuat warna bayangan tersebut sama persis dengan warna objeknya, lalu memberikan nilai blur (pendaran) yang tinggi.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+        <div class="pseudo-label">Penjelasan Logika &amp; Pseudocode</div>
 <pre>// CARA MENGHIDUPKAN LAMPU NEON:
 1. Tentukan seberapa terang pendarannya (shadowBlur).
    Semakin besar angkanya, cahayanya makin menyebar luas.
@@ -505,7 +505,7 @@ Oleh karena itu, ada aturan emas:
 - Gambar kotak Player (Kotak tergambar normal, tidak ikut bersinar)</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js &mdash; stateDraw)</div>
+        <div class="code-label">Kode (state-based.js &mdash; stateDraw)</div>
 <pre><span class="cm">// Siapkan sketsa bola</span>
 stateCtx.beginPath();
 stateCtx.arc(stateBall.x, stateBall.y, stateBall.r, <span class="num">0</span>, Math.PI * <span class="num">2</span>);
@@ -543,7 +543,7 @@ stateCtx.shadowBlur  = <span class="num">0</span>;
     <div class="exp-desc">Kita butuh sebuah mesin yang terus berdetak memanggil fungsi gambar kita tiada henti. Di browser web, mesin terbaik untuk ini adalah <code>requestAnimationFrame</code>. Mesin ini super cerdas karena dia sinkron dengan layar monitor kita.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+        <div class="pseudo-label">Penjelasan Logika &amp; Pseudocode</div>
 <pre>// BAGAIMANA MESIN ANIMASI BEKERJA?
 
 Kita buat satu Fungsi Utama (Siklus), isinya 3 langkah baku:
@@ -564,7 +564,7 @@ Alur Kejadiannya:
 - Terus berulang secepat kedipan monitor (biasanya 60x sebdetik).</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js)</div>
+        <div class="code-label">Kode (state-based.js)</div>
 <pre><span class="kw">function</span> stateFrame() {
   <span class="cm">// Jika game sedang tidak di-pause</span>
   <span class="kw">if</span> (!statePaused) {
@@ -598,7 +598,7 @@ requestAnimationFrame(stateFrame);</pre>
     <div class="exp-desc">Untuk membuat benda bergerak, benda itu harus punya <strong>Kecepatan (Velocity)</strong>. Kecepatan ini ibarat "bensin" yang ditambahkan ke posisinya setiap kali layar menggambar ulang.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+        <div class="pseudo-label">Penjelasan Logika &amp; Pseudocode</div>
 <pre>// MEMBERIKAN BENSIN (KECEPATAN) KE BOLA
 Bola butuh dua jenis bensin:
 - Kecepatan Mendatar (vx) : untuk maju/mundur (Kiri-Kanan)
@@ -618,7 +618,7 @@ Kalau langkah ini diulang 60 kali sebdetik, bola X yang awalnya di 100
 akan meluncur mulus sampai X=280! Mata kita melihatnya sebagai gerakan nyata.</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js &mdash; stateUpdate)</div>
+        <div class="code-label">Kode (state-based.js &mdash; stateUpdate)</div>
 <pre><span class="kw">function</span> stateUpdate() {
   <span class="cm">// Tambahkan "bensin kecepatan" ke posisi X</span>
   <span class="cm">// Penulisan singkat dari: stateBall.x = stateBall.x + stateBall.vx</span>
@@ -650,7 +650,7 @@ akan meluncur mulus sampai X=280! Mata kita melihatnya sebagai gerakan nyata.</p
     <div class="exp-desc">Pernah main game di mana karakternya jalan sangat mulus selama tombol ditahan? Itu karena gamenya menggunakan metode <strong>State-Based</strong>. Gamenya tidak menyuruh karakter gerak saat tombol ditekan, tapi game "Mengingat" tombol apa yang sedang ditahan, dan menggerakkan karakter terus menerus.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+        <div class="pseudo-label">Penjelasan Logika &amp; Pseudocode</div>
 <pre>// LOGIKA BUKU CATATAN (STATE):
 Kita siapkan sebuah buku catatan kosong.
 
@@ -670,7 +670,7 @@ mesin selalu mengecek buku catatan tersebut:
 &rarr; Hasilnya: Pergerakan yang super duper mulus tanpa macet!</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js)</div>
+        <div class="code-label">Kode (state-based.js)</div>
 <pre><span class="cm">// 1. Siapkan "Buku Catatan" (Object kosong)</span>
 <span class="kw">const</span> stateKeys = {};
 
@@ -709,7 +709,7 @@ window.addEventListener(<span class="str">"keyup"</span>, e => {
     <div class="exp-desc">Metode <strong>Event-Based</strong> adalah kebalikan dari cara di atas. Karakter tidak digerakkan oleh mesin animasi, melainkan <em>hanya bergerak pasca tombol dipencet</em>. Karena keyboard komputer punya jeda (delay) saat tombol ditahan, gerakannya akan terasa macet di awal lalu patah-patah.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+        <div class="pseudo-label">Penjelasan Logika &amp; Pseudocode</div>
 <pre>// LOGIKA REAKSI INSTAN:
 Tidak ada buku catatan. Tidak menunggu mesin animasi.
 
@@ -731,7 +731,7 @@ Ini tidak enak untuk game Action, tapi SANGAT COCOK untuk:
 - Game turn-based RPG kuno</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode (event-based.js)</div>
+        <div class="code-label">Kode (event-based.js)</div>
 <pre><span class="cm">// Reaksi Instan saat tombol ditekan</span>
 window.addEventListener(<span class="str">"keydown"</span>, e => {
   <span class="kw">const</span> k = e.key.toLowerCase();
@@ -774,7 +774,7 @@ window.addEventListener(<span class="str">"keydown"</span>, e => {
     <div class="exp-desc">Bagaimana membuat bola tidak tembus menghilang keluar layar? Jawabannya sederhana: kita pasang <strong>"Penjaga Dinding" (Kondisi If)</strong>. Jika penjaga melihat bola melewati garis pinggir, penjaga akan memaksa bola <strong>Berbalik Arah secara ekstrem!</strong>.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+        <div class="pseudo-label">Penjelasan Logika &amp; Pseudocode</div>
 <pre>// LOGIKA PENJAGA DINDING KANAN-KIRI (SUMBU X)
 Bola sedang melaju santai ke kanan (Kecepatan X = +3).
 
@@ -795,7 +795,7 @@ Kalau kita cuma cek 'Titik Tengah' bolanya,
 setengah badan bola akan tembus layar sebelum dia sadar untuk memantul.</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js)</div>
+        <div class="code-label">Kode (state-based.js)</div>
 <pre><span class="cm">// Posisi bola + Jari-jari (r) = Tepi Kanan Bola</span>
 <span class="cm">// SW = Lebar Canvas penuh</span>
 
@@ -827,7 +827,7 @@ setengah badan bola akan tembus layar sebelum dia sadar untuk memantul.</pre>
     <div class="exp-desc">Kita ingin ada bayangan lingkaran yang selalu menempel di ujung panah mouse. Caranya bukan dengan menggeser lingkarannya secara harfiah. Caranya adalah dengan <strong>selalu menggambar ulang lingkaran baru persis di mana mouse sedang berada</strong> saat itu.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+        <div class="pseudo-label">Penjelasan Logika &amp; Pseudocode</div>
 <pre>// LOGIKA SATPAM PENYADAP
 1. Pasang alat penyadap (Event Listener) di mouse manusia.
 2. Tiap kali manusia menggeser mouse 1 milimeter pun,
@@ -845,7 +845,7 @@ setengah badan bola akan tembus layar sebelum dia sadar untuk memantul.</pre>
 Hasilnya di mata manusia: Wah, lingkarannya hidup dan membuntuti mouse!</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js)</div>
+        <div class="code-label">Kode (state-based.js)</div>
 <pre><span class="cm">// MEMORI PENYIMPAN POSISI (SATPAM)</span>
 <span class="kw">const</span> stateMouse = { x: <span class="num">0</span>, y: <span class="num">0</span> };
 
@@ -879,7 +879,7 @@ stateCtx.stroke();</pre>
     <div class="exp-desc">Kita sudah bisa menggerakkan kotak kuning (Player) dengan WASD. Tapi tunggu dulu, kotaknya bisa bablas keluar layar dan hilang ditelan kegelapan! Kita harus membuat "Penjara Tanpa Teralis" yang tidak membiarkan nilai posisi kotak melebihi batas layar. Teknik sakti ini bernama <strong>Clamp (Jepit)</strong>.</div>
     <div class="exp-blocks">
       <div class="pseudo-block">
-        <div class="pseudo-label">&#128203; Penjelasan Logika &amp; Pseudocode</div>
+        <div class="pseudo-label">Penjelasan Logika &amp; Pseudocode</div>
 <pre>// APA ITU CLAMP (JEPIT)?
 Bayangkan alat penjepit nilai. Kita punya nilai X, dan kita bilang:
 "Nilai X, kamu boleh membesar sesukamu, TAPI maksimal 900 ya.
@@ -898,7 +898,7 @@ Jepit Maksimal: Gunakan Math.min(BatasMax, Nilai)
 &rarr; "Pilih mana yang lebih kecil, angka Maksimal atau nilaimu saat ini?"</pre>
       </div>
       <div class="code-block">
-        <div class="code-label">&#128187; Kode (state-based.js)</div>
+        <div class="code-label">Kode (state-based.js)</div>
 <pre><span class="cm">// Mesin Penjepit Ringkas (Fungsi Clamp)</span>
 <span class="cm">// Digabung dalam satu baris maut!</span>
 <span class="kw">const</span> sclamp =
@@ -994,9 +994,9 @@ Jepit Maksimal: Gunakan Math.min(BatasMax, Nilai)
 .exp-desc code,.exp-desc strong{color:#f8fafc}
 .exp-desc code{background:rgba(139,92,246,.15);padding:2px 7px;border-radius:6px;color:#a78bfa;font-family:monospace}
 .exp-blocks{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
-.pseudo-block{border-radius:12px;overflow:hidden;border:1px solid rgba(99,102,241,.2)}
-.pseudo-label{padding:10px 16px;font-size:12px;font-weight:800;letter-spacing:1px;background:rgba(99,102,241,.22);color:#a5b4fc}
-.pseudo-block pre{margin:0;padding:20px;font-size:13.5px;line-height:1.8;font-family:"Fira Code","Cascadia Code","Courier New",monospace;background:rgba(0,0,0,.4);color:#e2e8f0;overflow-x:auto;white-space:pre}
+.pseudo-block{border:none;background:transparent;margin-bottom:10px;}
+.pseudo-label{padding:0 0 8px 0;font-size:14px;font-weight:800;letter-spacing:1px;background:transparent;color:#a5b4fc;border-bottom:1px solid rgba(165,180,252,0.2);margin-bottom:12px;}
+.pseudo-block pre{margin:0;padding:0;font-size:14.5px;line-height:1.8;font-family:inherit;background:transparent;color:#cbd5e1;overflow-x:visible;white-space:pre-wrap;}
 .code-block{border-radius:12px;overflow:hidden;border:1px solid rgba(34,211,238,.2)}
 .code-label{padding:10px 16px;font-size:12px;font-weight:800;letter-spacing:1px;background:rgba(34,211,238,.14);color:#67e8f9}
 .code-block pre{margin:0;padding:20px;font-size:13.5px;line-height:1.8;font-family:"Fira Code","Cascadia Code","Courier New",monospace;background:rgba(0,0,0,.4);color:#e2e8f0;overflow-x:auto;white-space:pre}
