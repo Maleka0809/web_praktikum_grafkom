@@ -668,42 +668,7 @@ stateCtx.stroke();</pre>
 </div>
 </div><!-- /section-challenge -->
 
-<!-- SECTION 7: DEMO -->
-<div class="article-section" id="section-demo">
-<div class="article-header"><h2 class="article-title">Integrasi Fitur (Demo)</h2></div>
-<p class="tab-intro">Area eksekusi canvas berikut merender implementasi terintegrasi dari modul logika State-Based translasi, Event tracking koordinat mouse absolut, komputasi manipulasi boundary padding, rotasi array fillStyle, serta pengoperasian sistem HUD (Heads-Up Display) data secara real-time frame rate display loop.</p>
-<div class="demo-layout">
-  <div class="demo-canvas-wrap">
-    <canvas id="demoCanvas" width="780" height="440"></canvas>
-    <div class="demo-hud" id="demoHud">Mouse: (0, 0)</div>
-  </div>
-  <aside class="demo-panel">
-    <h3>Panel Observasi Frame</h3>
-    <div class="demo-badge-list">
-      <div class="demo-badge active" id="badge-bounce">Tantangan #1 (Fisika Bounce Limit)</div>
-      <div class="demo-badge" id="badge-mouse">Tantangan #2 (Sensor Track Position)</div>
-      <div class="demo-badge" id="badge-click">Tantangan #3 (Trigger Re-Coloring Array)</div>
-      <div class="demo-badge" id="badge-key">Tantangan #4 (Key State Evaluation)</div>
-      <div class="demo-badge active" id="badge-coord">Tantangan #5 (Draw String Display Text)</div>
-    </div>
-    <div class="demo-info-box">
-      <div class="demo-info-row"><span>Log Variabel Mouse (Absolute)</span><strong id="demoMouseTxt">(0, 0)</strong></div>
-      <div class="demo-info-row"><span>Log Translasi Posisi Subjek</span><strong id="demoPlayerTxt">(350, 180)</strong></div>
-      <div class="demo-info-row"><span>Status Rotasi Array Warna Aktif</span><strong id="demoBallColor">#8b5cf6</strong></div>
-      <div class="demo-info-row"><span>Data Identifikasi Binding Event</span><strong id="demoKeyTxt">&ndash;</strong></div>
-    </div>
-    <div class="demo-controls">
-      <p>Tekan binding modul input <strong>WASD</strong> untuk memvalidasi interupsi translasi subjek pada sumbu vektor.</p>
-      <p>Ekseskusi parameter event <strong>Click listener</strong> pada area grid untuk melakukan sinkronisasi siklik rotasi state indeks array modul style background bola primer.</p>
-      <p>Gerakkan pointer perangkat navigasi mouse global untuk mereproduksi interpolasi pembacaan event koordinat data point visual.</p>
-    </div>
-    <button id="demoPauseBtn" class="control-btn" style="margin-top:14px">Suspend Frame Thread (Pause)</button>
-    <button id="demoResetBtn" class="control-btn" style="margin-top:6px">Reinstantiate Engine Variables (Reset)</button>
-  </aside>
 </div>
-</div><!-- /section-demo -->
-
-  </div>
 </section>
 
 <style>
@@ -832,89 +797,5 @@ modeButtons.forEach(function(button){
 </script>
 <script src="state-based.js"></script>
 <script src="event-based.js"></script>
-<script>
-(function(){
-  var dc=document.getElementById('demoCanvas');
-  var dctx=dc?dc.getContext('2d'):null;
-  if(!dctx)return;
-  var DW=dc.width,DH=dc.height;
-  var dColors=['#8b5cf6','#f43f5e','#22c55e','#facc15','#22d3ee'];
-  var dColorIdx=0;
-  var dBall={x:200,y:150,r:22,vx:3.2,vy:2.4,color:dColors[0]};
-  var dPlayer={x:350,y:180,w:50,h:50,color:'#f97316'};
-  var dMouse={x:-100,y:-100};
-  var dKeys={};
-  var dPaused=false,dMouseActive=false;
-  var dCircles=[];
-  var dMouseTxt=document.getElementById('demoMouseTxt');
-  var dPlayerTxt=document.getElementById('demoPlayerTxt');
-  var dBallColor=document.getElementById('demoBallColor');
-  var dKeyTxt=document.getElementById('demoKeyTxt');
-  var dHud=document.getElementById('demoHud');
-  var badges={bounce:document.getElementById('badge-bounce'),mouse:document.getElementById('badge-mouse'),click:document.getElementById('badge-click'),key:document.getElementById('badge-key'),coord:document.getElementById('badge-coord')};
-  function dDraw(){
-    dctx.fillStyle='#07111f';dctx.fillRect(0,0,DW,DH);
-    dctx.strokeStyle='rgba(255,255,255,.04)';dctx.lineWidth=1;
-    for(var x=0;x<DW;x+=40){dctx.beginPath();dctx.moveTo(x,0);dctx.lineTo(x,DH);dctx.stroke();}
-    for(var y=0;y<DH;y+=40){dctx.beginPath();dctx.moveTo(0,y);dctx.lineTo(DW,y);dctx.stroke();}
-    dctx.fillStyle='#3b82f6';dctx.fillRect(30,30,130,80);
-    dctx.beginPath();dctx.moveTo(200,50);dctx.lineTo(370,130);dctx.strokeStyle='#f43f5e';dctx.lineWidth=3;dctx.stroke();
-    dctx.beginPath();dctx.arc(490,80,44,0,Math.PI*2);dctx.fillStyle='#22c55e';dctx.fill();
-    dctx.beginPath();dctx.moveTo(80,260);dctx.lineTo(30,370);dctx.lineTo(130,370);dctx.closePath();dctx.fillStyle='#facc15';dctx.fill();
-    dCircles.forEach(function(c){dctx.beginPath();dctx.arc(c.x,c.y,c.r,0,Math.PI*2);dctx.fillStyle=c.color;dctx.fill();});
-    dctx.beginPath();dctx.arc(dBall.x,dBall.y,dBall.r,0,Math.PI*2);dctx.fillStyle=dBall.color;dctx.shadowBlur=28;dctx.shadowColor=dBall.color;dctx.fill();dctx.shadowBlur=0;
-    dctx.fillStyle='#22d3ee';dctx.font='13px monospace';dctx.fillText('Mouse: ('+Math.round(dMouse.x)+', '+Math.round(dMouse.y)+')',12,DH-10);
-    if(dMouseActive){dctx.beginPath();dctx.arc(dMouse.x,dMouse.y,22,0,Math.PI*2);dctx.strokeStyle='#22d3ee';dctx.lineWidth=2.5;dctx.shadowBlur=14;dctx.shadowColor='#22d3ee';dctx.stroke();dctx.shadowBlur=0;dctx.beginPath();dctx.arc(dMouse.x,dMouse.y,4,0,Math.PI*2);dctx.fillStyle='#22d3ee';dctx.fill();}
-    dctx.fillStyle=dPlayer.color;dctx.shadowBlur=18;dctx.shadowColor=dPlayer.color;dctx.fillRect(dPlayer.x,dPlayer.y,dPlayer.w,dPlayer.h);dctx.shadowBlur=0;
-    dctx.fillStyle='#fff';dctx.font='bold 10px monospace';dctx.textAlign='center';dctx.fillText('WASD',dPlayer.x+dPlayer.w/2,dPlayer.y+dPlayer.h/2+4);dctx.textAlign='left';
-    dctx.fillStyle='rgba(255,255,255,.25)';dctx.font='12px monospace';dctx.fillText('Canvas '+DW+'x'+DH+' - CHALLENGE DEMO',12,18);
-  }
-  function dUpdate(){
-    dBall.x+=dBall.vx;dBall.y+=dBall.vy;
-    if(dBall.x<dBall.r||dBall.x>DW-dBall.r)dBall.vx*=-1;
-    if(dBall.y<dBall.r||dBall.y>DH-dBall.r)dBall.vy*=-1;
-    var spd=4;
-    if(dKeys.ArrowLeft||dKeys.a)dPlayer.x-=spd;
-    if(dKeys.ArrowRight||dKeys.d)dPlayer.x+=spd;
-    if(dKeys.ArrowUp||dKeys.w)dPlayer.y-=spd;
-    if(dKeys.ArrowDown||dKeys.s)dPlayer.y+=spd;
-    dPlayer.x=Math.max(0,Math.min(DW-dPlayer.w,dPlayer.x));
-    dPlayer.y=Math.max(0,Math.min(DH-dPlayer.h,dPlayer.y));
-  }
-  function dLoop(){if(!dPaused){dUpdate();dDraw();}requestAnimationFrame(dLoop);}
-  dc.addEventListener('mousemove',function(e){
-    var r=dc.getBoundingClientRect();
-    dMouse.x=(e.clientX-r.left)*DW/r.width;dMouse.y=(e.clientY-r.top)*DH/r.height;
-    dMouseActive=true;
-    if(dMouseTxt)dMouseTxt.textContent='('+Math.round(dMouse.x)+', '+Math.round(dMouse.y)+')';
-    if(dHud)dHud.textContent='Mouse: ('+Math.round(dMouse.x)+', '+Math.round(dMouse.y)+')';
-    if(badges.mouse)badges.mouse.classList.add('active');
-    if(badges.coord)badges.coord.classList.add('active');
-  });
-  dc.addEventListener('mouseleave',function(){dMouseActive=false;});
-  dc.addEventListener('click',function(){
-    dColorIdx=(dColorIdx+1)%dColors.length;dBall.color=dColors[dColorIdx];
-    if(dBallColor)dBallColor.textContent=dColors[dColorIdx];
-    dCircles.push({x:dMouse.x,y:dMouse.y,r:13,color:dColors[(dColorIdx+2)%dColors.length]});
-    if(badges.click){badges.click.classList.add('active');setTimeout(function(){badges.click.classList.remove('active');},700);}
-  });
-  window.addEventListener('keydown',function(e){
-    var k=e.key.toLowerCase();dKeys[e.key]=true;dKeys[k]=true;
-    if(dKeyTxt)dKeyTxt.textContent=e.key;
-    if(badges.key)badges.key.classList.add('active');
-    if(dPlayerTxt)dPlayerTxt.textContent='('+Math.round(dPlayer.x)+', '+Math.round(dPlayer.y)+')';
-  });
-  window.addEventListener('keyup',function(e){
-    var k=e.key.toLowerCase();dKeys[e.key]=false;dKeys[k]=false;
-    if(dKeyTxt)dKeyTxt.textContent='-';
-    if(badges.key)badges.key.classList.remove('active');
-  });
-  var pauseBtn=document.getElementById('demoPauseBtn');
-  var resetBtn=document.getElementById('demoResetBtn');
-  if(pauseBtn)pauseBtn.addEventListener('click',function(){dPaused=!dPaused;pauseBtn.textContent=dPaused?'Suspend Frame Thread (Lanjutkan)':'Suspend Frame Thread (Pause)';});
-  if(resetBtn)resetBtn.addEventListener('click',function(){dPlayer.x=350;dPlayer.y=180;dBall.x=200;dBall.y=150;dBall.vx=3.2;dBall.vy=2.4;dColorIdx=0;dBall.color=dColors[0];dCircles.length=0;dPaused=false;if(pauseBtn)pauseBtn.textContent='Suspend Frame Thread (Pause)';});
-  requestAnimationFrame(dLoop);
-})();
-</script>
 </body>
 </html>
