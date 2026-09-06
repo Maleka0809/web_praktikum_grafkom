@@ -33,7 +33,7 @@
     </div>
     <!-- TAB 1: HTML CANVAS -->
 <div class="article-section" id="section-canvas">
-<div class="article-header"><h2 class="article-title">&#128444;&#65039; HTML Canvas</h2></div>
+<div class="article-header"><h2 class="article-title">HTML Canvas</h2></div>
 <p class="tab-intro"><strong>HTML Canvas</strong> ibarat sebuah <em>selembar kertas kosong digital</em> di halaman web. Kertas ini tidak bisa menggambar dirinya sendiri &mdash; kita harus menggunakan JavaScript sebagai "tangan" dan "kuas" untuk mencoret-coret di atasnya.</p>
 
 <div class="exp-card">
@@ -188,7 +188,7 @@ stateCtx.stroke();          <span class="cm">// Tebalkan garisnya!</span></pre>
 
 <!-- TAB 2: PRIMITIF -->
 <div class="article-section" id="section-primitif">
-<div class="article-header"><h2 class="article-title">&#128310; Primitif</h2></div>
+<div class="article-header"><h2 class="article-title">Primitif</h2></div>
 <p class="tab-intro">Primitif adalah <strong>bentuk-bentuk dasar</strong> pembangun grafis. Ibarat lego, dengan menggabungkan kotak, garis, lingkaran, dan segitiga, kita bisa membuat gambar apapun. Berikut cara Canvas menggambar bentuk-bentuk dasar ini.</p>
 
 <div class="exp-card">
@@ -376,7 +376,7 @@ stateCtx.fill();</pre>
 
 <!-- TAB 3: WARNA -->
 <div class="article-section" id="section-warna">
-<div class="article-header"><h2 class="article-title">&#127912; Warna</h2></div>
+<div class="article-header"><h2 class="article-title">Warna</h2></div>
 <p class="tab-intro">Memberi warna di Canvas tidak sekadar cat padat. Kita bisa menggunakan <strong>transparansi</strong>, mengganti-ganti warna dengan <strong>pola perputaran</strong>, dan bahkan memberikan <strong>efek cahaya (glow)</strong> agar objek terlihat hidup.</p>
 
 <div class="exp-card">
@@ -531,7 +531,7 @@ stateCtx.shadowBlur  = <span class="num">0</span>;
 
 <!-- TAB 4: ANIMASI -->
 <div class="article-section" id="section-animasi">
-<div class="article-header"><h2 class="article-title">&#127902; Animasi</h2></div>
+<div class="article-header"><h2 class="article-title">Animasi</h2></div>
 <p class="tab-intro">Sebuah gambar diam bisa hidup menjadi animasi jika kita <strong>menggambarnya berulang-ulang dengan posisi yang sedikit bergeser</strong>. Jika kita melakukannya sangat cepat (60 kali per detik), mata kita akan tertipu dan melihatnya sebagai gerakan yang mulus. Inilah yang disebut <em>Game Loop</em>.</p>
 
 <div class="exp-card">
@@ -638,7 +638,7 @@ akan meluncur mulus sampai X=280! Mata kita melihatnya sebagai gerakan nyata.</p
 
 <!-- TAB 5: INTERAKSI -->
 <div class="article-section" id="section-interaksi">
-<div class="article-header"><h2 class="article-title">&#128433;&#65039; Interaksi</h2></div>
+<div class="article-header"><h2 class="article-title">Interaksi</h2></div>
 <p class="tab-intro">Tugas JavaScript adalah mendengarkan <strong>"Kejadian" (Event)</strong> yang dilakukan oleh manusia. Entah itu manusia menggeser mouse, menekan tombol keyboard, atau mengklik layar. JavaScript bertugas menangkap kejadian itu dan mengubahnya menjadi reaksi di layar.</p>
 
 <div class="exp-card">
@@ -755,7 +755,7 @@ window.addEventListener(<span class="str">"keydown"</span>, e => {
 
 <!-- TAB 6: tantangan -->
 <div class="article-section" id="section-challenge">
-<div class="article-header"><h2 class="article-title">&#9889; Challenge</h2></div>
+<div class="article-header"><h2 class="article-title">Challenge</h2></div>
 <p class="tab-intro">Di praktikum ini, diberikan tantangan untuk membuat fitur-fitur khusus. Bukannya memilih salah satu, <strong>kita babat habis semua kelima tantangannya!</strong> Mari kita bedah bagaimana cara setiap tantangan diselesaikan secara elegan.</p>
 <div class="challenge-list">
   <div class="ch-row done"><span class="ch-num">&#9989; #1</span><div><strong>Objek memantul di batas canvas</strong><p>Hukum pantulan fisika: Balikkan arah kecepatan jika membentur tembok.</p></div></div>
@@ -928,7 +928,7 @@ Jepit Maksimal: Gunakan Math.min(BatasMax, Nilai)
 
 <!-- TAB 7: DEMO -->
 <div class="article-section" id="section-demo">
-<div class="article-header"><h2 class="article-title">&#127918; Demo</h2></div>
+<div class="article-header"><h2 class="article-title">Demo</h2></div>
 <p class="tab-intro">Jangan cuma baca teorinya! Canvas interaktif di bawah mendemonstrasikan <strong>semua 5 fitur tantangan</strong> sekaligus di satu tempat. Gerakkan mouse untuk melihat kursor pelacak, klik sembarang tempat, dan tekan tombol WASD!</p>
 <div class="demo-layout">
   <div class="demo-canvas-wrap">
@@ -936,11 +936,11 @@ Jepit Maksimal: Gunakan Math.min(BatasMax, Nilai)
     <div class="demo-hud" id="demoHud">Mouse: (0, 0)</div>
   </div>
   <aside class="demo-panel">
-    <h3>&#127918; Panel Kontrol Demo</h3>
+    <h3>Panel Kontrol Demo</h3>
     <div class="demo-badge-list">
       <div class="demo-badge active" id="badge-bounce">&#127955; #1 Fisika Pantulan Aktif</div>
       <div class="demo-badge" id="badge-mouse">&#127919; #2 Sensor Tracking Aktif</div>
-      <div class="demo-badge" id="badge-click">&#128433;&#65039; #3 Klik Untuk Spawn</div>
+      <div class="demo-badge" id="badge-click">#3 Klik Untuk Spawn</div>
       <div class="demo-badge" id="badge-key">&#9000;&#65039; #4 Siap Merespon WASD</div>
       <div class="demo-badge active" id="badge-coord">&#128205; #5 GPS HUD Aktif</div>
     </div>
@@ -952,7 +952,7 @@ Jepit Maksimal: Gunakan Math.min(BatasMax, Nilai)
     </div>
     <div class="demo-controls">
       <p>&#127919; Gunakan <strong>WASD / Panah</strong> untuk menyetir kotak oranye.</p>
-      <p>&#128433;&#65039; <strong>Klik di mana saja</strong> untuk mengganti baju si bola yang memantul dan meninggalkan jejak.</p>
+      <p><strong>Klik di mana saja</strong> untuk mengganti baju si bola yang memantul dan meninggalkan jejak.</p>
       <p>&#10024; Coba diamkan mouse, dan perhatikan cincin birunya.</p>
     </div>
     <button id="demoPauseBtn" class="control-btn" style="margin-top:14px">&#9208; Bekukan Waktu (Pause)</button>
@@ -1028,7 +1028,7 @@ Jepit Maksimal: Gunakan Math.min(BatasMax, Nilai)
 
 .article-section{margin-bottom:60px; padding-bottom:60px; border-bottom:1px dashed rgba(255,255,255,0.1)}
 .article-section:last-child{border-bottom:none; margin-bottom:0; padding-bottom:0;}
-.article-header{text-align:center; margin-bottom:30px; margin-top:20px;}
+.article-header{text-align:left; margin-bottom:30px; margin-top:20px;}
 .article-title{font-size:26px; color:#fff; display:inline-block; padding:10px 30px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:100px; box-shadow:0 4px 20px rgba(0,0,0,0.2);}
 </style>
 
