@@ -213,7 +213,7 @@ canvas.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
     mouseNDC.x = ((e.clientX - rect.left) / canvas.width) * 2 - 1;
     mouseNDC.y = 1 - ((e.clientY - rect.top) / canvas.height) * 2;
-    document.getElementById('mouseNdcDisplay').innerText = \`\${mouseNDC.x.toFixed(2)}, \${mouseNDC.y.toFixed(2)}\`;
+    document.getElementById('mouseNdcDisplay').innerText = `${mouseNDC.x.toFixed(2)}, ${mouseNDC.y.toFixed(2)}`;
 });
 
 canvas.addEventListener('click', () => {
@@ -328,7 +328,7 @@ function updateBufferData() {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(finalArray), gl.DYNAMIC_DRAW);
     
     // Update jumlah primitive di layar
-    document.getElementById('primitiveCountDisplay').innerText = \`\${4 + spawnedCount} Obj\`;
+    document.getElementById('primitiveCountDisplay').innerText = `${4 + spawnedCount} Obj`;
 }
 
 // 4. Main Render Loop
