@@ -14,6 +14,7 @@ out vec3 v_color;
 
 void main() {
     gl_Position = vec4(a_position, 0.0, 1.0);
+    gl_PointSize = 8.0; // Membesarkan point agar mode POINTS terlihat
     v_color = a_color;
 }
 `;
@@ -59,7 +60,7 @@ gl.useProgram(program);
 // Format per vertex: X, Y, R, G, B
 const baseVertices = new Float32Array([
     // --- Primitive 1: Segitiga Bergerak (Index 0-2) ---
-    // Mode: gl.TRIANGLES
+    // Mode Default: gl.TRIANGLES
     -0.15, -0.15, 1.0, 0.0, 0.0, // Kiri Bawah - Merah
     0.15, -0.15, 0.0, 1.0, 0.0, // Kanan Bawah - Hijau
     0.00, 0.15, 0.0, 0.0, 1.0, // Atas - Biru
@@ -87,6 +88,17 @@ const baseVertices = new Float32Array([
     0.2, 0.4, 1.0, 1.0, 0.0, // Kanan
 ]);
 
+// --- Challenge E: Procedural Grid ---
+const gridVertices = [];
+for (let i = -1.0; i <= 1.0; i += 0.1) {
+    gridVertices.push(i, -1.0, 0.2, 0.2, 0.2,  i, 1.0, 0.2, 0.2, 0.2); // garis vertikal
+    gridVertices.push(-1.0, i, 0.2, 0.2, 0.2,  1.0, i, 0.2, 0.2, 0.2); // garis horizontal
+}
+
+// --- Challenge C: Spawned Primitives ---
+let spawnedVertices = [];
+let spawnedCount = 0;
+
 const vbo = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
 
@@ -109,62 +121,60 @@ let offsetY = 0.0;
 let scaleNewObj = 1.0;
 const moveSpeed = 0.02;
 
-// --- Rotasi Bertahap: +45° → -90° → +90° → (ulang) ---
-const rotationSequence = [45, -45, -45, 45]; // urutan delta rotasi (derajat)
-let seqIndex = 0;       // indeks langkah saat ini
-let currentAngle = 0;       // sudut aktual (radian)
-let targetAngle = 0;       // sudut target (radian)
-let isRotating = false;   // sedang beranimasi?
-let isPaused = false;   // sedang jeda antar langkah?
-let lastPauseTime = 0;
-const PAUSE_MS = 400;     // jeda (ms) sebelum langkah berikutnya
-const LERP_SPEED = 0.07;    // kecepatan interpolasi (0–1, lebih besar = lebih cepat)
+// --- Animasi Bouncing ---
 let speedMultiplier = 1.0;
 
-document.getElementById("btnSpeedUp").addEventListener("click", () => {
-    speedMultiplier *= 1.5;
+// --- State Tambahan Challenge ---
+let isPaused = false;
+let showGrid = true;
+let mainDrawMode = gl.TRIANGLES;
+let activeColor = [1.0, 0.0, 0.0];
+let mouseNDC = {x: 0, y: 0};
+
+// Event Listeners UI
+document.getElementById("btnSpeedUp").addEventListener("click", () => speedMultiplier *= 1.5);
+document.getElementById("btnSlowDown").addEventListener("click", () => speedMultiplier /= 1.5);
+document.getElementById("btnClearSpawned").addEventListener("click", () => {
+    spawnedVertices = [];
+    spawnedCount = 0;
+});
+document.getElementById("toggleGrid").addEventListener("change", (e) => showGrid = e.target.checked);
+
+document.getElementById("primitiveSelector").addEventListener("change", (e) => {
+    mainDrawMode = gl[e.target.value];
+    document.getElementById("drawModeDisplay").innerText = e.target.value;
 });
 
-document.getElementById("btnSlowDown").addEventListener("click", () => {
-    speedMultiplier /= 1.5;
-});
-
-function toRad(deg) { return deg * Math.PI / 180; }
-
-/** Mulai rotasi ke langkah berikutnya dalam urutan */
-function startNextRotation() {
-    targetAngle += toRad(rotationSequence[seqIndex]);
-    seqIndex = (seqIndex + 1) % rotationSequence.length;
-    isRotating = true;
-}
-
-/** Dipanggil tiap frame untuk mengupdate sudut rotasi */
-function updateRotation(timestamp) {
-    if (isPaused) {
-        // Tunggu jeda selesai, lalu mulai rotasi berikutnya
-        if (timestamp - lastPauseTime >= (PAUSE_MS / speedMultiplier)) {
-            isPaused = false;
-            startNextRotation();
-        }
-        return;
-    }
-
-    if (isRotating) {
-        // Lerp: dekati targetAngle secara halus
-        currentAngle += (targetAngle - currentAngle) * Math.min(1.0, LERP_SPEED * speedMultiplier);
-
-        // Jika sudah sangat dekat ke target → snap & masuk jeda
-        if (Math.abs(targetAngle - currentAngle) < 0.001) {
-            currentAngle = targetAngle;
-            isRotating = false;
-            isPaused = true;
-            lastPauseTime = timestamp;
-        }
+// Selector & Warna (Challenge B)
+function setMainColor(r, g, b) {
+    activeColor = [r, g, b];
+    // Update warna di dalam baseVertices untuk Primitive 1 (index 0, 1, 2)
+    for(let i = 0; i < 3; i++) {
+        baseVertices[i*5 + 2] = r;
+        baseVertices[i*5 + 3] = g;
+        baseVertices[i*5 + 4] = b;
     }
 }
 
-// Mulai langkah pertama saat halaman dimuat
-startNextRotation();
+document.querySelectorAll('.color-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        let color = e.target.getAttribute('data-color');
+        if (color === 'random') {
+            setMainColor(Math.random(), Math.random(), Math.random());
+        } else {
+            let [r, g, b] = color.split(',').map(Number);
+            setMainColor(r, g, b);
+        }
+    });
+});
+
+// State pergerakan memantul untuk ke-4 objek asli kamu
+const movingObjects = [
+    { posX: 0, posY: 0, vx: 0.005, vy: 0.003 },   // Primitive 1: Segitiga
+    { posX: 0, posY: 0, vx: -0.004, vy: 0.006 },  // Primitive 2: Persegi
+    { posX: 0, posY: 0, vx: 0.006, vy: -0.005 },  // Primitive 3: Segi Lima
+    { posX: 0, posY: 0, vx: -0.005, vy: -0.004 }  // Primitive 4: Diamond
+];
 
 window.addEventListener("keydown", (event) => {
     const controlledKeys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"];
@@ -173,10 +183,24 @@ window.addEventListener("keydown", (event) => {
     }
     keys[event.key] = true;
 
-    // Tekan 'r' atau 'R' untuk reset posisi segitiga
+    // Tekan 'r' atau 'R' untuk reset posisi
     if (event.key.toLowerCase() === "r" && !event.repeat) {
         offsetX = 0.0;
         offsetY = 0.0;
+        movingObjects.forEach(obj => {
+            obj.posX = 0;
+            obj.posY = 0;
+        });
+        spawnedVertices = [];
+        spawnedCount = 0;
+    }
+    // Tekan 'p' untuk pause (Challenge)
+    if (event.key.toLowerCase() === "p" && !event.repeat) {
+        isPaused = !isPaused;
+    }
+    // Tekan 'c' untuk ganti warna random (Challenge)
+    if (event.key.toLowerCase() === "c" && !event.repeat) {
+        setMainColor(Math.random(), Math.random(), Math.random());
     }
 });
 
@@ -184,85 +208,56 @@ window.addEventListener("keyup", (event) => {
     keys[event.key] = false;
 });
 
-function updateKeyboard() {
-    let nextOffsetX = offsetX;
-    let nextOffsetY = offsetY;
+// Mouse Event (Challenge F & C)
+canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouseNDC.x = ((e.clientX - rect.left) / canvas.width) * 2 - 1;
+    mouseNDC.y = 1 - ((e.clientY - rect.top) / canvas.height) * 2;
+    document.getElementById('mouseNdcDisplay').innerText = \`\${mouseNDC.x.toFixed(2)}, \${mouseNDC.y.toFixed(2)}\`;
+});
 
-    if (keys["ArrowLeft"]) nextOffsetX -= moveSpeed;
-    if (keys["ArrowRight"]) nextOffsetX += moveSpeed;
-    if (keys["ArrowUp"]) nextOffsetY += moveSpeed;
-    if (keys["ArrowDown"]) nextOffsetY -= moveSpeed;
+canvas.addEventListener('click', () => {
+    // Spawn objek baru berdasarkan draw mode aktif (triangle = 3 vertex) di posisi NDC
+    let r = activeColor[0], g = activeColor[1], b = activeColor[2];
+    let cx = mouseNDC.x, cy = mouseNDC.y;
+    let s = 0.15 * scaleNewObj; 
+    
+    // Asumsi selalu spawn 3 titik (triangle/point/line)
+    spawnedVertices.push(
+        cx - s, cy - s, r, g, b,
+        cx + s, cy - s, r, g, b,
+        cx, cy + s, r, g, b
+    );
+    spawnedCount++;
+});
+
+
+function updateKeyboard() {
+    if (keys["ArrowLeft"]) offsetX -= moveSpeed;
+    if (keys["ArrowRight"]) offsetX += moveSpeed;
+    if (keys["ArrowUp"]) offsetY += moveSpeed;
+    if (keys["ArrowDown"]) offsetY -= moveSpeed;
 
     if (keys["w"] || keys["W"]) scaleNewObj += 0.02;
     if (keys["s"] || keys["S"]) scaleNewObj = Math.max(0.1, scaleNewObj - 0.02);
-
-    // Fungsi untuk mengecek apakah dengan offset baru, ada titik yang keluar canvas (-1.0 sampai 1.0)
-    function checkOutOfBounds(testOffsetX, testOffsetY) {
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-
-        function checkShape(startIndex, vertexCount, scale = 1.0) {
-            let cx = 0, cy = 0;
-            for (let i = 0; i < vertexCount; i++) {
-                const offset = (startIndex + i) * 5;
-                cx += baseVertices[offset];
-                cy += baseVertices[offset + 1];
-            }
-            cx /= vertexCount;
-            cy /= vertexCount;
-
-            const cosA = Math.cos(currentAngle);
-            const sinA = Math.sin(currentAngle);
-
-            for (let i = 0; i < vertexCount; i++) {
-                const offset = (startIndex + i) * 5;
-                const lx = (baseVertices[offset] - cx) * scale;
-                const ly = (baseVertices[offset + 1] - cy) * scale;
-
-                const x = (lx * cosA - ly * sinA) + cx + testOffsetX;
-                const y = (lx * sinA + ly * cosA) + cy + testOffsetY;
-
-                if (x < minX) minX = x;
-                if (x > maxX) maxX = x;
-                if (y < minY) minY = y;
-                if (y > maxY) maxY = y;
-            }
-        }
-
-        // Cek semua primitive agar tidak keluar batas
-        checkShape(0, 3);
-        checkShape(3, 4);
-        checkShape(7, 5);
-        checkShape(12, 4, scaleNewObj);
-
-        // Pisahkan pengecekan sumbu X dan Y agar tidak saling mengunci
-        return {
-            outX: minX < -1.0 || maxX > 1.0,
-            outY: minY < -1.0 || maxY > 1.0
-        };
-    }
-
-    // Terapkan offset X jika tidak menabrak batas, ATAU pergerakan tersebut mundur ke arah tengah
-    const boundsX = checkOutOfBounds(nextOffsetX, offsetY);
-    if (!boundsX.outX || Math.abs(nextOffsetX) < Math.abs(offsetX)) {
-        offsetX = nextOffsetX;
-    }
-
-    // Terapkan offset Y jika tidak menabrak batas, ATAU pergerakan tersebut mundur ke arah tengah
-    const boundsY = checkOutOfBounds(offsetX, nextOffsetY);
-    if (!boundsY.outY || Math.abs(nextOffsetY) < Math.abs(offsetY)) {
-        offsetY = nextOffsetY;
-    }
 }
 
-function updateBufferData() {
-    const updatedVertices = new Float32Array(baseVertices);
+function updateBouncing() {
+    if (isPaused) return;
 
-    // Fungsi bantuan (helper) untuk menghitung rotasi tiap objek
-    function rotateShape(startIndex, vertexCount, offsetX_shape = 0, offsetY_shape = 0, scale = 1.0) {
-        let cx = 0;
-        let cy = 0;
-
-        // 1. Cari titik tengah (centroid) khusus untuk objek ini
+    movingObjects.forEach((obj, objIndex) => {
+        obj.posX += obj.vx * speedMultiplier;
+        obj.posY += obj.vy * speedMultiplier;
+        
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        let startIndex = 0, vertexCount = 0, scale = 1.0;
+        
+        if (objIndex === 0) { startIndex = 0; vertexCount = 3; }
+        else if (objIndex === 1) { startIndex = 3; vertexCount = 4; }
+        else if (objIndex === 2) { startIndex = 7; vertexCount = 5; }
+        else if (objIndex === 3) { startIndex = 12; vertexCount = 4; scale = scaleNewObj; }
+        
+        let cx = 0, cy = 0;
         for (let i = 0; i < vertexCount; i++) {
             const offset = (startIndex + i) * 5;
             cx += baseVertices[offset];
@@ -271,37 +266,69 @@ function updateBufferData() {
         cx /= vertexCount;
         cy /= vertexCount;
 
-        const cosA = Math.cos(currentAngle);
-        const sinA = Math.sin(currentAngle);
+        for (let i = 0; i < vertexCount; i++) {
+            const offset = (startIndex + i) * 5;
+            const lx = (baseVertices[offset] - cx) * scale;
+            const ly = (baseVertices[offset + 1] - cy) * scale;
+            
+            const x = cx + lx + obj.posX + offsetX;
+            const y = cy + ly + obj.posY + offsetY;
+            
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+        }
 
-        // 2. Putar setiap titik pada objek ini di porosnya
+        // Pantulan (Bouncing)
+        if (minX < -1.0) { obj.posX += (-1.0 - minX); obj.vx = Math.abs(obj.vx); }
+        if (maxX > 1.0) { obj.posX -= (maxX - 1.0); obj.vx = -Math.abs(obj.vx); }
+        if (minY < -1.0) { obj.posY += (-1.0 - minY); obj.vy = Math.abs(obj.vy); }
+        if (maxY > 1.0) { obj.posY -= (maxY - 1.0); obj.vy = -Math.abs(obj.vy); }
+    });
+}
+
+function updateBufferData() {
+    const updatedVertices = new Float32Array(baseVertices);
+
+    function transformShape(startIndex, vertexCount, objIndex, scale = 1.0) {
+        let cx = 0, cy = 0;
+        for (let i = 0; i < vertexCount; i++) {
+            const offset = (startIndex + i) * 5;
+            cx += baseVertices[offset];
+            cy += baseVertices[offset + 1];
+        }
+        cx /= vertexCount;
+        cy /= vertexCount;
+
+        const obj = movingObjects[objIndex];
+
         for (let i = 0; i < vertexCount; i++) {
             const offset = (startIndex + i) * 5;
             const lx = (baseVertices[offset] - cx) * scale;
             const ly = (baseVertices[offset + 1] - cy) * scale;
 
-            updatedVertices[offset] = (lx * cosA - ly * sinA) + cx + offsetX_shape;
-            updatedVertices[offset + 1] = (lx * sinA + ly * cosA) + cy + offsetY_shape;
+            updatedVertices[offset] = cx + lx + obj.posX + offsetX;
+            updatedVertices[offset + 1] = cy + ly + obj.posY + offsetY;
         }
     }
 
-    // --- Terapkan fungsi rotasi ke semua objek ---
+    transformShape(0, 3, 0);
+    transformShape(3, 4, 1);
+    transformShape(7, 5, 2);
+    transformShape(12, 4, 3, scaleNewObj);
 
-    // Primitive 1: Segitiga (Mulai dari vertex ke-0, sebanyak 3 titik)
-    // (Segitiga ditambahkan kontrol arah panah keyboard)
-    rotateShape(0, 3, offsetX, offsetY);
-
-    // Primitive 2: Persegi (Mulai dari vertex ke-3, sebanyak 4 titik)
-    rotateShape(3, 4, offsetX, offsetY);
-
-    // Primitive 3: Segi Lima Garis (Mulai dari vertex ke-7, sebanyak 5 titik)
-    rotateShape(7, 5, offsetX, offsetY);
-
-    // Primitive 4: Diamond (Mulai dari vertex ke-12, sebanyak 4 titik)
-    rotateShape(12, 4, offsetX, offsetY, scaleNewObj);
+    // --- Menggabungkan Grid, Objek Utama, dan Objek Spawned ke satu Buffer ---
+    let finalArray = [];
+    if (showGrid) finalArray.push(...gridVertices);
+    finalArray.push(...updatedVertices);
+    if (spawnedCount > 0) finalArray.push(...spawnedVertices);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-    gl.bufferData(gl.ARRAY_BUFFER, updatedVertices, gl.DYNAMIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(finalArray), gl.DYNAMIC_DRAW);
+    
+    // Update jumlah primitive di layar
+    document.getElementById('primitiveCountDisplay').innerText = \`\${4 + spawnedCount} Obj\`;
 }
 
 // 4. Main Render Loop
@@ -321,41 +348,45 @@ function render(timestamp) {
         lastFrameTime = timestamp;
     }
 
-    // Update teks kecepatan rotasi
     document.getElementById("speedDisplay").innerText = speedMultiplier.toFixed(2) + "x";
 
-    // Menghitung ukuran piksel objek ke-4 (Diamond)
-    // Lebar dan tinggi objek diamond di koordinat WebGL (tanpa scale) adalah 0.4
-    // Kanvas ukuran 800x600. Koordinat WebGL dari -1 ke 1 (total lebar 2.0).
-    // Lebar piksel = (0.4 * scaleNewObj / 2.0) * 800 = 160 * scaleNewObj
-    // Tinggi piksel = (0.4 * scaleNewObj / 2.0) * 600 = 120 * scaleNewObj
-    const pixelWidth = Math.round(160 * scaleNewObj);
-    const pixelHeight = Math.round(120 * scaleNewObj);
-    document.getElementById("scaleDisplay").innerText = `~ (${pixelWidth}x${pixelHeight} px)`;
-
     updateKeyboard();
-    updateRotation(timestamp);  // update sudut rotasi bertahap
+    updateBouncing();
     updateBufferData();
 
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0.03, 0.05, 0.10, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    // Render Primitive 1: Segitiga Bergerak & Berputar (3 Vertex)
-    // Mode Draw: TRIANGLES
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    let offset = 0;
+    
+    // 1. Draw Grid
+    if (showGrid) {
+        const count = gridVertices.length / 5;
+        gl.drawArrays(gl.LINES, offset, count);
+        offset += count;
+    }
 
-    // Render Primitive 2: Persegi Statis (4 Vertex)
-    // Mode Draw: TRIANGLE_STRIP
-    gl.drawArrays(gl.TRIANGLE_STRIP, 3, 4);
+    // 2. Draw Primitive 1: Segitiga Bergerak (Bentuk bisa diubah lewat UI)
+    gl.drawArrays(mainDrawMode, offset, 3);
+    offset += 3;
 
-    // Render Primitive 3: Segi Lima Garis Statis (5 Vertex)
-    // Mode Draw: LINE_LOOP
-    gl.drawArrays(gl.LINE_LOOP, 7, 5);
+    // 3. Draw Primitive 2: Persegi Statis
+    gl.drawArrays(gl.TRIANGLE_STRIP, offset, 4);
+    offset += 4;
 
-    // Render Primitive 4: Diamond berputar & bisa di scale (4 Vertex)
-    // Mode Draw: TRIANGLE_FAN
-    gl.drawArrays(gl.TRIANGLE_FAN, 12, 4);
+    // 4. Draw Primitive 3: Segi Lima Garis Statis
+    gl.drawArrays(gl.LINE_LOOP, offset, 5);
+    offset += 5;
+
+    // 5. Draw Primitive 4: Diamond
+    gl.drawArrays(gl.TRIANGLE_FAN, offset, 4);
+    offset += 4;
+    
+    // 6. Draw Spawned Objects (Jika ada)
+    if (spawnedCount > 0) {
+        gl.drawArrays(mainDrawMode, offset, spawnedCount * 3);
+    }
 
     requestAnimationFrame(render);
 }

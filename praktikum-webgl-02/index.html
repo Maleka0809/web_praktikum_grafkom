@@ -33,7 +33,7 @@
                             <polygon points="5 4 15 12 5 20 5 4"></polygon>
                             <line x1="19" y1="5" x2="19" y2="19"></line>
                         </svg>
-                        Cepatin Rotasi
+                        Cepatin Gerakan
                     </button>
                     <button id="btnSlowDown" class="btn secondary-btn">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -41,27 +41,50 @@
                             <polygon points="19 20 9 12 19 4 19 20"></polygon>
                             <line x1="5" y1="19" x2="5" y2="5"></line>
                         </svg>
-                        Lambanin Rotasi
+                        Lambanin Gerakan
                     </button>
+                    <button id="btnClearSpawned" class="btn secondary-btn">Clear Spawn</button>
                 </div>
-                <div class="instruction">
-                    <span class="key">W</span> perbesar &bull; <span class="key">S</span> perkecil &bull; <span
-                        class="key">Arah</span> gerakkan
+                
+                <div class="challenge-controls" style="display: flex; gap: 16px; margin-top: 12px; align-items: center;">
+                    <select id="primitiveSelector" style="padding: 6px; border-radius: 6px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                        <option value="TRIANGLES">Triangle</option>
+                        <option value="LINE_STRIP">Line Strip</option>
+                        <option value="POINTS">Points</option>
+                    </select>
+                    
+                    <div id="colorButtons" style="display: flex; gap: 8px;">
+                        <button class="color-btn" style="background: red;" data-color="1,0,0"></button>
+                        <button class="color-btn" style="background: green;" data-color="0,1,0"></button>
+                        <button class="color-btn" style="background: blue;" data-color="0,0,1"></button>
+                        <button class="color-btn" style="background: cyan;" data-color="0,1,1"></button>
+                        <button class="color-btn" style="background: linear-gradient(45deg, red, blue);" data-color="random">?</button>
+                    </div>
+
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); cursor: pointer;">
+                        <input type="checkbox" id="toggleGrid" checked>
+                        Grid Pattern
+                    </label>
+                </div>
+                <div class="instruction" style="margin-top: 12px;">
+                    <span class="key">W</span> perbesar &bull; <span class="key">S</span> perkecil &bull; <span class="key">Arah</span> gerakkan &bull; <span class="key">P</span> pause &bull; <span class="key">C</span> warna &bull; <span class="key">R</span> reset &bull; <strong>Klik Canvas</strong> spawn
                 </div>
             </div>
 
             <div class="stats-panel">
                 <div class="stat-card">
-                    <span class="stat-label">FPS Monitor</span>
+                    <span class="stat-label">FPS / Mode</span>
                     <span class="stat-value" id="fpsDisplay">0</span>
+                    <span id="drawModeDisplay" style="font-size: 12px; color: var(--accent-color); margin-top: 4px;">TRIANGLES</span>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-label">Multiplier Rotasi</span>
+                    <span class="stat-label">Speed / Primitive</span>
                     <span class="stat-value" id="speedDisplay">1.00x</span>
+                    <span id="primitiveCountDisplay" style="font-size: 12px; color: var(--accent-color); margin-top: 4px;">4 Obj</span>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-label">Ukuran Objek</span>
-                    <span class="stat-value text-small" id="scaleDisplay">~ (160x120 px)</span>
+                    <span class="stat-label">Mouse NDC</span>
+                    <span class="stat-value text-small" id="mouseNdcDisplay">0.00, 0.00</span>
                 </div>
             </div>
         </div>

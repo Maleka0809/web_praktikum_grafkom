@@ -217,3 +217,20 @@ canvas {
     background: #060a14;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
 }
+
+.color-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: transform 0.2s;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    padding: 0;
+}
+.color-btn:hover {
+    transform: scale(1.2);
+    border-color: white;
+}
