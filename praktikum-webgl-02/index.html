@@ -28,27 +28,6 @@
             <p>Eksplorasi grafika komputer: Translasi, Rotasi & Skala</p>
         </header>
 
-        <div class="dashboard">
-
-            <div class="stats-panel">
-                <div class="stat-card">
-                    <span class="stat-label">FPS / Mode</span>
-                    <span class="stat-value" id="fpsDisplay">0</span>
-                    <span id="drawModeDisplay"
-                        style="font-size: 12px; color: var(--accent-color); margin-top: 4px;">TRIANGLES</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">Speed / Primitive</span>
-                    <span class="stat-value" id="speedDisplay">1.00x</span>
-                    <span id="primitiveCountDisplay"
-                        style="font-size: 12px; color: var(--accent-color); margin-top: 4px;">4 Obj</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">Mouse NDC</span>
-                    <span class="stat-value text-small" id="mouseNdcDisplay">0.00, 0.00</span>
-                </div>
-            </div>
-        </div>
 
         <div class="explanation-panel"
             style="background: rgba(255,255,255,0.05); padding: 24px; border-radius: 12px; margin-bottom: 24px; color: var(--text-color, #e2e8f0); font-size: 15px; line-height: 1.7; border: 1px solid rgba(255,255,255,0.1);">
@@ -62,7 +41,8 @@
             <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">1. Minimal 3 Primitive & 2 Draw Mode</h4>
             <p style="margin: 0 0 12px 0;">Terdapat 4 objek dasar (Segitiga, Persegi, Segi Lima Garis, Diamond).
                 Masing-masing menggunakan <i>draw mode</i> berbeda: <code>gl.TRIANGLES</code>,
-                <code>gl.TRIANGLE_STRIP</code>, <code>gl.LINE_LOOP</code>, dan <code>gl.TRIANGLE_FAN</code>.</p>
+                <code>gl.TRIANGLE_STRIP</code>, <code>gl.LINE_LOOP</code>, dan <code>gl.TRIANGLE_FAN</code>.
+            </p>
             <pre
                 style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>gl.drawArrays(mainDrawMode, offset, 3); // Segitiga
 gl.drawArrays(gl.TRIANGLE_STRIP, offset, 4); // Persegi
@@ -111,7 +91,8 @@ updatedVertices[offset] = cx + lx + obj.posX + offsetX;</code></pre>
 
             <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">A. Primitive Selector</h4>
             <p style="margin: 0 0 12px 0;">Terdapat Dropdown di panel kontrol untuk mengganti mode. Ketika diganti,
-                <code>mainDrawMode</code> di script akan menyesuaikan dan diterapkan di <i>drawArrays</i>.</p>
+                <code>mainDrawMode</code> di script akan menyesuaikan dan diterapkan di <i>drawArrays</i>.
+            </p>
             <pre
                 style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>document.getElementById("primitiveSelector").addEventListener("change", (e) => {
     mainDrawMode = gl[e.target.value];
@@ -163,7 +144,8 @@ if (maxX > 1.0) { obj.posX -= (maxX - 1.0); obj.vx = -Math.abs(obj.vx); }</code>
 document.getElementById('mouseNdcDisplay').innerText = `${mouseNDC.x.toFixed(2)}, ${mouseNDC.y.toFixed(2)}`;</code></pre>
         </div>
 
-        <div class="controls-panel" style="margin-bottom: 20px;">
+        <div class="dashboard" style="margin-bottom: 24px;">
+            <div class="controls-panel">
                 <div class="button-group">
                     <button id="btnSpeedUp" class="btn primary-btn">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -215,6 +197,26 @@ document.getElementById('mouseNdcDisplay').innerText = `${mouseNDC.x.toFixed(2)}
                         Canvas</strong> spawn
                 </div>
             </div>
+
+            <div class="stats-panel">
+                <div class="stat-card">
+                    <span class="stat-label">FPS / Mode</span>
+                    <span class="stat-value" id="fpsDisplay">0</span>
+                    <span id="drawModeDisplay"
+                        style="font-size: 12px; color: var(--accent-color); margin-top: 4px;">TRIANGLES</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Speed / Primitive</span>
+                    <span class="stat-value" id="speedDisplay">1.00x</span>
+                    <span id="primitiveCountDisplay"
+                        style="font-size: 12px; color: var(--accent-color); margin-top: 4px;">4 Obj</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Mouse NDC</span>
+                    <span class="stat-value text-small" id="mouseNdcDisplay">0.00, 0.00</span>
+                </div>
+            </div>
+        </div>
 
         <div class="canvas-wrapper">
             <canvas id="glCanvas" width="800" height="600">
