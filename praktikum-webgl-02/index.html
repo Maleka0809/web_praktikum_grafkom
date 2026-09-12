@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../halaman_awal/praktikum.css">
-    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./style.css?v=3">
 </head>
 
 <body>
@@ -17,7 +17,11 @@
     <div class="app-container">
         <header class="app-header">
             <a href="../halaman_awal/index.html" class="back-link">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
                 Kembali ke Halaman Awal
             </a>
             <h1>WebGL Canvas Interaktif</h1>
@@ -45,29 +49,36 @@
                     </button>
                     <button id="btnClearSpawned" class="btn secondary-btn">Clear Spawn</button>
                 </div>
-                
-                <div class="challenge-controls" style="display: flex; gap: 16px; margin-top: 12px; align-items: center;">
-                    <select id="primitiveSelector" style="padding: 6px; border-radius: 6px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+
+                <div class="challenge-controls"
+                    style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap; justify-content: center;">
+                    <select id="primitiveSelector"
+                        style="padding: 6px; border-radius: 6px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
                         <option value="TRIANGLES">Triangle</option>
                         <option value="LINE_STRIP">Line Strip</option>
                         <option value="POINTS">Points</option>
                     </select>
-                    
+
                     <div id="colorButtons" style="display: flex; gap: 8px;">
                         <button class="color-btn" style="background: red;" data-color="1,0,0"></button>
                         <button class="color-btn" style="background: green;" data-color="0,1,0"></button>
                         <button class="color-btn" style="background: blue;" data-color="0,0,1"></button>
                         <button class="color-btn" style="background: cyan;" data-color="0,1,1"></button>
-                        <button class="color-btn" style="background: linear-gradient(45deg, red, blue);" data-color="random">?</button>
+                        <button class="color-btn" style="background: linear-gradient(45deg, red, blue);"
+                            data-color="random">?</button>
                     </div>
 
-                    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); cursor: pointer;">
+                    <label
+                        style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); cursor: pointer;">
                         <input type="checkbox" id="toggleGrid" checked>
                         Grid Pattern
                     </label>
                 </div>
-                <div class="instruction" style="margin-top: 12px;">
-                    <span class="key">W</span> perbesar &bull; <span class="key">S</span> perkecil &bull; <span class="key">Arah</span> gerakkan &bull; <span class="key">P</span> pause &bull; <span class="key">C</span> warna &bull; <span class="key">R</span> reset &bull; <strong>Klik Canvas</strong> spawn
+                <div class="instruction">
+                    <span class="key">W</span> perbesar &bull; <span class="key">S</span> perkecil &bull; <span
+                        class="key">Arah</span> gerakkan &bull; <span class="key">P</span> pause &bull; <span
+                        class="key">C</span> warna &bull; <span class="key">R</span> reset &bull; <strong>Klik
+                        Canvas</strong> spawn
                 </div>
             </div>
 
@@ -75,12 +86,14 @@
                 <div class="stat-card">
                     <span class="stat-label">FPS / Mode</span>
                     <span class="stat-value" id="fpsDisplay">0</span>
-                    <span id="drawModeDisplay" style="font-size: 12px; color: var(--accent-color); margin-top: 4px;">TRIANGLES</span>
+                    <span id="drawModeDisplay"
+                        style="font-size: 12px; color: var(--accent-color); margin-top: 4px;">TRIANGLES</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label">Speed / Primitive</span>
                     <span class="stat-value" id="speedDisplay">1.00x</span>
-                    <span id="primitiveCountDisplay" style="font-size: 12px; color: var(--accent-color); margin-top: 4px;">4 Obj</span>
+                    <span id="primitiveCountDisplay"
+                        style="font-size: 12px; color: var(--accent-color); margin-top: 4px;">4 Obj</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label">Mouse NDC</span>
@@ -89,27 +102,117 @@
             </div>
         </div>
 
-        <div class="explanation-panel" style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; margin-bottom: 20px; color: var(--text-color, #e2e8f0); font-size: 14px; line-height: 1.6; border: 1px solid rgba(255,255,255,0.1); overflow-y: auto; max-height: 250px;">
-            <h2 style="margin-top: 0; font-size: 18px; color: var(--accent-color, #4facfe);">Penjelasan Pemenuhan Requirement & Challenge</h2>
-            
-            <h3 style="margin-top: 16px; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">🎯 Pemenuhan Kriteria Dasar (Requirements)</h3>
-            <ul style="margin-top: 8px; padding-left: 20px; margin-bottom: 0;">
-                <li style="margin-bottom: 6px;"><strong>Minimal 3 Primitive & 2 Draw Mode:</strong> Terdapat 4 objek dasar (Segitiga, Persegi, Segi Lima Garis, Diamond). Masing-masing menggunakan <i>draw mode</i> berbeda: <code>gl.TRIANGLES</code>, <code>gl.TRIANGLE_STRIP</code>, <code>gl.LINE_LOOP</code>, dan <code>gl.TRIANGLE_FAN</code>.</li>
-                <li style="margin-bottom: 6px;"><strong>Vertex Color & Minimal 3 Warna:</strong> Array <code>baseVertices</code> menampung 5 nilai per titik (X, Y, R, G, B) dengan variasi warna lebih dari 3 (Merah, Hijau, Biru, Kuning, dll).</li>
-                <li style="margin-bottom: 6px;"><strong>Minimal Satu Object Bergerak:</strong> Terdapat 4 primitif yang terus bergerak bebas dan memantul ketika mengenai batas kanvas layar.</li>
-                <li style="margin-bottom: 6px;"><strong>Interaksi & Loop:</strong> Interaksi keyboard (W, S, P, R, C, Arah) dan Mouse (klik). Animasi berjalan mulus melalui <code>requestAnimationFrame</code>.</li>
-                <li><strong>Lainnya:</strong> Background biru-gelap terpisah, transformasi (translasi dan skala) dihitung menggunakan matematika vertex dasar di fungsi <code>updateBufferData()</code>, kode dirapihkan tanpa duplikasi fungsi berlebih.</li>
-            </ul>
+        <div class="explanation-panel"
+            style="background: rgba(255,255,255,0.05); padding: 24px; border-radius: 12px; margin-bottom: 24px; color: var(--text-color, #e2e8f0); font-size: 15px; line-height: 1.7; border: 1px solid rgba(255,255,255,0.1);">
+            <h2 style="margin-top: 0; font-size: 22px; color: var(--accent-color, #4facfe); margin-bottom: 24px;">
+                Penjelasan Pemenuhan Requirement & Challenge</h2>
 
-            <h3 style="margin-top: 16px; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">🚀 Penjelasan Challenge (A - F)</h3>
-            <ul style="margin-top: 8px; padding-left: 20px; margin-bottom: 0;">
-                <li style="margin-bottom: 6px;"><strong>A. Primitive Selector:</strong> Terdapat Dropdown di panel kontrol untuk mengganti mode. Ketika diganti, <code>mainDrawMode</code> di script akan menyesuaikan dan diterapkan di <i>drawArrays</i>.</li>
-                <li style="margin-bottom: 6px;"><strong>B. Color Control:</strong> Tombol warna (termasuk tombol <code>?</code> untuk warna random). Ketika diklik, akan mengubah nilai RGB dari bentuk pertama di memori <code>baseVertices</code>.</li>
-                <li style="margin-bottom: 6px;"><strong>C. Spawn Primitive:</strong> Ketika layar diklik, posisi pixel mouse dikonversi menjadi kordinat NDC, lalu script menambahkan objek (3 vertex baru) tepat di posisi kursor klik.</li>
-                <li style="margin-bottom: 6px;"><strong>D. Multiple Moving Objects:</strong> Ke-4 objek bergerak dengan arah & kecepatan mandiri. Logika pantulan dikalkulasi pada fungsi <code>updateBouncing()</code> memantau batas X dan Y (-1.0 hingga 1.0).</li>
-                <li style="margin-bottom: 6px;"><strong>E. Procedural Pattern:</strong> Terdapat garis grid di background. Data titiknya di-generate otomatis dengan perulangan <code>for</code> loop di awal JavaScript.</li>
-                <li><strong>F. Simple HUD:</strong> Data indikator seperti angka FPS, jumlah objek (spawn), kecepatan, dan kordinat kursor NDC disuntikkan ke teks HTML murni secara real-time via <code>innerText</code> agar tidak membebani WebGL rendering.</li>
-            </ul>
+            <h3
+                style="font-size: 18px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 16px; color: #fff;">
+                🎯 Pemenuhan Kriteria Dasar (Requirements)</h3>
+
+            <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">1. Minimal 3 Primitive & 2 Draw Mode</h4>
+            <p style="margin: 0 0 12px 0;">Terdapat 4 objek dasar (Segitiga, Persegi, Segi Lima Garis, Diamond).
+                Masing-masing menggunakan <i>draw mode</i> berbeda: <code>gl.TRIANGLES</code>,
+                <code>gl.TRIANGLE_STRIP</code>, <code>gl.LINE_LOOP</code>, dan <code>gl.TRIANGLE_FAN</code>.</p>
+            <pre
+                style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>gl.drawArrays(mainDrawMode, offset, 3); // Segitiga
+gl.drawArrays(gl.TRIANGLE_STRIP, offset, 4); // Persegi
+gl.drawArrays(gl.LINE_LOOP, offset, 5); // Segi lima
+gl.drawArrays(gl.TRIANGLE_FAN, offset, 4); // Diamond</code></pre>
+
+            <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">2. Vertex Color & Minimal 3 Warna</h4>
+            <p style="margin: 0 0 12px 0;">Array <code>baseVertices</code> menampung 5 nilai per titik (X, Y, R, G, B)
+                dengan variasi warna lebih dari 3 (Merah, Hijau, Biru, Kuning, dll).</p>
+            <pre
+                style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>-0.15, -0.15, 1.0, 0.0, 0.0, // Merah
+ 0.15, -0.15, 0.0, 1.0, 0.0, // Hijau
+ 0.00,  0.15, 0.0, 0.0, 1.0, // Biru</code></pre>
+
+            <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">3. Minimal Satu Object Bergerak</h4>
+            <p style="margin: 0 0 12px 0;">Terdapat 4 primitif yang terus bergerak bebas dan memantul ketika mengenai
+                batas kanvas layar.</p>
+            <pre
+                style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>const movingObjects = [
+    { posX: 0, posY: 0, vx: 0.005, vy: 0.003 },
+    { posX: 0, posY: 0, vx: -0.004, vy: 0.006 },
+    // ...
+];</code></pre>
+
+            <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">4. Interaksi & Loop</h4>
+            <p style="margin: 0 0 12px 0;">Interaksi keyboard (W, S, P, R, C, Arah) dan Mouse (klik). Animasi berjalan
+                mulus melalui <code>requestAnimationFrame</code>.</p>
+            <pre
+                style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>window.addEventListener("keydown", (event) => { ... });
+requestAnimationFrame(render);</code></pre>
+
+            <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">5. Kriteria Lainnya</h4>
+            <p style="margin: 0 0 12px 0;">Background biru-gelap terpisah, transformasi (translasi dan skala) dihitung
+                menggunakan matematika vertex dasar di fungsi <code>updateBufferData()</code>, kode dirapihkan tanpa
+                duplikasi fungsi berlebih.</p>
+            <pre
+                style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 32px 0; overflow-x: auto; font-family: monospace;"><code>gl.clearColor(0.03, 0.05, 0.10, 1.0); // Background
+// Transformasi Skala & Translasi manual di Javascript
+const lx = (baseVertices[offset] - cx) * scale;
+const ly = (baseVertices[offset + 1] - cy) * scale;
+updatedVertices[offset] = cx + lx + obj.posX + offsetX;</code></pre>
+
+            <h3
+                style="font-size: 18px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 16px; color: #fff;">
+                🚀 Penjelasan Challenge (A - F)</h3>
+
+            <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">A. Primitive Selector</h4>
+            <p style="margin: 0 0 12px 0;">Terdapat Dropdown di panel kontrol untuk mengganti mode. Ketika diganti,
+                <code>mainDrawMode</code> di script akan menyesuaikan dan diterapkan di <i>drawArrays</i>.</p>
+            <pre
+                style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>document.getElementById("primitiveSelector").addEventListener("change", (e) => {
+    mainDrawMode = gl[e.target.value];
+});</code></pre>
+
+            <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">B. Color Control</h4>
+            <p style="margin: 0 0 12px 0;">Tombol warna (termasuk tombol <code>?</code> untuk warna random). Ketika
+                diklik, akan mengubah nilai RGB dari bentuk pertama di memori <code>baseVertices</code>.</p>
+            <pre
+                style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>function setMainColor(r, g, b) {
+    for(let i = 0; i < 3; i++) {
+        baseVertices[i*5 + 2] = r;
+        baseVertices[i*5 + 3] = g;
+        baseVertices[i*5 + 4] = b;
+    }
+}</code></pre>
+
+            <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">C. Spawn Primitive</h4>
+            <p style="margin: 0 0 12px 0;">Ketika layar diklik, posisi pixel mouse dikonversi menjadi kordinat NDC, lalu
+                script menambahkan objek (3 vertex baru) tepat di posisi kursor klik.</p>
+            <pre
+                style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>canvas.addEventListener('click', () => {
+    let cx = mouseNDC.x, cy = mouseNDC.y;
+    spawnedVertices.push(cx - s, cy - s, r, g, b, ...);
+});</code></pre>
+
+            <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">D. Multiple Moving Objects</h4>
+            <p style="margin: 0 0 12px 0;">Ke-4 objek bergerak dengan arah & kecepatan mandiri. Logika pantulan
+                dikalkulasi pada fungsi <code>updateBouncing()</code> memantau batas X dan Y (-1.0 hingga 1.0).</p>
+            <pre
+                style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>if (minX < -1.0) { obj.posX += (-1.0 - minX); obj.vx = Math.abs(obj.vx); }
+if (maxX > 1.0) { obj.posX -= (maxX - 1.0); obj.vx = -Math.abs(obj.vx); }</code></pre>
+
+            <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">E. Procedural Pattern</h4>
+            <p style="margin: 0 0 12px 0;">Terdapat garis grid di background. Data titiknya di-generate otomatis dengan
+                perulangan <code>for</code> loop di awal JavaScript.</p>
+            <pre
+                style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>for (let i = -1.0; i <= 1.0; i += 0.1) {
+    gridVertices.push(i, -1.0, 0.2, 0.2, 0.2,  i, 1.0, 0.2, 0.2, 0.2); // vertikal
+    gridVertices.push(-1.0, i, 0.2, 0.2, 0.2,  1.0, i, 0.2, 0.2, 0.2); // horizontal
+}</code></pre>
+
+            <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">F. Simple HUD</h4>
+            <p style="margin: 0 0 12px 0;">Data indikator seperti angka FPS, jumlah objek (spawn), kecepatan, dan
+                kordinat kursor NDC disuntikkan ke teks HTML murni secara real-time via <code>innerText</code> agar
+                tidak membebani WebGL rendering.</p>
+            <pre
+                style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0; overflow-x: auto; font-family: monospace;"><code>document.getElementById("fpsDisplay").innerText = currentFps;
+document.getElementById('mouseNdcDisplay').innerText = `${mouseNDC.x.toFixed(2)}, ${mouseNDC.y.toFixed(2)}`;</code></pre>
         </div>
 
         <div class="canvas-wrapper">
