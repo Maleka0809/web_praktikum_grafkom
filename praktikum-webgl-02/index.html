@@ -89,6 +89,29 @@
             </div>
         </div>
 
+        <div class="explanation-panel" style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; margin-bottom: 20px; color: var(--text-color, #e2e8f0); font-size: 14px; line-height: 1.6; border: 1px solid rgba(255,255,255,0.1); overflow-y: auto; max-height: 250px;">
+            <h2 style="margin-top: 0; font-size: 18px; color: var(--accent-color, #4facfe);">Penjelasan Pemenuhan Requirement & Challenge</h2>
+            
+            <h3 style="margin-top: 16px; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">🎯 Pemenuhan Kriteria Dasar (Requirements)</h3>
+            <ul style="margin-top: 8px; padding-left: 20px; margin-bottom: 0;">
+                <li style="margin-bottom: 6px;"><strong>Minimal 3 Primitive & 2 Draw Mode:</strong> Terdapat 4 objek dasar (Segitiga, Persegi, Segi Lima Garis, Diamond). Masing-masing menggunakan <i>draw mode</i> berbeda: <code>gl.TRIANGLES</code>, <code>gl.TRIANGLE_STRIP</code>, <code>gl.LINE_LOOP</code>, dan <code>gl.TRIANGLE_FAN</code>.</li>
+                <li style="margin-bottom: 6px;"><strong>Vertex Color & Minimal 3 Warna:</strong> Array <code>baseVertices</code> menampung 5 nilai per titik (X, Y, R, G, B) dengan variasi warna lebih dari 3 (Merah, Hijau, Biru, Kuning, dll).</li>
+                <li style="margin-bottom: 6px;"><strong>Minimal Satu Object Bergerak:</strong> Terdapat 4 primitif yang terus bergerak bebas dan memantul ketika mengenai batas kanvas layar.</li>
+                <li style="margin-bottom: 6px;"><strong>Interaksi & Loop:</strong> Interaksi keyboard (W, S, P, R, C, Arah) dan Mouse (klik). Animasi berjalan mulus melalui <code>requestAnimationFrame</code>.</li>
+                <li><strong>Lainnya:</strong> Background biru-gelap terpisah, transformasi (translasi dan skala) dihitung menggunakan matematika vertex dasar di fungsi <code>updateBufferData()</code>, kode dirapihkan tanpa duplikasi fungsi berlebih.</li>
+            </ul>
+
+            <h3 style="margin-top: 16px; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">🚀 Penjelasan Challenge (A - F)</h3>
+            <ul style="margin-top: 8px; padding-left: 20px; margin-bottom: 0;">
+                <li style="margin-bottom: 6px;"><strong>A. Primitive Selector:</strong> Terdapat Dropdown di panel kontrol untuk mengganti mode. Ketika diganti, <code>mainDrawMode</code> di script akan menyesuaikan dan diterapkan di <i>drawArrays</i>.</li>
+                <li style="margin-bottom: 6px;"><strong>B. Color Control:</strong> Tombol warna (termasuk tombol <code>?</code> untuk warna random). Ketika diklik, akan mengubah nilai RGB dari bentuk pertama di memori <code>baseVertices</code>.</li>
+                <li style="margin-bottom: 6px;"><strong>C. Spawn Primitive:</strong> Ketika layar diklik, posisi pixel mouse dikonversi menjadi kordinat NDC, lalu script menambahkan objek (3 vertex baru) tepat di posisi kursor klik.</li>
+                <li style="margin-bottom: 6px;"><strong>D. Multiple Moving Objects:</strong> Ke-4 objek bergerak dengan arah & kecepatan mandiri. Logika pantulan dikalkulasi pada fungsi <code>updateBouncing()</code> memantau batas X dan Y (-1.0 hingga 1.0).</li>
+                <li style="margin-bottom: 6px;"><strong>E. Procedural Pattern:</strong> Terdapat garis grid di background. Data titiknya di-generate otomatis dengan perulangan <code>for</code> loop di awal JavaScript.</li>
+                <li><strong>F. Simple HUD:</strong> Data indikator seperti angka FPS, jumlah objek (spawn), kecepatan, dan kordinat kursor NDC disuntikkan ke teks HTML murni secara real-time via <code>innerText</code> agar tidak membebani WebGL rendering.</li>
+            </ul>
+        </div>
+
         <div class="canvas-wrapper">
             <canvas id="glCanvas" width="800" height="600">
             </canvas>
