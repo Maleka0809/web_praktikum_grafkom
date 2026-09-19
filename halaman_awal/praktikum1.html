@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="praktikum.css">
+    <title>Praktikum 1 - Interactive Canvas</title>
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="../index.html" class="brand"><span class="brand-icon">💻</span>Grafika<span>Komputer</span></a>
+        <div class="nav-menu">
+            <a href="../index.html">Home</a>
+            <a href="halaman_praktikum.html" class="active">Praktikum</a>
+            <a href="kontak_kami.html">Kontak Kami</a>
+        </div>
+    </div>
+</nav>
+
+<section class="page-header">
+    <span class="section-label">PRAKTIKUM 01</span>
+    <h1>Interactive Canvas</h1>
+    <p>Eksperimen objek 2D, animasi, transformasi, mouse, keyboard, State-Based, dan Event-Based.</p>
+</section>
+
+<section class="soal-section">
+  <div class="soal-inner">
+    <div class="soal-header">
+      <span class="section-label">SOAL PRAKTIKUM</span>
+      <h2>Penjelasan Logika &amp; Implementasi</h2>
+      <p>Berikut adalah penjelasan teknis untuk setiap komponen praktikum Canvas API.</p>
+    </div>
+
+<!-- SECTION 1: HTML CANVAS -->
+<div class="article-section" id="section-canvas">
+<div class="article-header"><h2 class="article-title">HTML Canvas</h2></div>
+<p class="tab-intro">Canvas API menyediakan sarana untuk menggambar grafis secara dinamis via JavaScript. Area canvas ditentukan pada dokumen HTML, sedangkan proses rendering seluruhnya dikontrol melalui script.</p>
+
+<div class="exp-card">
+  <div class="exp-head purple">
+    <div class="exp-icon">1</div>
+    <div><div class="exp-tag">KONSEP DASAR</div><div class="exp-title">Inisialisasi Canvas dan Konteks 2D</div></div>
+  </div>
+  <div class="exp-body">
+    <div class="exp-desc">Rendering pada canvas membutuhkan elemen HTML dan inisialisasi context pada JavaScript. Konteks (context) ini menyediakan berbagai metode standar untuk manipulasi piksel dan grafis vektor 2D.</div>
+    <div class="exp-blocks">
+      <div class="pseudo-block">
+        <h4 class="pseudo-label">Penjelasan Logika</h4>
+        <div class="pseudo-text">
+          <ul>
+            <li><strong>Tahap 1:</strong> Mendefinisikan elemen <code>&lt;canvas&gt;</code> di dalam struktur HTML dengan atribut <code>width</code> dan <code>height</code> untuk menentukan dimensi area render.</li>
+            <li><strong>Tahap 2:</strong> Mendapatkan referensi DOM ke elemen canvas tersebut melalui fungsi <code>document.getElementById()</code>.</li>
+            <li><strong>Tahap 3:</strong> Menginisialisasi <em>Rendering Context</em> menggunakan <code>getContext("2d")</code>. Objek context ini merupakan antarmuka (API) utama untuk memanggil instruksi penggambaran.</li>
+            <li><strong>Tahap 4:</strong> Melakukan eksekusi metode menggambar seperti <code>fillRect()</code> (untuk persegi) atau <code>arc()</code> (untuk lingkaran) menggunakan instance dari context tersebut.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Kode HTML + JavaScript (state-based.js)</div>
+<pre><span class="cm">&lt;!-- Di file HTML: buat elemen canvas --&gt;</span>
+&lt;<span class="kw">canvas</span>
+  id=<span class="str">"graphicsCanvas"</span>
+  width=<span class="num">960</span>
+  height=<span class="num">600</span>&gt;
+&lt;/<span class="kw">canvas</span>&gt;
+
+<span class="cm">// Di JavaScript: ambil canvas dan konteks</span>
+<span class="kw">const</span> stateCanvas = document.getElementById(<span class="str">"graphicsCanvas"</span>);
+<span class="kw">const</span> stateCtx = stateCanvas.getContext(<span class="str">"2d"</span>);
+
+<span class="cm">// Simpan dimensi dalam konstanta</span>
+<span class="kw">const</span> SW = stateCanvas.width;  <span class="cm">// 960</span>
+<span class="kw">const</span> SH = stateCanvas.height; <span class="cm">// 600</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="exp-card">
+  <div class="exp-head cyan">
+    <div class="exp-icon">2</div>
+    <div><div class="exp-tag">SISTEM KOORDINAT</div><div class="exp-title">Koordinat X dan Y pada Canvas</div></div>
+  </div>
+  <div class="exp-body">
+    <div class="exp-desc">Sistem koordinat Canvas berbeda dengan sistem kartesian pada umumnya. Titik origin ditempatkan di sudut kiri atas elemen canvas.</div>
+    <div class="exp-blocks">
+      <div class="pseudo-block">
+        <h4 class="pseudo-label">Penjelasan Logika</h4>
+        <div class="pseudo-text">
+          <ul>
+            <li>Titik awal <code>(0, 0)</code> berada secara mutlak di sudut <strong>kiri atas</strong>.</li>
+            <li>Sumbu <strong>X</strong> bernilai positif ke arah kanan.</li>
+            <li>Sumbu <strong>Y</strong> bernilai positif ke arah bawah.</li>
+            <li>Untuk menentukan titik pusat (center point) dari canvas, digunakan perhitungan: koordinat <code>X = lebar canvas / 2</code>, dan <code>Y = tinggi canvas / 2</code>.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Kode &mdash; Contoh Posisi</div>
+<pre><span class="cm">// Mendapatkan dimensi</span>
+<span class="kw">const</span> SW = stateCanvas.width;
+<span class="kw">const</span> SH = stateCanvas.height;
+
+<span class="cm">// Render persegi di titik origin (kiri atas)</span>
+ctx.fillRect(<span class="num">0</span>, <span class="num">0</span>, <span class="num">100</span>, <span class="num">50</span>);
+
+<span class="cm">// Render persegi di tengah canvas</span>
+<span class="cm">// Koordinat digeser sebesar setengah dimensi objek</span>
+ctx.fillRect(
+  (SW / <span class="num">2</span>) - <span class="num">50</span>,  
+  (SH / <span class="num">2</span>) - <span class="num">25</span>,  
+  <span class="num">100</span>, <span class="num">50</span>
+);</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="exp-card">
+  <div class="exp-head orange">
+    <div class="exp-icon">3</div>
+    <div><div class="exp-tag">URUTAN MENGGAMBAR</div><div class="exp-title">Mendefinisikan State sebelum Instruksi Render</div></div>
+  </div>
+  <div class="exp-body">
+    <div class="exp-desc">Rendering pada Canvas berbasis state (State Machine). Atribut visual (seperti warna atau ketebalan) harus diatur ke dalam context terlebih dahulu sebelum pemanggilan metode instruksi perenderan.</div>
+    <div class="exp-blocks">
+      <div class="pseudo-block">
+        <h4 class="pseudo-label">Penjelasan Logika</h4>
+        <div class="pseudo-text">
+          <ul>
+            <li><strong>Instruksi Langsung (Rect):</strong> Mengatur warna menggunakan <code>fillStyle</code>, dilanjutkan dengan metode <code>fillRect()</code> yang segera merender persegi pada kanvas.</li>
+            <li><strong>Instruksi Berbasis Lintasan (Path):</strong> Bentuk kompleks memerlukan penentuan koordinat jalur secara matematis sebelum dirender:
+              <ul>
+                <li><code>beginPath()</code>: Menginisialisasi jalur baru dan menghapus state lintasan memori sebelumnya.</li>
+                <li><code>moveTo()</code>: Menggeser titik awal kursor ke koordinat tertentu tanpa menggambar garis.</li>
+                <li><code>lineTo()</code>: Menambahkan segmen lintasan lurus dari posisi kursor saat ini ke koordinat tujuan.</li>
+                <li><code>stroke()</code> / <code>fill()</code>: Menerapkan state visual (seperti <code>strokeStyle</code>) pada lintasan (path) yang telah didefinisikan ke memori piksel Canvas.</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Kode &mdash; Perbandingan (state-based.js)</div>
+<pre><span class="cm">// Metode langsung (Instruksi fillRect)</span>
+stateCtx.fillStyle = <span class="str">"#3b82f6"</span>;
+stateCtx.fillRect(<span class="num">80</span>, <span class="num">90</span>, <span class="num">170</span>, <span class="num">105</span>);
+
+<span class="cm">// Metode lintasan (Instruksi Path)</span>
+stateCtx.beginPath();       <span class="cm">// Memulai lintasan baru</span>
+stateCtx.moveTo(<span class="num">310</span>, <span class="num">110</span>);  <span class="cm">// Menetapkan titik awal</span>
+stateCtx.lineTo(<span class="num">500</span>, <span class="num">185</span>);  <span class="cm">// Menetapkan titik akhir segmen</span>
+stateCtx.strokeStyle = <span class="str">"#f43f5e"</span>; <span class="cm">// Mendefinisikan warna garis</span>
+stateCtx.lineWidth   = <span class="num">4</span>;         <span class="cm">// Mendefinisikan ketebalan</span>
+stateCtx.stroke();          <span class="cm">// Mengeksekusi render garis</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- /section-canvas -->
+
+<!-- SECTION 2: PRIMITIF -->
+<div class="article-section" id="section-primitif">
+<div class="article-header"><h2 class="article-title">Primitif</h2></div>
+<p class="tab-intro">Bentuk primitif merupakan instruksi grafis dasar yang disediakan secara native oleh API Canvas. Kombinasi primitif geometris (segi empat, garis, busur) ini menyusun komposisi dari objek grafis kompleks.</p>
+
+<div class="exp-card">
+  <div class="exp-head purple">
+    <div class="exp-icon">4</div>
+    <div><div class="exp-tag">BENTUK 1</div><div class="exp-title">Persegi (Rectangle)</div></div>
+  </div>
+  <div class="exp-body">
+    <div class="exp-desc">Persegi adalah satu-satunya entitas bentuk (shape) pada API Canvas yang memiliki fungsi utilitas untuk merender instan tanpa menggunakan instruksi path.</div>
+    <div class="exp-blocks">
+      <div class="pseudo-block">
+        <h4 class="pseudo-label">Penjelasan Logika</h4>
+        <div class="pseudo-text">
+          <ul>
+            <li>Metode <code>fillRect()</code> memproses 4 argumen berurutan secara spesifik:</li>
+            <li><strong>Argumen 1:</strong> Titik koordinat absis (X) dari kiri-atas persegi.</li>
+            <li><strong>Argumen 2:</strong> Titik koordinat ordinat (Y) dari kiri-atas persegi.</li>
+            <li><strong>Argumen 3:</strong> Besaran lebar (width) dari persegi ke arah kanan.</li>
+            <li><strong>Argumen 4:</strong> Besaran tinggi (height) dari persegi ke arah bawah.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Kode (state-based.js)</div>
+<pre>stateCtx.fillStyle = <span class="str">"#3b82f6"</span>;
+<span class="cm">// Render blok padat: fillRect(X, Y, Width, Height)</span>
+stateCtx.fillRect(<span class="num">80</span>, <span class="num">90</span>, <span class="num">170</span>, <span class="num">105</span>);
+
+<span class="cm">// Render kerangka tepi luar (outline)</span>
+stateCtx.strokeStyle = <span class="str">"#3b82f6"</span>;
+stateCtx.lineWidth   = <span class="num">2</span>;
+stateCtx.strokeRect(<span class="num">80</span>, <span class="num">90</span>, <span class="num">170</span>, <span class="num">105</span>);</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="exp-card">
+  <div class="exp-head cyan">
+    <div class="exp-icon">5</div>
+    <div><div class="exp-tag">BENTUK 3</div><div class="exp-title">Lingkaran (Arc / Circle)</div></div>
+  </div>
+  <div class="exp-body">
+    <div class="exp-desc">Objek lingkaran dihasilkan dengan menggunakan metode lintasan kurva atau busur (Arc). Instruksi ini memanfaatkan notasi ukuran sudut dalam satuan radian.</div>
+    <div class="exp-blocks">
+      <div class="pseudo-block">
+        <h4 class="pseudo-label">Penjelasan Logika</h4>
+        <div class="pseudo-text">
+          <ul>
+            <li>Pembuatan lingkaran diinisiasi dengan <code>beginPath()</code> dan menggunakan fungsi <code>arc(x, y, radius, startAngle, endAngle)</code>.</li>
+            <li>Koordinat <code>(x, y)</code> menentukan letak origin (titik pusat) lingkaran, dan <code>radius</code> merepresentasikan jarak garis melengkung dari titik pusat tersebut.</li>
+            <li>Sistem rotasi Canvas API menggunakan perhitungan radian, di mana panjang keliling satu lingkaran ekuivalen dengan rumus <code>Math.PI * 2</code>.</li>
+            <li>Metode <code>fill()</code> diaplikasikan di akhir untuk mewarnai geometri tersebut menjadi lingkaran padat.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Kode (state-based.js)</div>
+<pre>stateCtx.beginPath();
+<span class="cm">// Parameter: X, Y, Radius, Sudut Awal, Sudut Akhir (2 * PI)</span>
+stateCtx.arc(
+  <span class="num">700</span>, <span class="num">135</span>,
+  <span class="num">58</span>,
+  <span class="num">0</span>, Math.PI * <span class="num">2</span>
+);
+stateCtx.fillStyle = <span class="str">"#22c55e"</span>;
+stateCtx.fill();</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="exp-card">
+  <div class="exp-head orange">
+    <div class="exp-icon">6</div>
+    <div><div class="exp-tag">BENTUK 4</div><div class="exp-title">Poligon Tertutup (Segitiga)</div></div>
+  </div>
+  <div class="exp-body">
+    <div class="exp-desc">Pembentukan poligon seperti segitiga mengandalkan pemetaan tiga garis titik yang diakhiri dengan instruksi penyatuan path, yaitu <code>closePath()</code>.</div>
+    <div class="exp-blocks">
+      <div class="pseudo-block">
+        <h4 class="pseudo-label">Penjelasan Logika</h4>
+        <div class="pseudo-text">
+          <ul>
+            <li>Tahapan pembuatan segitiga: inisiasi path baru, penentuan koordinat awal dengan <code>moveTo()</code>, dan memplot dua garis vertex selanjutnya dengan <code>lineTo()</code>.</li>
+            <li>Fungsi <code>closePath()</code> mengeksekusi instruksi pembentukan segmen lurus otomatis dari vertex terakhir kembali ke origin (koordinat moveTo), menciptakan poligon tertutup yang dapat diisi warna.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Kode (event-based.js)</div>
+<pre>stateCtx.beginPath();
+stateCtx.moveTo(<span class="num">130</span>, <span class="num">360</span>); <span class="cm">// Titik puncak (Vertex atas)</span>
+stateCtx.lineTo(<span class="num">65</span>,  <span class="num">490</span>); <span class="cm">// Verteks kiri bawah</span>
+stateCtx.lineTo(<span class="num">195</span>, <span class="num">490</span>); <span class="cm">// Verteks kanan bawah</span>
+
+<span class="cm">// Menyambungkan titik akhir secara otomatis ke puncak</span>
+stateCtx.closePath();
+
+stateCtx.fillStyle = <span class="str">"#f97316"</span>;
+stateCtx.fill();</pre>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- /section-primitif -->
+
+<!-- SECTION 3: WARNA -->
+<div class="article-section" id="section-warna">
+<div class="article-header"><h2 class="article-title">Warna & Efek Visual</h2></div>
+
+<div class="exp-card">
+  <div class="exp-head purple">
+    <div class="exp-icon">7</div>
+    <div><div class="exp-tag">TRANSPARANSI</div><div class="exp-title">Manipulasi Nilai Alpha Channel (RGBA)</div></div>
+  </div>
+  <div class="exp-body">
+    <div class="exp-desc">Nilai transparansi dari objek diatur melalui kanal Alpha pada model warna RGBA. Teknik ini secara khusus dapat dieksploitasi untuk menghasilkan motion blur atau trail effect dalam sistem frame loop.</div>
+    <div class="exp-blocks">
+      <div class="pseudo-block">
+        <h4 class="pseudo-label">Penjelasan Logika</h4>
+        <div class="pseudo-text">
+          <ul>
+            <li>Nilai float untuk Alpha channel beroperasi pada batasan 0.0 (fully transparent) sampai 1.0 (fully opaque).</li>
+            <li><strong>Mekanisme Trail Animasi:</strong> Dalam setiap perulangan siklus render (frame refresh), kanvas tidak dihapus secara menyeluruh dengan metode <code>clearRect</code>, melainkan dilapisi oleh persegi (fillRect) sebesar ukuran layar.</li>
+            <li>Persegi tersebut menggunakan format fill warna latar (misal: hitam) dengan nilai Alpha rendah (contoh: 0.13). Redudansi lapisan semi-transparan ini pada piksel bola lama mengakibatkan pengikisan warna bertahap yang menciptakan jejak (trail) berkesinambungan.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Kode (state-based.js)</div>
+<pre><span class="cm">// Pendefinisian warna dengan Alpha sebesar 13%</span>
+<span class="cm">// rgb(merah, hijau, biru), alpha(transparansi)</span>
+stateCtx.fillStyle = <span class="str">"rgba(7, 17, 31, 0.13)"</span>;
+
+<span class="cm">// Lapisan kotak semi-transparan di seluruh layar</span>
+stateCtx.fillRect(<span class="num">0</span>, <span class="num">0</span>, SW, SH);</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="exp-card">
+  <div class="exp-head cyan">
+    <div class="exp-icon">8</div>
+    <div><div class="exp-tag">ROTASI STATE</div><div class="exp-title">Pengindeksan dengan Operator Modulo (%)</div></div>
+  </div>
+  <div class="exp-body">
+    <div class="exp-desc">Pergantian status komponen secara melingkar (siklik) dapat ditangani menggunakan perpaduan variabel indeks dan operator aritmetika Modulo, tanpa harus bergantung pada kondisional logika if-else yang panjang.</div>
+    <div class="exp-blocks">
+      <div class="pseudo-block">
+        <h4 class="pseudo-label">Penjelasan Logika</h4>
+        <div class="pseudo-text">
+          <ul>
+            <li>Variabel warna dideklarasikan dalam tipe data kumpulan (Array) dan indeks status ditugaskan dengan nilai 0.</li>
+            <li>Pada saat callback event dieksekusi (contoh: 'click'), nilai state index diperbarui dengan persamaan matematis: <code>(indexSaatIni + 1) % elemenTotalArray</code>.</li>
+            <li>Fungsi modulus mengembalikan sisa hasil bagi, memastikan nilai indeks mengulang ke angka 0 saat mencapai ekuivalensi iterasi dari panjang elemen maksimal array. Array index error (out of bounds) dapat dihindari secara konstan.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Kode (state-based.js)</div>
+<pre><span class="cm">// Array data set heksadesimal warna</span>
+<span class="kw">const</span> stateColors = [<span class="str">"#8b5cf6"</span>, <span class="str">"#f43f5e"</span>, <span class="str">"#22c55e"</span>, <span class="str">"#3b82f6"</span>];
+<span class="kw">let</span> stateColorIndex = <span class="num">0</span>; 
+
+stateCanvas.addEventListener(<span class="str">"click"</span>, () => {
+  <span class="cm">// Pembaruan index melalui fungsi matematika modulo</span>
+  stateColorIndex = (stateColorIndex + <span class="num">1</span>) % stateColors.length;
+  stateBall.color = stateColors[stateColorIndex];
+});</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="exp-card">
+  <div class="exp-head orange">
+    <div class="exp-icon">9</div>
+    <div><div class="exp-tag">SHADOW</div><div class="exp-title">Implementasi Glow Effect via Atribut Shadow</div></div>
+  </div>
+  <div class="exp-body">
+    <div class="exp-desc">Tidak ada native API untuk efek Neon Glow pada HTML5 Canvas. Implementasinya memanfaatkan render properti bayangan (Shadow) dengan parameter blur yang dilebarkan secara konstan sebanding dengan objek bersangkutan.</div>
+    <div class="exp-blocks">
+      <div class="pseudo-block">
+        <h4 class="pseudo-label">Penjelasan Logika</h4>
+        <div class="pseudo-text">
+          <ul>
+            <li>Pendaran warna dikonfigurasi melalui penetapan <code>shadowColor</code> (yang umumnya mengambil variable color yang sama dengan instance primitif yang dirender).</li>
+            <li>Intensitas dispersi efek dicapai dengan meningkatkan skala nilai properti <code>shadowBlur</code>.</li>
+            <li><strong>Aturan Sinkronisasi State:</strong> Karena konteks 2D akan mempertahankan instruksi styling untuk draw call selanjutnya, properti blur wajib di-reset (dinolkan) segera pasca pemanggilan render <code>fill()</code> atau <code>stroke()</code> objek yang dituju.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Kode (state-based.js)</div>
+<pre>stateCtx.beginPath();
+stateCtx.arc(stateBall.x, stateBall.y, stateBall.r, <span class="num">0</span>, Math.PI * <span class="num">2</span>);
+stateCtx.fillStyle = stateBall.color;
+
+<span class="cm">// Aplikasi state bayangan (Glow simulation)</span>
+stateCtx.shadowBlur  = <span class="num">25</span>;          
+stateCtx.shadowColor = stateBall.color; 
+
+stateCtx.fill(); <span class="cm">// Render target dengan glow layer</span>
+
+<span class="cm">// Penetralan state memori (Mencegah perambatan glow)</span>
+stateCtx.shadowBlur  = <span class="num">0</span>;</pre>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- /section-warna -->
+
+<!-- SECTION 4: ANIMASI -->
+<div class="article-section" id="section-animasi">
+<div class="article-header"><h2 class="article-title">Animasi (Game Loop)</h2></div>
+
+<div class="exp-card">
+  <div class="exp-head purple">
+    <div class="exp-icon">10</div>
+    <div><div class="exp-tag">RENDER LOOP</div><div class="exp-title">Sinkronisasi Frame (requestAnimationFrame)</div></div>
+  </div>
+  <div class="exp-body">
+    <div class="exp-desc">Metode standar Web API untuk mengeksekusi operasi animasi yang efisien pada DOM Canvas adalah <code>requestAnimationFrame()</code>, sebagai substitusi superior atas metode timeout tradisional.</div>
+    <div class="exp-blocks">
+      <div class="pseudo-block">
+        <h4 class="pseudo-label">Penjelasan Logika</h4>
+        <div class="pseudo-text">
+          <ul>
+            <li>Pola arsitektur standar loop rendering dieksekusi secara iteratif melalui tiga tahapan berurutan: metode pembersihan latar canvas (Clear), perhitungan matematis posisi vektor koordinat entitas grafis (Update), dan penggambaran pergeseran posisi grafis terakhir ke layer memori Canvas (Draw).</li>
+            <li>Di penutup deklarasi blok fungsi tersebut, dieksekusi pemanggilan fungsi eksternal <code>requestAnimationFrame(fungsiLoopSendiri)</code>. Hal ini menciptakan perulangan rekursif asinkron dengan perantara browser.</li>
+            <li>Browser akan mengendalikan jadwal fungsi ini, mensinkronisasikannya dengan waktu repaint layar display yang aktif, yang berdampak positif pada efisiensi thread prosesor apabila proses tab jendela tidak aktif (suspend rendering mode).</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Kode (state-based.js)</div>
+<pre><span class="kw">function</span> stateFrame() {
+  <span class="kw">if</span> (!statePaused) {
+    stateClear();   <span class="cm">// Modul Pembersihan</span>
+    stateUpdate();  <span class="cm">// Modul Komputasi Vektor Update</span>
+    stateDraw();    <span class="cm">// Modul Implementasi Rendering Visual</span>
+  }
+  
+  <span class="cm">// Asynchronous recursive call untuk penjadwalan frame berikutnya</span>
+  requestAnimationFrame(stateFrame);
+}
+
+<span class="cm">// Pemanggilan instansiasi proses loop pertama kali </span>
+requestAnimationFrame(stateFrame);</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="exp-card">
+  <div class="exp-head pink">
+    <div class="exp-icon">11</div>
+    <div><div class="exp-tag">VEKTOR KOORDINAT</div><div class="exp-title">Komputasi Translasi (Kecepatan Vektor)</div></div>
+  </div>
+  <div class="exp-body">
+    <div class="exp-desc">Entitas yang dianimasikan dioperasikan menggunakan prinsip kinematika yang mendefinisikan perubahan posisi (displacement) yang diamplifikasi oleh besaran kecepatan dalam iterasi waktu (loop).</div>
+    <div class="exp-blocks">
+      <div class="pseudo-block">
+        <h4 class="pseudo-label">Penjelasan Logika</h4>
+        <div class="pseudo-text">
+          <ul>
+            <li>Vektor entitas mencakup variabel translasi horizontal atau velocity sumbu x (<code>vx</code>), dan vektor translasi vertikal atau velocity sumbu y (<code>vy</code>).</li>
+            <li>Di dalam loop <code>update()</code>, skalar numerik pada koordinat X entitas dievaluasi dengan menyeimbangkan atau mengakumulasi titik awal dengan variabel <code>vx</code> tersebut (demikian pula hal yang direplikasikan pada sumbu Y).</li>
+            <li>Komputasi penjumlahan berkelanjutan (frame demi frame) akan menghasilkan translasi kontinu objek yang secara konseptual dapat diamati secara visual sebagai fenomena pergerakan.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Kode (state-based.js)</div>
+<pre><span class="kw">function</span> stateUpdate() {
+  <span class="cm">// Akumulasi posisi X dengan velocity X secara iteratif</span>
+  <span class="cm">// Ekuivalen dengan operasi: stateBall.x = stateBall.x + stateBall.vx</span>
+  stateBall.x += stateBall.vx;
+  
+  <span class="cm">// Akumulasi posisi Y dengan velocity Y secara iteratif</span>
+  stateBall.y += stateBall.vy;
+}</pre>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- /section-animasi -->
+
+<!-- SECTION 5: INTERAKSI -->
+<div class="article-section" id="section-interaksi">
+<div class="article-header"><h2 class="article-title">Interaksi & Event</h2></div>
+
+<div class="exp-card">
+  <div class="exp-head purple">
+    <div class="exp-icon">12</div>
+    <div><div class="exp-tag">SISTEM KENDALI MULUS</div><div class="exp-title">Implementasi Mekanisme State-Based Keyboard</div></div>
+  </div>
+  <div class="exp-body">
+    <div class="exp-desc">Metode state-based dirancang untuk mengantisipasi penundaan repetisi bawaan pada input keyboard hardware, yang penting untuk memastikan pembaruan lintasan koordinat yang mulus secara terus-menerus pada sistem interaktif (mis. game loop).</div>
+    <div class="exp-blocks">
+      <div class="pseudo-block">
+        <h4 class="pseudo-label">Penjelasan Logika</h4>
+        <div class="pseudo-text">
+          <ul>
+            <li>Sebuah obyek penampung data lokal digunakan untuk memelihara state presensi status per setiap tuts (key mapping).</li>
+            <li>Pendengar input (event listener) memantau <code>keydown</code> untuk menetapkan properti pemetaan boolean key string di dalam state obj tersebut menjadi <code>true</code>, dan <code>keyup</code> membalik state valuenya ke kondisi <code>false</code>.</li>
+            <li>Perubahan state translasi pada subjek/entitas hanya dipantau langsung dalam update event (frame renderer). Jika boolean mengembalikan komparasi validasi nilai aktual (<code>true</code>), fungsi interpolasi sumbu koordinat dijalankan dengan proporsi besaran pergeseran yang konsisten per rendering iteration.</li>
+            <li>Hal ini memfasilitasi rendering diagonal yang responsif bila dua key state string dievaluasi `true` secara konkuren di satu iterasi render frame yang sama.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Kode (state-based.js)</div>
+<pre><span class="cm">// 1. Deklarasi object state penampung keyboard mapping</span>
+<span class="kw">const</span> stateKeys = {};
+
+<span class="cm">// 2. Konfigurasi peremajaan State pada DOM input Listener</span>
+window.addEventListener(<span class="str">"keydown"</span>, e => { stateKeys[e.key] = <span class="kw">true</span>; });
+window.addEventListener(<span class="str">"keyup"</span>,   e => { stateKeys[e.key] = <span class="kw">false</span>; });
+
+<span class="cm">// 3. Integrasi implementasi validasi aksi pada metode iteratif Loop</span>
+<span class="kw">function</span> stateUpdatePlayer() {
+  <span class="kw">const</span> s = <span class="num">5</span>; <span class="cm">// Skalar translasi absolut per iterasi pergerakan frame</span>
+  
+  <span class="cm">// Validasi keymap identifier 'd' (Translasi Right vector positif)</span>
+  <span class="kw">if</span> (stateKeys.d) { statePlayer.x += s; }
+  
+  <span class="cm">// Validasi keymap identifier 'a' (Translasi Left vector negatif)</span>
+  <span class="kw">if</span> (stateKeys.a) { statePlayer.x -= s; }
+}</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="exp-card">
+  <div class="exp-head pink">
+    <div class="exp-icon">13</div>
+    <div><div class="exp-tag">SISTEM KENDALI DISKRET</div><div class="exp-title">Implementasi Mekanisme Event-Based Keyboard</div></div>
+  </div>
+  <div class="exp-body">
+    <div class="exp-desc">Metode event-based, yang mengeksekusi rekayasa titik pembaruan sumbu (Update vector) sesegera setelah pemicu sinkronisasi API terjadi (tanpa iterasi terpisah pada rendering update frame-loop terpusat), cenderung sesuai diaplikasikan untuk perancangan instrumen UI seperti navigasi komponen panel dan menu sel diskret.</div>
+    <div class="exp-blocks">
+      <div class="pseudo-block">
+        <h4 class="pseudo-label">Penjelasan Logika</h4>
+        <div class="pseudo-text">
+          <ul>
+            <li>Eksekusi parameter <code>keydown</code> mengintervensi atau menambahkan nilai skalar pada subyek posisi variabel instan secara seketika.</li>
+            <li>Sistem interupsi register OS secara empiris menangguhkan interval impuls ke key handler (key-repeat rate behavior delay), yang menerjemahkan perilaku manipulasi layar berulang sehingga menimbulkan segmentasi gerakan awal subjek patah (stutter initial update motion), sebelum loop event input hardware stabil berjalan berurutan.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Kode (event-based.js)</div>
+<pre><span class="cm">// Modul modifikasi yang terpanggil seketika pada key invocation state</span>
+window.addEventListener(<span class="str">"keydown"</span>, e => {
+  <span class="kw">const</span> k = e.key.toLowerCase();
+  <span class="kw">const</span> s = <span class="num">5</span>; <span class="cm">// Skalar translasi modifikasi konstan</span>
+
+  <span class="cm">// Konversi mutasi skalar atribut axis divalidasi langsung pada listener</span>
+  <span class="kw">if</span> (k === <span class="str">"d"</span>) eventPlayer.x += s;
+  <span class="kw">if</span> (k === <span class="str">"a"</span>) eventPlayer.x -= s;
+  <span class="kw">if</span> (k === <span class="str">"w"</span>) eventPlayer.y -= s;
+  <span class="kw">if</span> (k === <span class="str">"s"</span>) eventPlayer.y += s;
+});</pre>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- /section-interaksi -->
+
+<!-- SECTION 6: tantangan -->
+<div class="article-section" id="section-challenge">
+<div class="article-header"><h2 class="article-title">Tantangan (Implementasi Logika)</h2></div>
+
+<div class="exp-card">
+  <div class="exp-head purple">
+    <div class="exp-icon">14</div>
+    <div><div class="exp-tag">TANTANGAN #1</div><div class="exp-title">Collision Detection: Pantulan Objek di Batas Layar</div></div>
+  </div>
+  <div class="exp-body">
+    <div class="exp-desc">Pembatasan wilayah pergerakan memerlukan metode deteksi tabrakan (Boundary Collision Detection) antara vektor geometri subjek yang dimutasi dengan parameter ujung skalar terluar dari ukuran ruang memori koordinat grid canvas (Width dan Height).</div>
+    <div class="exp-blocks">
+      <div class="pseudo-block">
+        <h4 class="pseudo-label">Penjelasan Logika</h4>
+        <div class="pseudo-text">
+          <ul>
+            <li>Metode deteksi batas tepi (X Boundary): Menyusun perbandingan nilai antara koordinat posisi subjek saat ini (diakumulasi dengan koefisien konstanta offset ukuran radiusnya) dan angka rasio ekstrem kanvas maksimum dan minimum wilayah 0.</li>
+            <li>Apabila perbandingan boolean pengujian kondisional mengembalikan komparator indikasi pelampauan sumbu ekstrim, modifikasi operasional perkalian -1 di-<em>assign</em> untuk diinversikan secara logis dari bilangan riil sumbu tersebut (Pembalikan Velocity Vector Positif menjadi Negatif, dan sebaliknya).</li>
+            <li>Komputasi radius disertakan saat menyusun validasi operasi grid agar pelampauan grafis elemen subjek sebelum frame eksekusi putar balik sepenuhnya terjadi (memantulkan objek pas menyentuh sisi tepinya).</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Kode (state-based.js)</div>
+<pre><span class="cm">// Validasi Collision Horizontal (X Axis Constraint Mapping)</span>
+<span class="cm">// Pengecekan limit minimal tepi Kiri dan limit maksimal tepi Kanan</span>
+<span class="kw">if</span> (stateBall.x &lt; stateBall.r || stateBall.x &gt; SW - stateBall.r) {
+  <span class="cm">// Reverse Polarity operasi Velocity vektor</span>
+  stateBall.vx = stateBall.vx * <span class="num">-1</span>;
+}
+
+<span class="cm">// Validasi Collision Vertikal (Y Axis Constraint Mapping)</span>
+<span class="cm">// Pengecekan limit minimal batas Atas dan limit maksimal batas Bawah</span>
+<span class="kw">if</span> (stateBall.y &lt; stateBall.r || stateBall.y &gt; SH - stateBall.r) {
+  <span class="cm">// Reverse Polarity operasi Velocity vektor</span>
+  stateBall.vy = stateBall.vy * <span class="num">-1</span>;
+}</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="exp-card">
+  <div class="exp-head cyan">
+    <div class="exp-icon">15</div>
+    <div><div class="exp-tag">TANTANGAN #2</div><div class="exp-title">Event Coordinate Listener: Objek Mengikuti Mouse</div></div>
+  </div>
+  <div class="exp-body">
+    <div class="exp-desc">Penyelarasan rendering geometris secara terus-menerus ke node kursor yang diinputkan dari user client diatur melalui transkripsi referensi event property (Mouse Coordinate Data Collection) pada sistem rendering per frame.</div>
+    <div class="exp-blocks">
+      <div class="pseudo-block">
+        <h4 class="pseudo-label">Penjelasan Logika</h4>
+        <div class="pseudo-text">
+          <ul>
+            <li>Event dispatcher <code>mousemove</code> dimonitor di DOM listener node root kanvas dan menangkap nilai <code>clientX</code> serta <code>clientY</code> di global context.</li>
+            <li>Algoritme mutlak translasi (Translation Constraint Mapper) dengan <code>getBoundingClientRect()</code> diperlukan karena client koordinat diwarisi oleh letak pixel posisi dari frame browser global viewport, sedangkan origin 0 canvas diletakkan secara relatif menurut penempatan orientasi style di parent document flow.</li>
+            <li>Pembaruan nilai kalkulasi dikonfigurasi dan diikat menjadi referensi ke satu var state statik yang dibaca dari modul prosedur Loop animasi rendering utama.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Kode (state-based.js)</div>
+<pre><span class="cm">// Modul state deklaratif untuk parameter letak buffer listener</span>
+<span class="kw">const</span> stateMouse = { x: <span class="num">0</span>, y: <span class="num">0</span> };
+
+stateCanvas.addEventListener(<span class="str">"mousemove"</span>, e => {
+  <span class="cm">// Pengambilan orientasi matrix rendering ukuran absolut root di Viewport</span>
+  <span class="kw">const</span> r = stateCanvas.getBoundingClientRect();
+  
+  <span class="cm">// Matematika normalisasi data global viewport ke Local Coordinate frame</span>
+  stateMouse.x = (e.clientX - r.left) * SW / r.width;
+  stateMouse.y = (e.clientY - r.top) * SH / r.height;
+});
+
+<span class="cm">// Konstruksi ulang instance visual arc yang diposisikan di vektor baru ini </span>
+<span class="cm">// Diambil secara asinkron dari metode frame Draw</span>
+stateCtx.beginPath();
+stateCtx.arc(stateMouse.x, stateMouse.y, <span class="num">18</span>, <span class="num">0</span>, Math.PI * <span class="num">2</span>);
+stateCtx.strokeStyle = <span class="str">"#22d3ee"</span>;
+stateCtx.stroke();</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="exp-card">
+  <div class="exp-head orange">
+    <div class="exp-icon">16</div>
+    <div><div class="exp-tag">TANTANGAN #4</div><div class="exp-title">Constraint Logic: Matematika Fungsi Clamp</div></div>
+  </div>
+  <div class="exp-body">
+    <div class="exp-desc">Subjek Player (kotak yang dapat dikontrol bebas) memerlukan metode logikal mitigasi batas margin (Boundary Logic Restrict Constraint), yang dikenal sebagai fungsi "Clamp", untuk menghindari subjek teranotasi koordinat menyeberang ruang kosong (Out of bounds) render window.</div>
+    <div class="exp-blocks">
+      <div class="pseudo-block">
+        <h4 class="pseudo-label">Penjelasan Logika</h4>
+        <div class="pseudo-text">
+          <ul>
+            <li>Algoritma penjepitan batas (Clamp Function) menerima argumen utama komputasional: Nilai aktual sumber subjek, skala ekstrem batas minimum operasi, dan skala ekstrem batas maksimum.</li>
+            <li>Evaluasi internal dari subrutin matematis menggunakan evaluasi statis yang dibungkus <code>Math.min()</code> dan <code>Math.max()</code>:</li>
+            <li>Tahap penyaringan batas maksimum: Mengomparasikan variabel awal mana yang merupakan koefisien terkecil (Variabel aktual ATAU Titik batas maksimal yang valid), untuk mengabaikan nilai luapan yang telah melampaui toleransi maksimum yang disyaratkan.</li>
+            <li>Tahap penyaringan batas minimum: <code>Math.max(Minimum, (Hasil Filter Sebelumnnya))</code> memaksa hasil kembali pada limit batas angka terkecil valid apabila evaluasi bernilai di bawah titik 0 layar operasional.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-label">Kode (state-based.js)</div>
+<pre><span class="cm">// Definisi abstraksi logika operasional fungsi jepit matematis (Clamp function)</span>
+<span class="kw">const</span> sclamp = (nilai, min, max) => Math.max(min, Math.min(max, nilai));
+
+<span class="kw">function</span> stateUpdatePlayer() {
+  <span class="cm">// ... operasi mutasi subjek posisi x dan y melalui keyboard state input ...</span>
+
+  <span class="cm">// Transformasi penjepitan subjek axis X: Restriksi 0 dan dimensi frame-lebar</span>
+  statePlayer.x = sclamp(
+    statePlayer.x, 
+    <span class="num">0</span>, 
+    SW - statePlayer.w
+  );
+  
+  <span class="cm">// Transformasi penjepitan subjek axis Y: Restriksi 0 dan dimensi frame-tinggi</span>
+  statePlayer.y = sclamp(
+    statePlayer.y, 
+    <span class="num">0</span>, 
+    SH - statePlayer.h
+  );
+}</pre>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- /section-challenge -->
+
+</div>
+</section>
+
+<style>
+.soal-section{width:min(1280px,95%);margin:0 auto 90px}
+.soal-inner{border:1px solid rgba(255,255,255,.09);border-radius:28px;padding:50px 44px;background:rgba(255,255,255,.02);backdrop-filter:blur(10px)}
+.soal-header{text-align:center;margin-bottom:42px}
+.soal-header h2{margin-top:14px;font-size:clamp(28px,4vw,42px)}
+.soal-header p{color:#94a3b8;margin-top:12px;font-size:15px;line-height:1.6}
+.soal-header strong{color:#f8fafc}
+.tab-intro{text-align:center;color:#94a3b8;margin-bottom:36px;font-size:15px;line-height:1.8;padding:0 8%}
+.tab-intro strong{color:#f8fafc}.tab-intro em{color:#a78bfa;font-style:normal;font-weight:600}
+.exp-card{border:1px solid rgba(255,255,255,.08);border-radius:20px;overflow:hidden;margin-bottom:24px;background:rgba(7,17,31,.65);transition:.3s}
+.exp-card:hover{border-color:rgba(139,92,246,.3);box-shadow:0 16px 48px rgba(0,0,0,.3);transform:translateY(-2px)}
+.exp-head{display:flex;align-items:center;gap:16px;padding:18px 26px}
+.exp-head.purple{background:linear-gradient(135deg,rgba(139,92,246,.28),rgba(99,102,241,.1))}
+.exp-head.pink{background:linear-gradient(135deg,rgba(244,114,182,.25),rgba(244,63,94,.1))}
+.exp-head.cyan{background:linear-gradient(135deg,rgba(34,211,238,.2),rgba(6,182,212,.08))}
+.exp-head.orange{background:linear-gradient(135deg,rgba(249,115,22,.25),rgba(251,191,36,.08))}
+.exp-icon{font-size:18px;font-weight:900;color:white;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,0.2);flex-shrink:0;line-height:1}
+.exp-tag{font-size:10px;font-weight:900;letter-spacing:1.6px;color:#a78bfa;margin-bottom:4px}
+.exp-title{font-size:17px;font-weight:700;color:#f8fafc}
+.exp-body{padding:26px}
+.exp-desc{font-size:14.5px;color:#94a3b8;line-height:1.85;margin-bottom:22px;border-left:4px solid rgba(139,92,246,.5);padding-left:18px}
+.exp-desc code,.exp-desc strong{color:#f8fafc}
+.exp-desc code{background:rgba(139,92,246,.15);padding:2px 7px;border-radius:6px;color:#a78bfa;font-family:monospace}
+.exp-blocks{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.pseudo-block{border:none;background:transparent;margin-bottom:10px;}
+.pseudo-label{padding:0 0 8px 0;font-size:14px;font-weight:800;letter-spacing:1px;background:transparent;color:#a5b4fc;border-bottom:1px solid rgba(165,180,252,0.2);margin-bottom:12px;margin-top:0;}
+.pseudo-block .pseudo-text{margin:0;padding:0;font-size:14.5px;line-height:1.8;font-family:inherit;background:transparent;color:#cbd5e1;overflow-x:visible;white-space:pre-wrap;}
+.pseudo-block .pseudo-text ul { margin: 0; padding-left: 20px; }
+.pseudo-block .pseudo-text li { margin-bottom: 8px; }
+.code-block{border-radius:12px;overflow:hidden;border:1px solid rgba(34,211,238,.2)}
+.code-label{padding:10px 16px;font-size:12px;font-weight:800;letter-spacing:1px;background:rgba(34,211,238,.14);color:#67e8f9}
+.code-block pre{margin:0;padding:20px;font-size:13.5px;line-height:1.8;font-family:"Fira Code","Cascadia Code","Courier New",monospace;background:rgba(0,0,0,.4);color:#e2e8f0;overflow-x:auto;white-space:pre}
+.kw{color:#93c5fd;font-weight:bold}.str{color:#86efac}.num{color:#fcd34d}.cm{color:#94a3b8;font-style:italic}
+.demo-layout{display:grid;grid-template-columns:1fr 240px;gap:20px;align-items:start}
+.demo-canvas-wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,.1);background:#07111f;box-shadow:inset 0 0 40px rgba(0,0,0,.4)}
+.demo-canvas-wrap canvas{display:block;width:100%;height:auto;cursor:crosshair}
+.demo-hud{position:absolute;bottom:12px;left:16px;font-size:13px;font-family:monospace;color:#22d3ee;pointer-events:none;text-shadow:0 0 10px rgba(34,211,238,.7)}
+.demo-panel{padding:22px;border:1px solid rgba(255,255,255,.1);border-radius:18px;background:rgba(10,16,32,.9)}
+.demo-panel h3{font-size:17px;margin-bottom:18px;color:#f8fafc}
+.demo-badge-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.demo-badge{padding:10px 14px;border-radius:10px;font-size:12px;font-weight:700;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#64748b;transition:.3s}
+.demo-badge.active{background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.4);color:#86efac;box-shadow:0 0 15px rgba(34,197,94,.1)}
+.demo-info-box{display:grid;gap:10px;padding:16px;border-radius:12px;background:rgba(0,0,0,.3);margin-bottom:20px}
+.demo-info-row{display:flex;justify-content:space-between;font-size:12px}
+.demo-info-row span{color:#94a3b8}.demo-info-row strong{color:#22d3ee;font-family:monospace;font-size:13px}
+.demo-controls p{font-size:12px;color:#94a3b8;margin-bottom:8px;line-height:1.6}
+.demo-controls strong{color:#e2e8f0}
+.article-section{margin-bottom:60px; padding-bottom:60px; border-bottom:1px dashed rgba(255,255,255,0.1)}
+.article-section:last-child{border-bottom:none; margin-bottom:0; padding-bottom:0;}
+.article-header{text-align:left; margin-bottom:30px; margin-top:20px;}
+.article-title{font-size:26px; color:#fff; display:inline-block; padding:10px 30px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:100px; box-shadow:0 4px 20px rgba(0,0,0,0.2);}
+@media(max-width:1024px){.exp-blocks{grid-template-columns:1fr}}
+@media(max-width:900px){.soal-inner{padding:28px 18px}.challenge-list{grid-template-columns:1fr}.demo-layout{grid-template-columns:1fr}}
+</style>
+
+<section class="canvas-page">
+    <div class="mode-selector">
+        <button class="mode-btn active" data-mode="state">State-Based</button>
+        <button class="mode-btn" data-mode="event">Event-Based</button>
+    </div>
+    <div id="stateSection" class="experiment">
+        <div class="experiment-header">
+            <div><span class="section-label">STATE-BASED</span><h2>State-Based Translation</h2><p>Posisi player diperbarui berdasarkan state keyboard pada setiap frame.</p></div>
+            <div id="mode" class="status running">RUNNING</div>
+        </div>
+        <div class="canvas-layout">
+            <div class="canvas-wrapper"><canvas id="graphicsCanvas" width="960" height="600"></canvas></div>
+            <aside class="control-panel">
+                <h3>Controls</h3>
+                <label>Speed <strong id="speedText">5</strong></label>
+                <input id="speed" type="range" min="1" max="15" value="5">
+                <label class="switch-row"><span>Trail Effect</span><input type="checkbox" id="trail"></label>
+                <button id="pause" class="control-btn">Pause (P)</button>
+                <button id="reset" class="control-btn">Reset (R)</button>
+                <button id="clear" class="control-btn danger">Clear Objects</button>
+                <div class="stats">
+                    <div><span>Frame</span><strong id="frameText">0</strong></div>
+                    <div><span>Mouse</span><strong id="mouseText">(0, 0)</strong></div>
+                    <div><span>Player</span><strong id="playerText">(600, 360)</strong></div>
+                    <div><span>Keys</span><strong id="keysText">none</strong></div>
+                </div>
+            </aside>
+        </div>
+    </div>
+    <div id="eventSection" class="experiment hidden">
+        <div class="experiment-header">
+            <div><span class="section-label">EVENT-BASED</span><h2>Event-Based Translation</h2><p>Pergerakan player terjadi melalui event keyboard dan interaksi mouse.</p></div>
+            <div id="eventMode" class="status running">EVENT MODE</div>
+        </div>
+        <div class="canvas-layout">
+            <div class="canvas-wrapper"><canvas id="eventCanvas" width="960" height="600"></canvas></div>
+            <aside class="control-panel">
+                <h3>Event Controls</h3>
+                <p class="control-description">Gunakan W A S D atau tombol Arrow untuk menggerakkan kotak.</p>
+                <div class="keyboard"><span>W</span><div><span>A</span><span>S</span><span>D</span></div></div>
+                <button id="eventPause" class="control-btn">Pause (P)</button>
+                <button id="eventReset" class="control-btn">Reset (R)</button>
+                <button id="eventClear" class="control-btn danger">Clear Objects</button>
+                <div class="stats">
+                    <div><span>Events</span><strong id="eventText">0 keydown</strong></div>
+                    <div><span>Mouse</span><strong id="eventMouseText">(0, 0)</strong></div>
+                    <div><span>Keys</span><strong id="eventKeysText">none</strong></div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</section>
+
+<footer><div class="footer-content"><div><strong>Grafika Komputer A</strong><p>Interactive Computer Graphics Laboratory</p></div><p>&copy; 2026 Kelompok Grafika Komputer</p></div></footer>
+
+<script>
+var modeButtons=document.querySelectorAll(".mode-btn");
+var stateSection=document.getElementById("stateSection");
+var eventSection=document.getElementById("eventSection");
+modeButtons.forEach(function(button){
+    button.addEventListener("click",function(){
+        modeButtons.forEach(function(b){b.classList.remove("active");});
+        button.classList.add("active");
+        var mode=button.dataset.mode;
+        stateSection.classList.toggle("hidden",mode!=="state");
+        eventSection.classList.toggle("hidden",mode!=="event");
+    });
+});
+</script>
+<script src="state-based.js"></script>
+<script src="event-based.js"></script>
+</body>
+</html>

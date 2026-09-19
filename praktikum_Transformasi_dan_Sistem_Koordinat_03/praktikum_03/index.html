@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Interactive Transformation Playground — WebGL2 | Praktikum Grafika Komputer 03" />
+    <title>Praktikum 03 — Interactive Transformation Playground | WebGL2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../halaman_awal/praktikum.css">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<div class="app-container">
+    
+    <header class="app-header">
+        <a href="../halaman_awal/index.html" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Kembali ke Halaman Awal
+        </a>
+        <h1>WebGL Interactive Transform</h1>
+        <p>Eksplorasi grafika komputer: Model Matrix, TRS vs RTS, Parent-Child, & Orbit</p>
+    </header>
+
+    <div class="explanation-panel"
+        style="background: rgba(255,255,255,0.05); padding: 24px; border-radius: 12px; margin-bottom: 24px; color: var(--text-color, #e2e8f0); font-size: 15px; line-height: 1.7; border: 1px solid rgba(255,255,255,0.1);">
+        <h2 style="margin-top: 0; font-size: 22px; color: var(--accent-color, #4facfe); margin-bottom: 24px;">
+            Penjelasan Implementasi WebGL2 & Tantangan</h2>
+        
+        <h3 style="font-size: 18px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 16px; color: #fff;">
+            🎯 Penjelasan Konsep Utama</h3>
+
+        <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">1. WebGL2 & Shader</h4>
+        <p style="margin: 0 0 12px 0;">Mengambil konteks rendering WebGL2 dan mengkompilasi GLSL ES 3.00 shader. Vertex shader menerima koordinat dan mengalikannya dengan <code>uModelMatrix</code> 3x3 untuk transformasi titik pada bidang 2D. <code>gl_Position</code> diatur ke <code>vec4(pos.xy, 0.0, 1.0)</code>.</p>
+        <pre style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>vec3 pos = uModelMatrix * vec3(aPosition, 1.0);</code></pre>
+
+        <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">2. Geometry & VAO</h4>
+        <p style="margin: 0 0 12px 0;">Menggunakan VAO (Vertex Array Object) yang diwajibkan di WebGL2. VAO menyimpan state ikatan data seperti <code>ARRAY_BUFFER</code> dan <code>vertexAttribPointer</code> sehingga kita hanya perlu memanggil <code>gl.bindVertexArray(vao)</code> sebelum memanggil fungsi draw.</p>
+        <pre style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>const squareBuffer = gl.createBuffer();
+const vaoSquare = gl.createVertexArray();
+gl.bindVertexArray(vaoSquare);
+gl.bindBuffer(gl.ARRAY_BUFFER, squareBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, squareVertices, gl.STATIC_DRAW);
+gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
+gl.enableVertexAttribArray(aPosition);</code></pre>
+
+        <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">3. Matriks Transformasi (TRS / RTS)</h4>
+        <p style="margin: 0 0 12px 0;">Translasi, rotasi, dan skala masing-masing diwakili matriks 3x3 homogen. Urutan perkalian matriks (TRS: Translasi × Rotasi × Skala) memastikan objek diskala, diputar di tempat, lalu dipindah posisinya. Mode RTS memutar objek mengitari origin dunia.</p>
+        <pre style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>function getMatrix(x, y, r, sx, sy, isTRS) {
+  let t = [1, 0, 0, 0, 1, 0, x, y, 1];
+  let c = Math.cos(r), s = Math.sin(r);
+  let rot = [c, s, 0, -s, c, 0, 0, 0, 1];
+  let sc = [sx, 0, 0, 0, sy, 0, 0, 0, 1];
+  let mat;
+  if (isTRS) { // Mode TRS
+    mat = multiply3x3(rot, sc);
+    mat = multiply3x3(t, mat);
+  } else {     // Mode RTS
+    mat = multiply3x3(t, sc);
+    mat = multiply3x3(rot, mat);
+  }
+  return mat;
+}</code></pre>
+
+        <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">4. Hierarki Parent-Child</h4>
+        <p style="margin: 0 0 12px 0;">Objek B adalah Child dari Objek A. Posisi lokal Objek B bergantung dari posisi A. Dengan <code>matB = matA * matB_local</code>, seluruh transformasi dari Objek A akan diturunkan secara hierarkis ke Objek B.</p>
+        <pre style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>let matA = getMatrix(objA.x, objA.y, objA.r, objA.sx, objA.sy, orderTRS);
+let matB_local = getMatrix(objB.x, objB.y, objB.r, objB.sx, objB.sy, orderTRS);
+
+let matB;
+if (chkParent.checked) {
+  matB = multiply3x3(matA, matB_local);
+} else {
+  matB = matB_local;
+}</code></pre>
+
+        <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">5. Kesimpulan</h4>
+        <p style="margin: 0 0 12px 0;">Praktikum ini mendemonstrasikan implementasi <strong>Hierarchical Transform</strong> menggunakan <strong>WebGL2</strong>.
+            Penerapan konsep <em>scene graph</em> ditunjukkan melalui objek Parent (Putih) dan Child (Kuning). 
+            Selain itu, urutan transformasi matriks (<strong>TRS vs RTS</strong>) terbukti menghasilkan output visual yang sangat berbeda karena sifat non-komutatif dari matriks.
+            Seluruh perhitungan matriks dikerjakan di CPU menggunakan array 1D homogen dan dikirim ke GPU sebagai <code>uniform mat3</code>.</p>
+        <pre style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>// Rendering Objek B dengan uniform matB
+gl.uniformMatrix3fv(uModelMatrix, false, new Float32Array(matB));
+gl.uniform4fv(uColor, objB.color);
+gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);</code></pre>
+
+
+        <h3 style="font-size: 18px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 16px; color: #fff;">
+            🚀 Penjelasan Tantangan (Challenges A - F)</h3>
+
+        <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">Konsep Dasar: Parent dan Child</h4>
+        <p style="margin: 0 0 12px 0;">Dalam sistem hierarki, sebuah <strong>Child</strong> akan mewarisi transformasi dari <strong>Parent</strong>-nya. Setiap objek memiliki matriks lokalnya sendiri. Untuk mendapatkan posisi aktual (World Matrix) dari sebuah child, kita mengalikan matriks dunia milik parent dengan matriks lokal milik child tersebut.
+        <br/><br/>
+        <em style="color: #64748b; font-size: 14px;">Contoh: Jika badan mobil (Parent) bergerak maju, maka roda (Child) akan secara otomatis ikut terbawa maju tanpa harus memprogram pergerakan roda satu per satu.</em></p>
+        <pre style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>// Implementasi kalkulasi posisi Child di render loop
+let matB_local = getMatrix(objB.x, objB.y, objB.r, objB.sx, objB.sy, orderTRS);
+
+if (chkParent.checked) {
+    // ChildWorld = ParentWorld × ChildLocal
+    // matA adalah world matrix dari Parent (Objek Putih)
+    matB = multiply3x3(matA, matB_local); 
+} else {
+    // Jika tidak terhubung, gunakan posisinya sendiri
+    matB = matB_local;
+}</code></pre>
+
+        <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">Challenge A: Reset Transform</h4>
+        <p style="margin: 0 0 12px 0;">Fitur ini digunakan untuk mengembalikan semua objek ke state awal mereka secara instan. Ketika tombol <code>R</code> pada keyboard ditekan, posisi <code>(x, y)</code>, rotasi <code>(r)</code>, dan skala <code>(sx, sy)</code> diatur kembali ke nilai default.
+        <br/><br/>
+        <strong style="color: #fff;">Implementasi di Canvas:</strong><br/> Coba gerakkan Objek Putih (Parent) dengan tombol <code>WASD</code>, lalu putar dengan <code>Q/E</code>, dan ubah skalanya. Setelah posisinya acak-acakan, tekan tombol <strong>R</strong> di keyboard atau klik tombol <strong>Reset (R)</strong> pada panel interaksi. Secara instan, Objek Putih akan melompat kembali ke posisi kiri, dan Objek Kuning kembali berpusat memutari Objek Putih dengan nilai yang disetel ulang persis ke kondisi awal ketika halaman dimuat.</p>
+        <pre style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>// Event listener keyboard untuk Challenge A
+if (e.key.toLowerCase() === 'r') {
+    // Reset objek A (Parent)
+    objA = { x: -0.38, y: 0.0, r: 0.0, sx: 1.0, sy: 1.0, color: [1.0, 1.0, 1.0, 1.0] };
+    // Reset objek B (Child)
+    objB = { x: 0.4, y: 0.0, r: 0.0, sx: 0.5, sy: 0.5, color: [0.98, 0.82, 0.28, 1.0] };
+    // Reset rotasi orbit
+    objC.r = 0;
+}</code></pre>
+
+        <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">Challenge B: Transform Preset</h4>
+        <p style="margin: 0 0 12px 0;">Menggunakan tombol <code>1</code>, <code>2</code>, dan <code>3</code> untuk memanggil tiga konfigurasi (preset) transformasi yang berbeda pada objek utama secara cepat.
+        <br/><br/>
+        <strong style="color: #fff;">Implementasi di Canvas:</strong><br/>
+        Tekan tombol <strong>1</strong> di keyboard untuk memindahkan Objek Putih ke posisi atas-kiri tanpa rotasi secara instan.<br/>
+        Tekan tombol <strong>2</strong> untuk memindahkan Objek Putih ke titik tengah (Origin), memutarnya sejauh 45°, dan memperbesar ukurannya secara seragam (Uniform Scale).<br/>
+        Tekan tombol <strong>3</strong> untuk memindahkannya ke bawah-kanan, merotasinya sejauh 90°, dan mengubah bentuknya menjadi pipih secara asimetris (Non-uniform scale).</p>
+        <pre style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>// Event listener keyboard untuk Challenge B
+if (e.key === '1') {
+    // Preset 1: Pindah posisi saja
+    objA = { x: -0.4, y: 0.2, r: 0.0, sx: 1.0, sy: 1.0, color: objA.color };
+} else if (e.key === '2') {
+    // Preset 2: Rotasi 45 derajat dan perbesar ukuran (Uniform)
+    objA = { x: 0.0, y: 0.0, r: 45 * Math.PI / 180, sx: 1.5, sy: 1.5, color: objA.color };
+} else if (e.key === '3') {
+    // Preset 3: Rotasi 90 derajat dan skala non-uniform (gepeng)
+    objA = { x: 0.3, y: -0.2, r: 90 * Math.PI / 180, sx: 1.8, sy: 0.6, color: objA.color };
+}</code></pre>
+
+        <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">Challenge C: Toggle Transform Order</h4>
+        <p style="margin: 0 0 12px 0;">Menekan tombol <code>T</code> akan mengubah urutan operasi transformasi matriks. Hal ini sangat penting karena perkalian matriks bersifat tidak komutatif (A × B &ne; B × A). Pada orde <code>T × R × S</code>, objek berputar di tempatnya sendiri. Pada orde <code>R × T × S</code>, objek akan mengorbit terhadap titik Origin (0,0).
+        <br/><br/>
+        <strong style="color: #fff;">Implementasi di Canvas:</strong><br/>
+        Pertama, geser Objek Putih menjauhi titik tengah (garis silang putih sumbu) pakai tombol <code>WASD</code>. Secara default, matriks beroperasi dengan orde <strong>TRS</strong>, jadi jika Anda menekan <code>Q</code> atau <code>E</code>, Objek Putih berputar di porosnya sendiri (titik hijau).<br/>
+        Sekarang, tekan tombol <strong>T</strong> (atau klik tombol <strong>Order: RTS</strong>). Jika Anda menekan rotasi <code>Q/E</code> sekarang, Objek Putih tidak lagi berputar di porosnya, melainkan terlempar melingkar dan berputar jauh mengelilingi Origin (titik 0,0 kanvas) bagaikan bulan yang mengelilingi orbit bumi sebesar radius dari pusat tersebut.</p>
+        <pre style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>// Di fungsi pembuatan matriks getMatrix()
+let mat;
+if (isTRS) {
+    // T x R x S (Scale duluan, Rotasi di tempat, lalu Translasi)
+    mat = multiply3x3(rot, sc);
+    mat = multiply3x3(t, mat);
+} else {
+    // R x T x S (Scale duluan, Translasi sejauh jarak, lalu Rotasi mengitari Origin)
+    mat = multiply3x3(t, sc);
+    mat = multiply3x3(rot, mat);
+}</code></pre>
+
+        <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">Challenge D: Mouse Translation</h4>
+        <p style="margin: 0 0 12px 0;">Klik dan geser pada area canvas untuk memindahkan objek utama ke posisi kursor. Pixel mouse dari koordinat layar diubah (mapping) menjadi ruang Normalised Device Coordinates (NDC) yang berjarak dari -1 hingga 1.
+        <br/><br/>
+        <strong style="color: #fff;">Implementasi di Canvas:</strong><br/>
+        Arahkan kursor Anda bebas di area kanvas layar hitam. <strong>Klik dan tahan tombol kiri mouse (Drag)</strong>, lalu geser mouse Anda. Objek Putih beserta anakannya (Objek Kuning) akan melompat dan melekat (snap) menempel tepat pada posisi kursor Anda. Selama mouse digeser, posisi objek akan terus diperbarui secara <em>real-time</em> mengikuti pergerakan kursor Anda.</p>
+        <pre style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>// Event Listener pada element Canvas
+canvas.addEventListener('mousemove', (e) => {
+    if (!isDragging) return; // Hanya jalan jika mouse ditekan (klik)
+    
+    // Dapatkan batas canvas
+    const rect = canvas.getBoundingClientRect();
+    
+    // Konversi Mouse Pixel ke koordinat NDC WebGL (-1.0 s/d 1.0)
+    const x = ((e.clientX - rect.left) / rect.width) * 2.0 - 1.0;
+    const y = -(((e.clientY - rect.top) / rect.height) * 2.0 - 1.0); // Y terbalik
+    
+    // Terapkan ke Translation Matrix (Update posisi objek A)
+    objA.x = x;
+    objA.y = y;
+});</code></pre>
+
+        <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">Challenge E: Parent & Child</h4>
+        <p style="margin: 0 0 12px 0;">Objek Child (B) memiliki status lokasinya <code>(x=0.4, y=0.0)</code> yang diukur dari titik tengah Parent, bukan dari tengah layar. Ketika Parent (A) digeser dengan tombol WASD atau dirotasi, objek B akan mengikuti gerakan tersebut karena matriksnya terikat bersama Parent.
+        <br/><br/>
+        <strong style="color: #fff;">Implementasi di Canvas:</strong><br/>
+        Perhatikan bahwa Objek Kuning terikat pada Objek Putih. Coba geser Objek Putih ke atas dengan menekan tombol <code>W</code>; perhatikan bahwa Objek Kuning ikut terseret bersama secara otomatis tanpa harus diberi perintah gerak tambahan. Coba putar Objek Putih menggunakan <code>E</code>; Objek Kuning pun akan ikut memutar menyesuaikan orientasi hadap objek Parent-nya (terbawa arus putaran rotasi objek Putih). Fitur rantai matriks <em>(Hierarchy)</em> ini bisa dihentikan sementara dengan menghilangkan centang pada kotak <strong>"Parent-Child Aktif"</strong>, yang akan membuat Objek Kuning diam dan berpisah secara independen.</p>
+        <pre style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 24px 0; overflow-x: auto; font-family: monospace;"><code>// Objek B terdefinisi sebagai independen, koordinat X 0.4 diukur dari Origin lokal
+let objB = { x: 0.4, y: 0.0, r: 0.0, sx: 0.5, sy: 0.5, color: [0.98, 0.82, 0.28, 1.0] };
+
+// Namun saat di-render, matriksnya mewarisi transformasi matA (Parent-nya)
+let matA = getMatrix(objA.x, objA.y, objA.r, objA.sx, objA.sy, orderTRS);
+let matB_local = getMatrix(objB.x, objB.y, objB.r, objB.sx, objB.sy, orderTRS);
+
+let matB;
+if (chkParent.checked) {
+    // Matriks Parent × Matriks Lokal = Ruang Dunia Child
+    matB = multiply3x3(matA, matB_local); 
+} else {
+    matB = matB_local; // Bergerak tanpa terpengaruh posisi Parent
+}</code></pre>
+
+        <h4 style="font-size: 16px; margin: 0 0 8px 0; color: #a5d8ff;">Challenge F: Simple Orbit</h4>
+        <p style="margin: 0 0 12px 0;">Dengan menerapkan <i>Matrix Composition</i>, kita memprogram agar objek B secara konstan menambahkan nilai sudut rotasinya terhadap Parent, sehingga mensimulasikan gerakan mengorbit yang mulus berbasis waktu (Delta Time).
+        <br/><br/>
+        <strong style="color: #fff;">Implementasi di Canvas:</strong><br/>
+        Karena opsi <strong>"Auto Animasi (Obj B & C)"</strong> dihidupkan, script memberikan perintah rotasi secara konstan. Namun, karena Objek Kuning terikat dan bergantung sebagai Child pada matriks dari Objek Putih (seperti pada Challenge E), perputaran konstan tersebut tersimulasikan sebagai perputaran orbit mengelilingi pusat Objek Putih bagaikan satelit, tanpa perlu rumus trigonometri tambahan. Coba tekan tombol <strong>Balik Orbit B (O)</strong> untuk melihat orbit berbalik arah.</p>
+        <pre style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; font-size: 13px; margin: 0 0 32px 0; overflow-x: auto; font-family: monospace;"><code>// Menjalankan orbit otomatis di render loop
+if (chkAutoB.checked) {
+    // objB terus menambahkan sudut putarannya perlahan mengikuti detak waktu.
+    // Karena ia terikat dengan objA lewat Matriks Parent, rotasinya mengorbit Parent!
+    objB.r += rSpd * dt * orbitDirection; 
+}</code></pre>
+
+
+    </div>
+
+    <div class="dashboard">
+        <div class="controls-panel">
+            
+            <div class="controls-section">
+                <span class="controls-label">Kecepatan & Skala</span>
+                
+                <div class="slider-group">
+                    <div class="slider-header"><span>Translasi</span><span id="lblTSpeed" class="slider-val">0.65</span></div>
+                    <input type="range" id="tSpeed" min="0" max="2" step="0.05" value="0.65">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header"><span>Rotasi</span><span id="lblRSpeed" class="slider-val">100°/s</span></div>
+                    <input type="range" id="rSpeed" min="0" max="360" step="10" value="100">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header"><span>Skala</span><span id="lblSSpeed" class="slider-val">0.80</span></div>
+                    <input type="range" id="sSpeed" min="0" max="2" step="0.05" value="0.80">
+                </div>
+            </div>
+
+            <div class="controls-section">
+                <span class="controls-label">Fitur Tampilan</span>
+                <div class="checkbox-group">
+                    <label class="custom-checkbox">
+                        <span>Object A (Putih)</span>
+                        <input type="checkbox" id="chkShowA" checked>
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="custom-checkbox">
+                        <span>Object B (Kuning - Child)</span>
+                        <input type="checkbox" id="chkShowB" checked>
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="custom-checkbox">
+                        <span>Object C (Merah - Orbit)</span>
+                        <input type="checkbox" id="chkShowC" checked>
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="custom-checkbox">
+                        <span>Garis Sumbu (Axes)</span>
+                        <input type="checkbox" id="chkAxes" checked>
+                        <span class="checkmark"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="controls-section">
+                <span class="controls-label">Interaksi</span>
+                <div class="checkbox-group">
+                    <label class="custom-checkbox">
+                        <span>Auto Animasi (Obj B & C)</span>
+                        <input type="checkbox" id="chkAutoB" checked>
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="custom-checkbox">
+                        <span>Parent-Child Aktif</span>
+                        <input type="checkbox" id="chkParent" checked>
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="custom-checkbox">
+                        <span>Pivot Marker</span>
+                        <input type="checkbox" id="chkPivot" checked>
+                        <span class="checkmark"></span>
+                    </label>
+                </div>
+                <div class="button-group" style="margin-top:10px;">
+                    <button class="btn primary-btn" id="btnPause">Pause (P)</button>
+                    <button class="btn secondary-btn" id="btnReset">Reset (R)</button>
+                </div>
+            </div>
+
+            <div class="button-group" style="width: 100%; margin-top: 10px;">
+                <button class="btn secondary-btn" id="btnOrder" style="max-width: 250px;">Order: <span id="valOrder">TRS</span> (T)</button>
+                <button class="btn secondary-btn" id="btnOrbit" style="max-width: 250px;">Balik Orbit B (O)</button>
+            </div>
+
+            <div class="instruction">
+                <span class="key">W A S D</span> Translasi &bull; <span class="key">Q E</span> Rotasi &bull; <span class="key">- +</span> Skala Uniform &bull; <span class="key">Z X</span> Skala X &bull; <span class="key">C V</span> Skala Y &bull; <span class="key">Mouse Drag</span> Pindah Cepat
+            </div>
+        </div>
+
+        <div class="stats-panel">
+            <div class="stat-card">
+                <span class="stat-label">Position A</span>
+                <span class="stat-value" id="valPosA">(0.00, 0.00)</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Rotation A</span>
+                <span class="stat-value" id="valRotA">0.0°</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Scale A</span>
+                <span class="stat-value" id="valScaleA">(1.00, 1.00)</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Frame dt</span>
+                <span class="stat-value" id="valDt">16ms</span>
+            </div>
+            <div class="stat-card matrix-card">
+                <span class="stat-label">Model Matrix A (Col-Major)</span>
+                <div class="stat-matrix" id="valMat">
+                    [1.00 0.00 0.00]<br>[0.00 1.00 0.00]<br>[0.00 0.00 1.00]
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="canvas-wrapper">
+        <canvas id="canvas"></canvas>
+    </div>
+
+</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
