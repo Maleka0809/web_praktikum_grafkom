@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kamera dan Proyeksi 3D</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="page-header">
+      <div>
+        <div class="eyebrow">PRAKTIKUM 04</div>
+        <h1>WebGL Kamera dan Proyeksi 3D</h1>
+        <p>Eksplorasi grafika komputer: Proyeksi Ortografis & Perspektif, dan Transformasi Kamera 3D</p>
+      </div>
+      <div class="status-badge" id="statusBadge">WEBGL2 INITIALIZING...</div>
+    </header>
+
+    <div class="workspace">
+      <div class="canvas-panel">
+        <div class="canvas-frame">
+          <canvas id="webglCanvas" width="800" height="500"></canvas>
+        </div>
+        
+        <div class="hud-grid">
+          <div class="hud-card">
+            PROJECTION
+            <b id="projectionInfo">perspective</b>
+          </div>
+          <div class="hud-card">
+            CAMERA POS
+            <b id="cameraInfo">(0.00, 1.20, 5.00)</b>
+          </div>
+          <div class="hud-card">
+            FOV
+            <b id="fovInfo">60°</b>
+          </div>
+          <div class="hud-card">
+            CLIP NEAR/FAR
+            <b id="clipInfo">0.10 / 30.00</b>
+          </div>
+          <div class="hud-card">
+            DEPTH TEST
+            <b id="depthInfo">Enabled</b>
+          </div>
+          <div class="hud-card">
+            MODE
+            <b id="cameraModeInfo">Manual</b>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-panel">
+        <div class="button-grid">
+          <button id="projectionButton">Toggle Proj</button>
+          <button id="orbitButton">Toggle Orbit</button>
+          <button id="splitButton">Toggle Split</button>
+          <button id="depthButton">Toggle Depth</button>
+        </div>
+        
+        <div class="button-grid">
+          <button id="clipButton">Cycle Clip</button>
+          <button id="fovPresetButton">Cycle FOV</button>
+        </div>
+
+        <div class="range-row">
+          <span>FOV</span>
+          <output id="fovValue">60°</output>
+        </div>
+        <input type="range" id="fovControl" min="10" max="150" step="1" value="60">
+
+        <div class="range-row">
+          <span>Camera Height</span>
+          <output id="heightValue">1.20</output>
+        </div>
+        <input type="range" id="heightControl" min="-5" max="5" step="0.1" value="1.2">
+
+        <div class="range-row">
+          <span>Target X</span>
+          <output id="targetXValue">0.00</output>
+        </div>
+        <input type="range" id="targetXControl" min="-5" max="5" step="0.1" value="0">
+
+        <div class="range-row">
+          <span>Target Y</span>
+          <output id="targetYValue">0.00</output>
+        </div>
+        <input type="range" id="targetYControl" min="-5" max="5" step="0.1" value="0">
+
+        <button id="resetButton" class="primary-button wide-button">Reset Scene</button>
+
+        <div class="keyboard-help">
+          <span><b>W / S / Up / Down</b> move camera</span>
+          <span><b>A / D / Q / E</b> move target</span>
+          <span><b>O</b> toggle projection</span>
+          <span><b>B</b> toggle orbit</span>
+          <span><b>X</b> toggle split screen</span>
+          <span><b>D</b> toggle depth</span>
+          <span><b>N</b> next clip preset</span>
+          <span><b>R</b> reset scene</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
