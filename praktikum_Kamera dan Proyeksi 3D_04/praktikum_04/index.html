@@ -102,7 +102,212 @@
         </div>
       </div>
     </div>
+    
+    <div class="explanation-section">
+      <h2>Penjelasan Detail Konsep & Jawaban Challenge Praktikum 04</h2>
+      
+      <div class="concept-block">
+        <h3>1. Benang Merah Pipeline 3D (Vertex ke Layar)</h3>
+        <p>Dalam grafika komputer 3D, sebuah vertex atau titik pada objek melewati tahapan transformasi (Pipeline) berurutan sebelum digambar di layar:</p>
+        <ol>
+          <li><b>Local Space:</b> Koordinat asli objek (misal: titik-titik pada kubus).</li>
+          <li><b>Model Matrix:</b> Memindahkan titik dari Local ke <b>World Space</b> (Mentranslasi, merotasi, dan menskala objek ke posisinya di dunia 3D).</li>
+          <li><b>View Matrix:</b> Memindahkan titik dari World ke <b>View Space</b> (Mengubah sudut pandang agar relatif terhadap posisi dan arah kamera).</li>
+          <li><b>Projection Matrix:</b> Memindahkan titik dari View ke <b>Clip Space</b> (Menerapkan efek perspektif atau ortografis dan memotong objek di luar jangkauan pandang).</li>
+          <li><b>Perspective Divide & NDC:</b> Pembagian dengan koordinat homogen (W) untuk menghasilkan Normalized Device Coordinates (NDC).</li>
+          <li><b>Viewport & Screen:</b> Memetakan koordinat NDC ke resolusi layar monitor (pixel).</li>
+        </ol>
+        <p>Pada Vertex Shader, implementasinya menggunakan perkalian matriks (Projection × View × Model × Posisi Lokal):</p>
+        <pre><code>#version 300 es
+in vec3 a_position;
+in vec3 a_color;
+
+uniform mat4 u_model;
+uniform mat4 u_view;
+uniform mat4 u_projection;
+
+out vec3 v_color;
+
+void main() {
+  gl_Position = u_projection * u_view * u_model * vec4(a_position, 1.0);
+  v_color = a_color;
+}</code></pre>
+      </div>
+
+      <div class="concept-block">
+        <h3>2. Mengapa Menggunakan Matrix 4x4?</h3>
+        <p>Koordinat 3D memiliki nilai X, Y, dan Z. Namun, transformasi linier 3x3 hanya bisa melakukan Rotasi dan Skala, tidak bisa melakukan Translasi (perpindahan). Dengan menggunakan Homogeneous Coordinate <code>(X, Y, Z, 1)</code> dan Matriks 4x4, kita dapat menggabungkan operasi Translasi, Rotasi, Skala, View, dan Proyeksi sekaligus di dalam satu matriks perkalian.</p>
+      </div>
+
+      <div class="concept-block">
+        <h3>3. Camera (Posisi, Target, Up Vector & LookAt)</h3>
+        <p>Kamera di ruang 3D tidak benar-benar bergerak. Secara matematis, View Matrix memindahkan seluruh dunia ke arah yang berlawanan dengan pergerakan kamera (Inverse Transform). Tiga komponen utama kamera:</p>
+        <ul>
+          <li><b>Position:</b> Koordinat lokasi kamera di dunia (misal: <code>[0.0, 1.5, 4.0]</code>).</li>
+          <li><b>Target:</b> Titik yang dilihat oleh kamera (misal: <code>[0.0, 0.0, 0.0]</code>).</li>
+          <li><b>Up Vector:</b> Arah "atas" pada dunia (biasanya <code>[0.0, 1.0, 0.0]</code>).</li>
+        </ul>
+        <p>Basis vektor kamera dihitung dengan <b>Cross Product</b>. <i>Forward</i> didapat dari (Target - Position). <i>Right</i> didapat dari (Forward × Up). <i>Corrected Up</i> didapat dari (Right × Forward).</p>
+        <pre><code>// Implementasi LookAt (View Matrix)
+lookAt(position, target, up) {
+  const forward = Vec3.normalize(Vec3.subtract(target, position));
+  const right = Vec3.normalize(Vec3.cross(forward, up));
+  const correctedUp = Vec3.cross(right, forward);
+
+  return new Float32Array([
+     right[0],       correctedUp[0],      -forward[0],       0,
+     right[1],       correctedUp[1],      -forward[1],       0,
+     right[2],       correctedUp[2],      -forward[2],       0,
+    -Vec3.dot(right, position), -Vec3.dot(correctedUp, position), Vec3.dot(forward, position), 1
+  ]);
+}</code></pre>
+      </div>
+
+      <div class="concept-block">
+        <h3>4. Perspective vs Orthographic Projection</h3>
+        <p>Projection Matrix menentukan bagaimana bentuk 3D dipetakan ke bidang 2D layar.</p>
+        <ul>
+          <li><b>Perspective:</b> Semakin jauh objek, semakin kecil tampilannya (seperti mata manusia). Menggunakan parameter FOV (Field of View) dan Aspect Ratio. Sering digunakan pada Game 3D.</li>
+          <li><b>Orthographic:</b> Objek tetap ukurannya tidak peduli seberapa jauh jaraknya dari kamera. Menggunakan batasan kotak (left, right, bottom, top). Sering digunakan pada CAD, arsitektur, dan peta.</li>
+        </ul>
+        <pre><code>// Implementasi Projection Matrix
+function createProjectionMatrix() {
+  const aspect = canvas.width / canvas.height;
+  if (projectionState.mode === "perspective") {
+    // fov, aspect, near, far
+    return Mat4.perspective(degToRad(projectionState.fov), aspect, projectionState.near, projectionState.far);
+  } else {
+    // left, right, bottom, top, near, far
+    const size = 2.0;
+    return Mat4.orthographic(-size * aspect, size * aspect, -size, size, projectionState.near, projectionState.far);
+  }
+}</code></pre>
+      </div>
+
+      <div class="concept-block">
+        <h3>5. Depth Buffer dan Depth Test</h3>
+        <p>Tanpa Depth Test, poligon yang dirender belakangan (<i>Draw Order</i>) akan digambar di atas poligon yang dirender duluan, meskipun posisi aslinya berada di belakang (tertutup). <b>Depth Test</b> menyimpan jarak tiap piksel (Z-Buffer) ke kamera. Hanya piksel dengan nilai depth lebih kecil (lebih dekat ke kamera) yang akan digambar ke layar.</p>
+        <pre><code>// Mengaktifkan dan Membersihkan Depth Buffer per Frame
+gl.enable(gl.DEPTH_TEST);
+gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);</code></pre>
+      </div>
+
+      <hr style="border: 1px solid rgba(139,92,246,0.3); margin: 30px 0;">
+
+      <h2>Jawaban Lengkap Challenge Praktikum 04</h2>
+
+      <div class="concept-block">
+        <h3>Challenge A: Orbit Camera</h3>
+        <p>Untuk membuat kamera bergerak melingkar mengelilingi titik pusat (target 0,0,0), kita menerapkan konsep lingkaran dari fungsi Sinus dan Cosinus. Posisi Y dapat dibuat statis, sementara X dan Z berubah berdasarkan pertambahan waktu <code>dt</code>.</p>
+        <pre><code>// Modifikasi pada fungsi updateCamera()
+let angle = 0;
+const orbitRadius = 4.0;
+const orbitSpeed = 1.0;
+
+function updateOrbitCamera(dt) {
+  angle += orbitSpeed * dt;
+  
+  // Mengubah posisi X dan Z berdasarkan fungsi trigonometri
+  camera.position[0] = Math.cos(angle) * orbitRadius;
+  camera.position[2] = Math.sin(angle) * orbitRadius;
+  
+  // Target tetap terkunci di origin
+  camera.target = [0.0, 0.0, 0.0];
+}</code></pre>
+      </div>
+
+      <div class="concept-block">
+        <h3>Challenge B: Camera Height Control</h3>
+        <p>Menambahkan kemampuan menaikkan dan menurunkan kamera pada sumbu Y menggunakan tombol khusus (PageUp untuk naik, PageDown untuk turun).</p>
+        <pre><code>// State-based keyboard controls dalam updateCamera()
+const heightSpeed = 3.0;
+
+function updateCameraHeight(dt) {
+  if (keys["pageup"]) {
+    camera.position[1] += heightSpeed * dt;
+  }
+  if (keys["pagedown"]) {
+    camera.position[1] -= heightSpeed * dt;
+  }
+}</code></pre>
+      </div>
+
+      <div class="concept-block">
+        <h3>Challenge C: Target Control</h3>
+        <p>Memindahkan pandangan kamera (Target) dengan posisi kamera tetap diam. Ini akan mengubah basis orientasi View Matrix, sehingga kamera tampak "menengok" ke arah yang berbeda.</p>
+        <pre><code>// Mengontrol target fokus kamera
+const targetSpeed = 2.0;
+
+function updateTarget(dt) {
+  if (keys["j"]) camera.target[0] -= targetSpeed * dt; // Kiri
+  if (keys["l"]) camera.target[0] += targetSpeed * dt; // Kanan
+  if (keys["i"]) camera.target[1] += targetSpeed * dt; // Atas
+  if (keys["k"]) camera.target[1] -= targetSpeed * dt; // Bawah
+}</code></pre>
+      </div>
+
+      <div class="concept-block">
+        <h3>Challenge D: Projection Comparison Split Mode</h3>
+        <p>Untuk membandingkan efek secara langsung, viewport WebGL dibagi dua secara horizontal. Setengah kanvas menggunakan proyeksi Perspektif, setengahnya lagi menggunakan proyeksi Ortografis pada frame yang sama.</p>
+        <pre><code>// Render Loop Modifikasi
+function renderSplitMode() {
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  
+  const aspect = (canvas.width / 2) / canvas.height;
+  const viewMatrix = Mat4.lookAt(camera.position, camera.target, camera.up);
+
+  // --- Kiri: Perspektif ---
+  gl.viewport(0, 0, canvas.width / 2, canvas.height);
+  const projPersp = Mat4.perspective(degToRad(60), aspect, 0.1, 100);
+  drawCube(model, viewMatrix, projPersp);
+
+  // --- Kanan: Ortografis ---
+  gl.viewport(canvas.width / 2, 0, canvas.width / 2, canvas.height);
+  const size = 2.0;
+  const projOrtho = Mat4.orthographic(-size * aspect, size * aspect, -size, size, 0.1, 100);
+  drawCube(model, viewMatrix, projOrtho);
+}</code></pre>
+      </div>
+
+      <div class="concept-block">
+        <h3>Challenge E: Multiple Cube Depth Test</h3>
+        <p>Menampilkan tiga objek pada kedalaman (Z) yang berbeda menggunakan transformasi Model Matrix untuk menguji apakah Z-Buffer (Depth Test) bekerja dengan benar saat posisi objek saling tumpang tindih secara visual.</p>
+        <pre><code>// Menyiapkan Model Matriks berbeda per objek
+function renderMultipleCubes() {
+  const viewMatrix = Mat4.lookAt(camera.position, camera.target, camera.up);
+  const projMatrix = createProjectionMatrix();
+
+  // Kubus 1 (Belakang, Biru/Hitam)
+  let model1 = Mat4.multiply(Mat4.translation(-1.5, 0.0, -3.0), Mat4.rotationY(degToRad(45)));
+  drawCube(model1, viewMatrix, projMatrix);
+
+  // Kubus 2 (Tengah, Standar)
+  let model2 = Mat4.translation(0.0, 0.0, 0.0);
+  drawCube(model2, viewMatrix, projMatrix);
+
+  // Kubus 3 (Depan, Merah/Kuning)
+  let model3 = Mat4.multiply(Mat4.translation(1.5, 0.0, 3.0), Mat4.rotationX(degToRad(30)));
+  drawCube(model3, viewMatrix, projMatrix);
+}</code></pre>
+      </div>
+
+      <div class="concept-block">
+        <h3>Challenge F: FOV Preset</h3>
+        <p>Mengubah sudut Field of View secara instan antara pandangan zoom (sempit), normal, dan lebar (wide) menggunakan event berbasis tombol (Keydown event, tidak bergantung pada deltatime).</p>
+        <pre><code>window.addEventListener("keydown", (event) => {
+  if (event.key === "1") {
+    projectionState.fov = 35; // Zoom in / Sempit
+  }
+  if (event.key === "2") {
+    projectionState.fov = 60; // Normal
+  }
+  if (event.key === "3") {
+    projectionState.fov = 90; // Wide / Lebar
+  }
+});</code></pre>
+      </div>
+    </div>
   </div>
-  <script type="module" src="./main.js"></script>
+  <script src="./main.js"></script>
 </body>
 </html>
