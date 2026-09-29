@@ -1,13 +1,125 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>praktikum_05</title>
+    <title>Praktikum 05 - Lighting, Shading & Texture</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div class="app-shell">
+        <div class="page-header">
+          <div>
+            <div class="eyebrow">PRAKTIKUM 05</div>
+            <h1>Lighting, Shading & Texture</h1>
+            <p>WebGL2 Implementation</p>
+          </div>
+          <div id="statusBadge" class="status-badge">WebGL2 READY</div>
+        </div>
+        <div class="workspace">
+          <div class="canvas-panel">
+            <div class="canvas-frame">
+              <canvas id="webglCanvas"></canvas>
+            </div>
+            <div class="hud-grid">
+              <div class="hud-card">SHADING <b id="shadingInfo">FLAT</b></div>
+              <div class="hud-card">TEXTURE <b id="textureInfo">CHECKER</b></div>
+              <div class="hud-card">CAMERA <b id="cameraInfo">ORBIT OFF</b></div>
+              <div class="hud-card">FILTER <b id="filterInfo">LINEAR</b></div>
+              <div class="hud-card">WRAP <b id="wrapInfo">REPEAT</b></div>
+              <div class="hud-card">LIGHT <b id="lightInfo">(2.00, 2.00, 3.00)</b></div>
+            </div>
+            <div class="keyboard-help">
+              <div><b>F</b> Toggle Shading (Flat/Smooth)</div>
+              <div><b>T</b> Toggle Texture</div>
+              <div><b>L</b> Toggle Light Orbit</div>
+              <div><b>P</b> Toggle Object Rotation</div>
+              <div><b>R</b> Reset All</div>
+              <div><b>Arrows/W/S</b> Move Light | <b>Q/E</b> Move Camera</div>
+            </div>
+          </div>
+          <div class="control-panel">
+            <label class="select-row">
+              Shape
+              <select id="shapeSelect">
+                <option value="cube">Cube</option>
+                <option value="sphere">Sphere</option>
+                <option value="torus">Torus</option>
+                <option value="torusKnot">Torus Knot</option>
+              </select>
+            </label>
+            
+            <div class="subheading">Lighting Components</div>
+            <div class="check-grid">
+              <label><input type="checkbox" id="ambientToggle" checked> Ambient</label>
+              <label><input type="checkbox" id="diffuseToggle" checked> Diffuse</label>
+              <label><input type="checkbox" id="specularToggle" checked> Specular</label>
+            </div>
+            
+            <div class="subheading">Material</div>
+            <div class="range-row">
+              <span>Ambient Strength</span>
+              <output id="ambientValue">0.18</output>
+            </div>
+            <input type="range" id="ambientControl" min="0" max="1" step="0.01" value="0.18">
+            
+            <div class="range-row">
+              <span>Shininess</span>
+              <output id="shininessValue">32</output>
+            </div>
+            <input type="range" id="shininessControl" min="1" max="256" step="1" value="32">
+            
+            <div class="subheading">Light Position (X, Y, Z)</div>
+            <div class="triple-range">
+              <input type="range" id="lightXControl" min="-5" max="5" step="0.1" value="2">
+              <input type="range" id="lightYControl" min="-5" max="5" step="0.1" value="2">
+              <input type="range" id="lightZControl" min="-5" max="5" step="0.1" value="3">
+            </div>
+            
+            <div class="subheading">Object Scale (X, Y, Z)</div>
+            <div class="triple-range">
+              <input type="range" id="scaleXControl" min="0.1" max="3" step="0.1" value="1">
+              <input type="range" id="scaleYControl" min="0.1" max="3" step="0.1" value="1">
+              <input type="range" id="scaleZControl" min="0.1" max="3" step="0.1" value="1">
+            </div>
+
+            <div class="subheading">Texture Settings</div>
+            <label class="select-row">
+              Source
+              <select id="textureSource">
+                <option value="checker">Checker Pattern</option>
+                <option value="image">Image (texture.svg)</option>
+              </select>
+            </label>
+            <label class="select-row">
+              Filter
+              <select id="filterSelect">
+                <option value="nearest">Nearest</option>
+                <option value="linear" selected>Linear</option>
+                <option value="mipmap">Mipmap</option>
+              </select>
+            </label>
+            <label class="select-row">
+              Wrap
+              <select id="wrapSelect">
+                <option value="repeat" selected>Repeat</option>
+                <option value="clamp">Clamp to Edge</option>
+              </select>
+            </label>
+
+            <div class="button-grid">
+              <button id="flatButton">Toggle Shading</button>
+              <button id="textureButton">Toggle Texture</button>
+              <button id="lightOrbitButton">Light Orbit</button>
+              <button id="cameraOrbitButton">Camera Orbit</button>
+            </div>
+            
+            <button id="cubeRotationButton" class="wide-button">Stop Object Rotation (P)</button>
+            <button id="resetButton" class="wide-button" style="background:#28647d; color:#dcecff; border-color:#28647d; margin-top:8px;">Reset Settings</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
