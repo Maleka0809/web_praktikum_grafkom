@@ -1,4 +1,4 @@
-import './style.css';
+
 
 const canvas = document.querySelector("#webglCanvas");
 const gl = canvas.getContext("webgl2");
