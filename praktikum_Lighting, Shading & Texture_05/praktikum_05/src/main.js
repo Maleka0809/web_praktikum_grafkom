@@ -185,9 +185,9 @@ function cubeData() {
 function curvedData(shape) {
   const tau = Math.PI * 2;
   function knotCenter(t) {
-    const radius = 0.68 + 0.24 * Math.cos(3 * t);
+    const radius = 0.68 + 0.24 * Math.cos(5 * t);
     return [radius * Math.cos(2 * t), radius * Math.sin(2 * t),
-      0.24 * Math.sin(3 * t)];
+      0.24 * Math.sin(5 * t)];
   }
   function surface(u, v) {
     const t = u * tau, angle = v * tau;
@@ -205,7 +205,7 @@ function curvedData(shape) {
     }
     const center = knotCenter(t);
     const tangent = normalize(subtract(knotCenter(t + 0.0001), knotCenter(t - 0.0001)));
-    // The planar tangent never vanishes for this (2, 3) knot. This frame is periodic.
+    // The planar tangent never vanishes for this (2, 5) knot. This frame is periodic.
     const side = normalize(cross(tangent, [0, 0, 1]));
     const up = normalize(cross(side, tangent));
     const normal = side.map((value, i) => value * Math.cos(angle) + up[i] * Math.sin(angle));
