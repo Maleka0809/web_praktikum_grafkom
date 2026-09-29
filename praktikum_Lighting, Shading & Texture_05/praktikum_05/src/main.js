@@ -435,7 +435,7 @@ function createCheckerTexture() {
   const context = checker.getContext("2d");
   for (let y = 0; y < 8; y += 1)
     for (let x = 0; x < 8; x += 1) {
-      context.fillStyle = (x + y) % 2 ? "#245a9f" : "#4df3ff";
+      context.fillStyle = (x + y) % 2 ? "#1e3a8a" : "#8b5cf6";
       context.fillRect(x * 16, y * 16, 16, 16);
     }
   const texture = gl.createTexture();
