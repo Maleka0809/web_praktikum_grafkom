@@ -1,8 +1,10 @@
 # Praktikum 5: Lighting, Shading & Texture WebGL2
 
 ## Data Mahasiswa
-- **Nama:** [Isi Nama Anda]
-- **NRP:** [Isi NRP Anda]
+| Nama | NRP |
+| :--- | :--- |
+| [Isi Nama Mahasiswa 1] | [Isi NRP Mahasiswa 1] |
+| [Isi Nama Mahasiswa 2] | [Isi NRP Mahasiswa 2] |
 
 ## Deskripsi Aplikasi
 Aplikasi ini merupakan implementasi WebGL2 murni untuk merender objek 3D (Cube, Sphere, Torus, Torus Knot) yang diintegrasikan dengan kerangka **Vite**. Aplikasi ini menambahkan efek **Lighting** (Ambient, Diffuse, Specular) berdasarkan Phong Reflection Model, **Shading** (Flat & Smooth), dan **Texture Mapping** (Checkerboard prosedural & Image eksternal).
