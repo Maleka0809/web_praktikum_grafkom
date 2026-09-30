@@ -4,14 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Praktikum — Grafika Komputer A</title>
     <link rel="stylesheet" href="praktikum.css">
-    <title>Daftar Praktikum</title>
 </head>
 
 <body>
-    <nav class="navbar">
+    <!-- Scroll Progress Indicator -->
+    <div id="scroll-progress"></div>
+
+    <!-- Animated Ambient Light Orbs -->
+    <div class="bg-ambient-orb orb-1"></div>
+    <div class="bg-ambient-orb orb-2"></div>
+    <div class="bg-ambient-orb orb-3"></div>
+
+    <nav class="navbar" id="navbar">
         <div class="nav-container">
-            <a href="../index.html" class="brand"><span class="brand-icon">💻</span>Grafika<span>Komputer</span></a>
+            <a href="../index.html" class="brand">
+                <span class="brand-icon">💻</span>Grafika<span>Komputer</span>
+            </a>
             <div class="nav-menu">
                 <a href="../index.html">Home</a>
                 <a href="#" class="active">Praktikum</a>
@@ -22,7 +32,7 @@
 
     <main>
         <section class="page-header">
-            <span class="section-label">PRAKTIKUM</span>
+            <span class="section-label"><span class="sparkle">✦</span> PRAKTIKUM</span>
             <h1>Daftar Praktikum</h1>
             <p>Pilih praktikum yang ingin dipelajari dan eksplorasi implementasi grafika komputer secara langsung.</p>
         </section>
@@ -33,67 +43,106 @@
                 <div class="practice-info">
                     <span>PRAKTIKUM 01</span>
                     <h2>Interactive Canvas</h2>
-                    <p>Eksplorasi objek 2D menggunakan Canvas, keyboard, mouse, animasi, dan event.</p>
+                    <p>Eksplorasi objek 2D menggunakan Canvas, keyboard, mouse, animasi, dan perbandingan State-Based vs Event-Based.</p>
                     <div class="tag-list">
                         <span>Canvas</span><span>JavaScript</span><span>Animation</span><span>Interaction</span>
                     </div>
                 </div>
                 <div class="practice-arrow">→</div>
             </a>
+
             <a href="../praktikum-webgl-02/index.html" class="practice-card">
                 <div class="practice-number">02</div>
                 <div class="practice-info">
                     <span>PRAKTIKUM 02</span>
                     <h2>WebGL</h2>
-                    <p>Praktik menggunakan WebGL</p>
+                    <p>Praktik pipeline rendering WebGL, pemanfaatan GLSL shaders, buffer data geometri, dan primitives.</p>
                     <div class="tag-list">
                         <span>WebGL</span><span>Shader</span><span>Primitives</span><span>Interaction</span>
                     </div>
                 </div>
                 <div class="practice-arrow">→</div>
             </a>
+
             <a href="../praktikum_Transformasi_dan_Sistem_Koordinat_03/praktikum_03/index.html" class="practice-card">
                 <div class="practice-number">03</div>
                 <div class="practice-info">
                     <span>PRAKTIKUM 03</span>
                     <h2>Transformasi &amp; Sistem Koordinat</h2>
-                    <p>Eksplorasi transformasi 2D (Translasi, Rotasi, Skala) menggunakan WebGL.</p>
-                    <div class="tag-list"><span>WebGL</span><span>Transform</span><span>Coordinate System</span></div>
+                    <p>Eksplorasi transformasi matriks 2D/3D (Translasi, Rotasi, Skala) menggunakan WebGL secara interaktif.</p>
+                    <div class="tag-list">
+                        <span>WebGL</span><span>Transform</span><span>Coordinate System</span>
+                    </div>
                 </div>
                 <div class="practice-arrow">→</div>
             </a>
+
             <a href="../praktikum_Kamera dan Proyeksi 3D_04/praktikum_04/index.html" class="practice-card">
                 <div class="practice-number">04</div>
                 <div class="practice-info">
                     <span>PRAKTIKUM 04</span>
                     <h2>Kamera &amp; Proyeksi 3D</h2>
-                    <p>Eksplorasi kamera dan proyeksi 3D menggunakan WebGL.</p>
-                    <div class="tag-list"><span>WebGL</span><span>Kamera</span><span>Proyeksi 3D</span></div>
+                    <p>Eksplorasi kamera virtual (View Matrix) dan sistem proyeksi 3D (Perspektif & Ortografis) menggunakan WebGL.</p>
+                    <div class="tag-list">
+                        <span>WebGL</span><span>Kamera</span><span>Proyeksi 3D</span>
+                    </div>
                 </div>
                 <div class="practice-arrow">→</div>
             </a>
+
             <a href="../praktikum_Lighting, Shading & Texture_05/praktikum_05/index.html" class="practice-card">
                 <div class="practice-number">05</div>
                 <div class="practice-info">
                     <span>PRAKTIKUM 05</span>
-                    <h2>Model &amp; lighting, shading & texture</h2>
-                    <p>Eksplorasi lighting, shading & texture</p>
-                    <div class="tag-list"><span>lighting, shading & texture</span><span>Model</span><span>Tekstur
-                            3D</span></div>
+                    <h2>Model &amp; Lighting, Shading &amp; Texture</h2>
+                    <p>Eksplorasi model pencahayaan Phong 3D (Ambient, Diffuse, Specular) dan penerapan image texture mapping.</p>
+                    <div class="tag-list">
+                        <span>Lighting &amp; Shading</span><span>3D Model</span><span>Tekstur 3D</span>
+                    </div>
                 </div>
                 <div class="practice-arrow">→</div>
             </a>
         </section>
     </main>
 
+    <!-- Back to top button -->
+    <button class="back-to-top" id="backToTop" title="Kembali ke atas">↑</button>
+
     <footer>
         <div class="footer-content">
-            <div><strong>Grafika Komputer A</strong>
-                <p>Interactive Computer Graphics Laboratory</p>
+            <div>
+                <strong>Grafika Komputer A</strong>
+                <p>Interactive Computer Graphics Laboratory • Teknik Informatika</p>
             </div>
-            <p>© 2026 Kelompok Grafika Komputer</p>
+            <p>© 2026 Kelompok Grafika Komputer A</p>
         </div>
     </footer>
+
+    <script>
+        window.addEventListener('scroll', () => {
+            const winScroll = document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            const progressBar = document.getElementById('scroll-progress');
+            if (progressBar) progressBar.style.width = scrolled + '%';
+
+            const navbar = document.getElementById('navbar');
+            if (navbar) {
+                if (winScroll > 40) navbar.classList.add('scrolled');
+                else navbar.classList.remove('scrolled');
+            }
+
+            const backToTop = document.getElementById('backToTop');
+            if (backToTop) {
+                if (winScroll > 200) backToTop.classList.add('visible');
+                else backToTop.classList.remove('visible');
+            }
+        });
+
+        document.getElementById('backToTop')?.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
 </body>
 
 </html>

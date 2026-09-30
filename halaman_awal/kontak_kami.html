@@ -3,55 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kontak Kami — Grafika Komputer A</title>
     <link rel="stylesheet" href="praktikum.css">
-    <title>Kontak Kami</title>
 </head>
 <body>
-<nav class="navbar">
-    <div class="nav-container">
-        <a href="../index.html" class="brand"><span class="brand-icon">💻</span>Grafika<span>Komputer</span></a>
-        <div class="nav-menu">
-            <a href="../index.html">Home</a>
-            <a href="halaman_praktikum.html">Praktikum</a>
-            <a href="#" class="active">Kontak Kami</a>
+    <div id="scroll-progress"></div>
+    <div class="bg-ambient-orb orb-1"></div>
+    <div class="bg-ambient-orb orb-2"></div>
+    <div class="bg-ambient-orb orb-3"></div>
+
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="../index.html" class="brand">
+                <span class="brand-icon">💻</span>Grafika<span>Komputer</span>
+            </a>
+            <div class="nav-menu">
+                <a href="../index.html">Home</a>
+                <a href="halaman_praktikum.html">Praktikum</a>
+                <a href="#" class="active">Kontak Kami</a>
+            </div>
         </div>
+    </nav>
+
+    <main>
+        <section class="page-header">
+            <span class="section-label"><span class="sparkle">✦</span> OUR TEAM</span>
+            <h1>Kontak Kami</h1>
+            <p>Kenali anggota kelompok yang mengembangkan website praktikum Grafika Komputer A. Hubungi kami melalui Email atau WhatsApp.</p>
+        </section>
+
+        <section class="contact-grid">
+            <!-- MEMBER 01 -->
+            <div class="contact-card">
+                <div class="contact-avatar">M</div>
+                <div class="contact-role">
+                    <span class="badge-dot"></span> MEMBER 01
+                </div>
+                <h2>Maleka Ghaniya</h2>
+                <p class="nrp">NRP 5025241189</p>
+
+                <div class="contact-details">
+                    <div>
+                        <span>EMAIL</span>
+                        <p>
+                            malekaghaniya0809@gmail.com
+                            <button class="copy-badge" onclick="copyText('malekaghaniya0809@gmail.com', 'Email Maleka')">Salin</button>
+                        </p>
+                    </div>
+                    <div>
+                        <span>PHONE</span>
+                        <p>
+                            085774650914
+                            <button class="copy-badge" onclick="copyText('085774650914', 'Nomor HP Maleka')">Salin</button>
+                        </p>
+                    </div>
+                </div>
+
+                <a href="https://wa.me/6285774650914" target="_blank" rel="noopener noreferrer" class="whatsapp-btn">
+                    <span>💬 Chat via WhatsApp</span>
+                    <span>↗</span>
+                </a>
+            </div>
+
+            <!-- MEMBER 02 -->
+            <div class="contact-card card-pink">
+                <div class="contact-avatar second">J</div>
+                <div class="contact-role">
+                    <span class="badge-dot"></span> MEMBER 02
+                </div>
+                <h2>Jahhaza Assiqooyah Nurul Hidayah</h2>
+                <p class="nrp">NRP 5025241019</p>
+
+                <div class="contact-details">
+                    <div>
+                        <span>EMAIL</span>
+                        <p>
+                            jahhazaassiqooyah123@gmail.com
+                            <button class="copy-badge" onclick="copyText('jahhazaassiqooyah123@gmail.com', 'Email Jahhaza')">Salin</button>
+                        </p>
+                    </div>
+                    <div>
+                        <span>PHONE</span>
+                        <p>
+                            081336810488
+                            <button class="copy-badge" onclick="copyText('081336810488', 'Nomor HP Jahhaza')">Salin</button>
+                        </p>
+                    </div>
+                </div>
+
+                <a href="https://api.whatsapp.com/send/?phone=6281336810488&text&type=phone_number&app_absent=0" target="_blank" rel="noopener noreferrer" class="whatsapp-btn">
+                    <span>💬 Chat via WhatsApp</span>
+                    <span>↗</span>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span>✅</span>
+        <span id="toast-msg">Tersalin ke clipboard!</span>
     </div>
-</nav>
 
-<main>
-<section class="page-header">
-    <span class="section-label">OUR TEAM</span>
-    <h1>Kontak Kami</h1>
-    <p>Kenali anggota kelompok yang mengembangkan website praktikum Grafika Komputer A.</p>
-</section>
+    <!-- Back to top button -->
+    <button class="back-to-top" id="backToTop" title="Kembali ke atas">↑</button>
 
-<section class="contact-grid">
-    <div class="contact-card">
-        <div class="contact-avatar">M</div>
-        <div class="contact-role">MEMBER 01</div>
-        <h2>Maleka Ghaniya</h2>
-        <p class="nrp">NRP 5025241189</p>
-        <div class="contact-details">
-            <div><span>EMAIL</span><p>malekaghaniya0809@gmail.com</p></div>
-            <div><span>PHONE</span><p>085774650914</p></div>
+    <footer>
+        <div class="footer-content">
+            <div>
+                <strong>Grafika Komputer A</strong>
+                <p>Interactive Computer Graphics Laboratory • Teknik Informatika</p>
+            </div>
+            <p>© 2026 Kelompok Grafika Komputer A</p>
         </div>
-        <a href="https://wa.me/6285774650914" target="_blank" class="whatsapp-btn">Chat via WhatsApp <span>↗</span></a>
-    </div>
+    </footer>
 
-    <div class="contact-card">
-        <div class="contact-avatar second">J</div>
-        <div class="contact-role">MEMBER 02</div>
-        <h2>Jahazza Assiqoyyah Nurul Hidayah</h2>
-        <p class="nrp">NRP 5025241019</p>
-        <div class="contact-details">
-            <div><span>PROGRAM</span><p>Grafika Komputer A</p></div>
-            <div><span>PROJECT</span><p>Interactive Graphics</p></div>
-        </div>
-        <div class="whatsapp-btn static-btn">Grafika Komputer A <span>✦</span></div>
-    </div>
-</section>
-</main>
+    <script>
+        // Scroll progress bar
+        window.addEventListener('scroll', () => {
+            const winScroll = document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            const progressBar = document.getElementById('scroll-progress');
+            if (progressBar) progressBar.style.width = scrolled + '%';
 
-<footer><div class="footer-content"><div><strong>Grafika Komputer A</strong><p>Interactive Computer Graphics Laboratory</p></div><p>© 2026 Kelompok Grafika Komputer</p></div></footer>
+            const navbar = document.getElementById('navbar');
+            if (navbar) {
+                if (winScroll > 40) navbar.classList.add('scrolled');
+                else navbar.classList.remove('scrolled');
+            }
+
+            const backToTop = document.getElementById('backToTop');
+            if (backToTop) {
+                if (winScroll > 200) backToTop.classList.add('visible');
+                else backToTop.classList.remove('visible');
+            }
+        });
+
+        // Back to top click
+        document.getElementById('backToTop')?.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Copy to clipboard helper
+        function copyText(text, label) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`✅ ${label} berhasil disalin!`);
+            }).catch(() => {
+                showToast(`Salin manual: ${text}`);
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            if (!toast || !toastMsg) return;
+            toastMsg.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
 </body>
 </html>

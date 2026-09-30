@@ -3,7 +3,7 @@
 ## Data Mahasiswa
 | Nama | NRP |
 | :--- | :--- |
-| Jahazza Assiqoyyah Nurul Hidayah | 5025241019 |
+| Jahhaza Assiqooyah Nurul Hidayah | 5025241019 |
 | Maleka Ghaniya | 5025241189 |
 
 ## Deskripsi Aplikasi
