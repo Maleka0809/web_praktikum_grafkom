@@ -115,8 +115,477 @@
               <button id="cameraOrbitButton">Camera Orbit</button>
             </div>
             
-            <button id="cubeRotationButton" class="wide-button">Stop Object Rotation (P)</button>
-            <button id="resetButton" class="wide-button" style="background:#28647d; color:#dcecff; border-color:#28647d; margin-top:8px;">Reset Settings</button>
+            <button id="cubeRotationButton" class="primary-button wide-button">Stop Object Rotation (P)</button>
+            <button id="resetButton" class="secondary-button">Reset Settings</button>
+          </div>
+        </div>
+
+        <!-- ================================================================== -->
+        <!-- IMPLEMENTASI CHALLENGE (KODE & PENJELASAN MENDALAM)                 -->
+        <!-- ================================================================== -->
+        <div class="explanation-section">
+          <h2>Implementasi Challenge (Kode & Penjelasan)</h2>
+          <p class="section-desc">
+            Bagian ini menjabarkan seluruh implementasi <b>Challenge A hingga G</b> secara mendalam, mencakup prinsip teoretis grafika komputer 3D, integrasi kode WebGL2 &amp; GLSL ES 3.00, bedah kode langkah-demi-langkah, dan analisis visual responsifnya.
+          </p>
+
+          <!-- CHALLENGE A -->
+          <div class="concept-block">
+            <h3>
+              Challenge A — Image Texture
+              <span class="concept-badge">Texture Mapping &bull; Asynchronous Load &bull; UV Inversion &bull; CORS</span>
+            </h3>
+
+            <h4>1. Konsep Teoretis Grafika Komputer</h4>
+            <p>
+              Texture mapping memetakan ruang diskrit citra digital 2D (susunan texel) ke permukaan poligon 3D menggunakan sistem koordinat ternormalisasi UV <code>(u, v) &isin; [0, 1]</code>. Pada pipeline WebGL2, pemuatan citra bitmap eksternal menghadapi sejumlah tantangan grafis:
+            </p>
+            <ul>
+              <li>
+                <b>Pembalikan Sumbu Vertikal (Y-axis Inversion):</b> Sistem koordinat WebGL meletakkan titik origin <code>(0, 0)</code> pada sudut <b>kiri-bawah</b> dengan arah sumbu vertikal <code>+Y</code> ke atas. Sebaliknya, standar citra web (DOM Image, Canvas, SVG, PNG) menempatkan titik origin <code>(0, 0)</code> pada sudut <b>kiri-atas</b> dengan <code>+Y</code> ke bawah. Tanpa operasi unpack flip, tekstur akan terproyeksikan terbalik (upside-down).
+              </li>
+              <li>
+                <b>Kebijakan Keamanan CORS (Cross-Origin Resource Sharing):</b> Mengunduh citra dari domain eksternal memerlukan atribut <code>crossOrigin = "anonymous"</code> agar context WebGL tidak ditandai sebagai <i>tainted</i> (terkontaminasi), yang dapat menyebabkan penolakan eksekusi <code>gl.texImage2D</code>.
+              </li>
+              <li>
+                <b>Penanganan Asinkron via 1x1 Placeholder:</b> Citra diunduh melalui protokol HTTP secara non-blocking. Untuk mencegah webgl merender tekstur null/kosong saat frame awal digambar, dialokasikan tekstur placeholder sementara berukuran 1x1 piksel RGBA.
+              </li>
+            </ul>
+
+            <h4>2. Implementasi Kode</h4>
+            <pre><code>// 1. Alokasi Objek Tekstur dan Penyiapan Placeholder 1x1 piksel sementara
+const imageTexture = gl.createTexture();
+gl.bindTexture(gl.TEXTURE_2D, imageTexture);
+gl.texImage2D(
+  gl.TEXTURE_2D,
+  0,                  // Level Mipmap dasar (level 0)
+  gl.RGBA,           // Format internal WebGL
+  1, 1, 0,           // Lebar 1px, Tinggi 1px, Border 0
+  gl.RGBA,           // Format data piksel sumber
+  gl.UNSIGNED_BYTE,  // Tipe data per komponen (8-bit per channel)
+  new Uint8Array([40, 90, 150, 255]) // Warna biru fallback sementara
+);
+
+// 2. Pemuatan Asinkron Gambar Eksternal dengan Penanganan CORS & UV Flip
+const image = new Image();
+image.crossOrigin = "anonymous"; // Mencegah pemblokiran keamanan CORS
+image.onload = () => {
+  gl.bindTexture(gl.TEXTURE_2D, imageTexture);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); // Balik orientasi Y agar pas dengan UV WebGL
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  updateTextureState(); // Terapkan konfigurasi filter dan wrap yang sedang aktif
+};
+image.src = "https://darlis-its.github.io/materi-grafika-komputer/praktikum/output/pert05/texture.svg";
+
+// 3. Ekstraksi Warna di Fragment Shader (GLSL ES 3.00)
+vec3 baseColor = u_useTexture ? texture(u_texture, v_uv).rgb : vec3(0.35, 0.78, 1.0);</code></pre>
+
+            <h4>3. Bedah Kode Baris per Baris</h4>
+            <ul>
+              <li><code>gl.createTexture()</code>: Meminta GPU mengalokasikan handle objek tekstur baru pada memori VRAM.</li>
+              <li><code>gl.bindTexture(gl.TEXTURE_2D, imageTexture)</code>: Mengaitkan target tekstur 2D aktif ke objek tekstur tersebut.</li>
+              <li><code>gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)</code>: Menginstruksikan modul unpacker membalik urutan baris memori vertikal piksel sehingga koordinat UV (0,0) WebGL di kiri-bawah selaras dengan citra asli.</li>
+              <li><code>gl.texImage2D(...)</code>: Mentransfer data larik piksel ke GPU dengan internal format 32-bit RGBA (8-bit tiap kanal warna).</li>
+              <li><code>texture(u_texture, v_uv)</code>: Fungsi GLSL yang melakukan sampling texel terinterpolasi pada poligon.</li>
+            </ul>
+
+            <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+            <p>
+              Ketika dropdown Texture Source diubah ke <i>Image (texture.svg)</i>, motif logo SVG tampil tegak, tajam, dan presisi di seluruh sisi kubus, bola, torus, dan torus knot. Tidak ada kedipan frame kosong saat startup berkat adanya buffer placeholder 1x1 piksel.
+            </p>
+          </div>
+
+          <!-- CHALLENGE B -->
+          <div class="concept-block">
+            <h3>
+              Challenge B — Ambient Control
+              <span class="concept-badge">Phong Reflection &bull; Uniform 1f &bull; Global Illumination Approximation</span>
+            </h3>
+
+            <h4>1. Konsep Teoretis Grafika Komputer</h4>
+            <p>
+              Pada model refleksi Phong, pencahayaan total dirumuskan sebagai superposisi tiga komponen aditif:
+              <code>I = I_ambient + I_diffuse + I_specular</code>.
+            </p>
+            <p>
+              Komponen <b>Ambient Light</b> mensimulasikan pemantulan cahaya tidak langsung (indirect/scattered light) dari lingkungan sekitar. Tanpa adanya ambient light, setiap sisi objek poligon yang membelakangi vektor datangnya cahaya akan bernilai hitam pekat mutlak (RGB = 0, 0, 0), menciptakan kontras tak wajar. Formulasi ambient:
+              <code>I_ambient = k_a &times; I_light</code>, di mana <code>k_a</code> adalah konstanta kekuatan ambien (<code>u_ambientStrength</code>) dan <code>I_light</code> adalah warna sumber cahaya.
+            </p>
+
+            <h4>2. Implementasi Kode</h4>
+            <pre><code>// 1. Event Listener Input Slider di main.js
+document.querySelector("#ambientControl").oninput = (e) => {
+  state.ambient = Number(e.target.value);
+  document.querySelector("#ambientValue").textContent = state.ambient.toFixed(2);
+};
+
+// 2. Shortcut Keyboard (Tombol A: Naik, Tombol Z: Turun)
+if (key === "a") { state.ambient = Math.min(1.0, state.ambient + 0.05); }
+if (key === "z") { state.ambient = Math.max(0.0, state.ambient - 0.05); }
+
+// 3. Pengiriman Uniform ke Fragment Shader (di fungsi draw)
+gl.uniform1f(locations.ambient, state.ambient);
+
+// 4. Komputasi Iluminasi di Fragment Shader
+uniform float u_ambientStrength;
+uniform vec3 u_lightColor;
+uniform bool u_useAmbient;
+
+vec3 ambient = u_useAmbient ? u_ambientStrength * u_lightColor : vec3(0.0);
+outColor = vec4(baseColor * (ambient + diffuse) + specular, 1.0);</code></pre>
+
+            <h4>3. Bedah Kode Baris per Baris</h4>
+            <ul>
+              <li><code>document.querySelector("#ambientControl").oninput</code>: Menangkap perubahan slider realtime dari nilai 0.00 hingga 1.00.</li>
+              <li><code>gl.uniform1f(locations.ambient, state.ambient)</code>: Mengunggah nilai skalar float 32-bit ke variabel seragam GPU pada setiap siklus frame.</li>
+              <li><code>u_useAmbient ? u_ambientStrength * u_lightColor : vec3(0.0)</code>: Percabangan dinamis pada shader untuk menonaktifkan atau mengalikan intensitas warna cahaya dengan koefisien ambient.</li>
+              <li><code>baseColor * (ambient + diffuse)</code>: Komponen ambien memodulasi warna dasar tekstur (albedo) sehingga rona warna permukaan tetap terlihat di area bayangan.</li>
+            </ul>
+
+            <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+            <ul>
+              <li><b>Nilai 0.00:</b> Daerah bayangan di belakang objek menjadi hitam total, menghasilkan kontras bayangan tajam khas ruang hampa udara luar angkasa.</li>
+              <li><b>Nilai 0.18 (Default):</b> Menghasilkan proporsi bayangan yang natural, di mana lekukan tekstur di sisi gelap tetap terbaca lembut.</li>
+              <li><b>Nilai 1.00:</b> Seluruh objek teriluminasi penuh secara seragam, menghilangkan kesan kedalaman dan dimensi bayangan 3D.</li>
+            </ul>
+          </div>
+
+          <!-- CHALLENGE C -->
+          <div class="concept-block">
+            <h3>
+              Challenge C — Camera Control
+              <span class="concept-badge">View Matrix &bull; LookAt &bull; Specular Halfway Vector &bull; View-Dependent Lighting</span>
+            </h3>
+
+            <h4>1. Konsep Teoretis Grafika Komputer</h4>
+            <p>
+              Kamera virtual 3D didefinisikan menggunakan <b>View Matrix</b> yang mentransformasikan koordinat dunia (World Space) ke koordinat mata pengamat (View Space) melalui fungsi <code>lookAt(eye, target, up)</code>.
+            </p>
+            <p>
+              Pergeseran posisi kamera tidak hanya mengubah sudut pandang dan paralaks objek, tetapi juga berdampak langsung pada perhitungan pantulan mengkilap <b>Specular Blinn-Phong</b>:
+            </p>
+            <p>
+              <code>viewDirection = normalize(cameraPosition - worldPosition)</code><br>
+              <code>halfVector = normalize(lightDirection + viewDirection)</code><br>
+              <code>I_specular = pow(max(dot(normal, halfVector), 0.0), shininess) &times; I_light</code>
+            </p>
+            <p>
+              Karena <code>viewDirection</code> bergantung langsung pada letak kamera, kilau pantulan putih (specular highlight) akan bergeser melintasi kontur permukaan objek mengikuti perpindahan mata pengamat (bersifat <i>view-dependent</i>).
+            </p>
+
+            <h4>2. Implementasi Kode</h4>
+            <pre><code>// 1. Pembaruan Koordinat Kamera Berbasis Selisih Waktu di updateCamera()
+function updateCamera(deltaTime) {
+  const speed = 1.8 * deltaTime; // Gerakan mulus independen dari variasi refresh rate
+  
+  if (state.keys.q) state.camera.position[0] -= speed; // Geser kamera ke kiri (-X)
+  if (state.keys.e) state.camera.position[0] += speed; // Geser kamera ke kanan (+X)
+  
+  // Orbit Kamera Otomatis
+  if (state.cameraOrbit) {
+    state.camera.position[0] = Math.sin(state.time * 0.45) * 5;
+    state.camera.position[2] = Math.cos(state.time * 0.45) * 5;
+  }
+}
+
+// 2. Pembuatan Matriks Pandangan dan Binding Uniform
+const view = lookAt(state.camera.position, state.camera.target, state.camera.up);
+gl.uniformMatrix4fv(locations.view, false, view);
+gl.uniform3fv(locations.cameraPosition, state.camera.position);
+
+// 3. Fragment Shader: Komputasi Vektor Pandang dan Specular Highlight
+vec3 viewDirection = normalize(u_cameraPosition - v_worldPosition);
+vec3 halfVector = normalize(lightDirection + viewDirection);
+float specularAmount = pow(max(dot(normal, halfVector), 0.0), u_shininess);</code></pre>
+
+            <h4>3. Bedah Kode Baris per Baris</h4>
+            <ul>
+              <li><code>const speed = 1.8 * deltaTime</code>: Menjamin laju perpindahan kamera tetap stabil dan konsisten pada layar 60Hz, 120Hz, maupun 144Hz.</li>
+              <li><code>state.keys.q / state.keys.e</code>: Membaca input penekanan tombol kontinu dari keyboard untuk translasi horizontal sumbu X.</li>
+              <li><code>gl.uniform3fv(locations.cameraPosition, ...)</code>: Memasok koordinat aktual kamera ke fragment shader untuk evaluasi vektor arah pandang tiap fragmen poligon.</li>
+              <li><code>normalize(lightDirection + viewDirection)</code>: Mengkalkulasi <i>halfway vector</i> Blinn-Phong yang mengoptimalkan komputasi pantulan specular dibanding Phong klasik.</li>
+            </ul>
+
+            <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+            <p>
+              Saat tombol <b>Q</b> atau <b>E</b> ditekan, sudut pandang berpindah secara halus. Terlihat jelas bintik pantulan kilau putih (specular highlight) pada permukaan melengkung bola atau torus knot bergeser secara realistis mengikuti perubahan sudut pandang kamera pengamat.
+            </p>
+          </div>
+
+          <!-- CHALLENGE D -->
+          <div class="concept-block">
+            <h3>
+              Challenge D — Non-Uniform Scale Mode
+              <span class="concept-badge">Non-Uniform Scale &bull; Normal Matrix &bull; Inverse-Transpose &bull; Orthogonality Preservation</span>
+            </h3>
+
+            <h4>1. Konsep Teoretis Grafika Komputer</h4>
+            <p>
+              Pada penskalaan seragam (uniform scale, <code>Sx = Sy = Sz</code>), proporsi geometris tetap terjaga. Namun, pada <b>Non-Uniform Scale</b> (misal <code>Sx &ne; Sy</code>), objek diregangkan atau dipipihkan secara asimetris.
+            </p>
+            <p>
+              <b>Permasalahan Vektor Normal:</b> Vektor normal <code>N</code> wajib selalu tegak lurus (ortogonal, 90&deg;) terhadap permukaan poligon. Jika vektor normal dikalikan langsung dengan Model Matrix biasa (<code>M &times; N</code>), deformasi asimetris akan memiringkan arah vektor normal sehingga tidak lagi ortogonal terhadap permukaan baru. Akibatnya, kalkulasi diffuse (<code>N &bull; L</code>) dan specular (<code>N &bull; H</code>) menjadi cacat dengan bayangan yang miring tidak wajar.
+            </p>
+            <p>
+              <b>Solusi Matematis (Normal Matrix):</b> Untuk mempertahankan ortogonalitas, vektor normal harus ditransformasikan menggunakan <b>Transpose dari Invers sub-matriks 3&times;3 model</b>:
+              <code>M_normal = (M_3x3^-1)^T</code>.
+            </p>
+
+            <h4>2. Implementasi Kode</h4>
+            <pre><code>// 1. Algoritma Perhitungan Matriks Inverse-Transpose 3x3 di main.js
+function normalMatrixFromMat4(m) {
+  const a00 = m[0], a01 = m[4], a02 = m[8],
+        a10 = m[1], a11 = m[5], a12 = m[9],
+        a20 = m[2], a21 = m[6], a22 = m[10];
+  const b01 = a22 * a11 - a12 * a21,
+        b11 = -a22 * a10 + a12 * a20,
+        b21 = a21 * a10 - a11 * a20;
+  const determinant = a00 * b01 + a01 * b11 + a02 * b21 || 1;
+  return new Float32Array([
+    b01 / determinant,
+    (-a22 * a01 + a02 * a21) / determinant,
+    (a12 * a01 - a02 * a11) / determinant,
+    b11 / determinant,
+    (a22 * a00 - a02 * a20) / determinant,
+    (-a12 * a00 + a02 * a10) / determinant,
+    b21 / determinant,
+    (-a21 * a00 + a01 * a20) / determinant,
+    (a11 * a00 - a01 * a10) / determinant,
+  ]);
+}
+
+// 2. Pengiriman ke Vertex Shader (di fungsi draw)
+gl.uniformMatrix3fv(locations.normalMatrix, false, normalMatrixFromMat4(model));
+
+// 3. Koreksi Vektor Normal di Vertex Shader (GLSL ES 3.00)
+uniform mat3 u_normalMatrix;
+in vec3 a_normal;
+out vec3 v_normal;
+
+void main() {
+  ...
+  v_normal = u_normalMatrix * a_normal; // Vektor normal tetap tegak lurus
+  ...
+}</code></pre>
+
+            <h4>3. Bedah Kode Baris per Baris</h4>
+            <ul>
+              <li><code>scale(...state.scale)</code>: Mengalikan matriks model dengan faktor skala independen sumbu X, Y, dan Z dari slider kontrol.</li>
+              <li><code>normalMatrixFromMat4(m)</code>: Menghitung determinan dan kofaktor 3x3 model, menginverskan matriks lalu mentransposisikannya (menukar baris dan kolom). Translasi baris ke-4 sengaja diabaikan karena normal adalah vektor arah murni tanpa posisi.</li>
+              <li><code>gl.uniformMatrix3fv(...)</code>: Mentransfer matriks 3x3 hasil invers-transpose ke variabel <code>u_normalMatrix</code> GPU.</li>
+              <li><code>normalize(v_normal)</code> di Fragment Shader: Menormalkan kembali panjang vektor normal menjadi 1.0 setelah diinterpolasi oleh rasterizer poligon.</li>
+            </ul>
+
+            <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+            <p>
+              Bahkan ketika objek kubus dipipihkan secara ekstrem menjadi pelat tipis (misal <code>Scale Y = 0.2, Scale X = 2.5</code>), bayangan shading diffuse dan kilau specular pada permukaan atas tetap terdistribusi rata dan tegak lurus secara sempurna tanpa pembiasan cahaya yang cacat.
+            </p>
+          </div>
+
+          <!-- CHALLENGE E -->
+          <div class="concept-block">
+            <h3>
+              Challenge E — Light Orbit
+              <span class="concept-badge">Trigonometric Parametric Path &bull; Circular Orbit &bull; Dynamic Shadow Terminator</span>
+            </h3>
+
+            <h4>1. Konsep Teoretis Grafika Komputer</h4>
+            <p>
+              Menggerakkan sumber cahaya dalam lintasan melingkar 360&deg; memvalidasi keakuratan respon material poligon terhadap pergerakan vektor cahaya datang. Lintasan melingkar pada bidang horizontal XZ dimodelkan secara analitis menggunakan <b>persamaan parametrik trigonometri lingkaran</b>:
+            </p>
+            <p>
+              <code>X(t) = R &times; sin(&omega; &times; t)</code><br>
+              <code>Z(t) = R &times; cos(&omega; &times; t)</code><br>
+              <code>Y(t) = konstan</code> (ketinggian sumber cahaya, misal Y = 2.0)
+            </p>
+            <p>
+              Radius <code>R = 3.0</code> unit menjamin sumber cahaya berada di luar radius batas geometri objek sehingga bayangan terminator berputar mulus mengitari objek.
+            </p>
+
+            <h4>2. Implementasi Kode</h4>
+            <pre><code>// 1. Komputasi Koordinat Melingkar di updateCamera()
+if (state.lightOrbit) {
+  state.light[0] = Math.sin(state.time) * 3; // Posisi melingkar sumbu X
+  state.light[2] = Math.cos(state.time) * 3; // Posisi melingkar sumbu Z
+}
+
+// 2. Tombol Toggle Orbit (UI & Keyboard 'L')
+document.querySelector("#lightOrbitButton").onclick = () => {
+  state.lightOrbit = !state.lightOrbit;
+};
+if (key === "l") state.lightOrbit = !state.lightOrbit;
+
+// 3. Fragment Shader: Evaluasi Vektor Cahaya Realtime
+vec3 lightDirection = normalize(u_lightPosition - v_worldPosition);
+float diffuseAmount = max(dot(normal, lightDirection), 0.0);</code></pre>
+
+            <h4>3. Bedah Kode Baris per Baris</h4>
+            <ul>
+              <li><code>Math.sin(state.time) * 3</code> &amp; <code>Math.cos(state.time) * 3</code>: Menghasilkan pasangan koordinat sinusoidal berfase 90&deg; yang membentuk kurva orbit lingkaran berkesinambungan.</li>
+              <li><code>state.time += dt</code>: Variabel waktu akumulatif berbasis selisih waktu presisi tinggi dari <code>requestAnimationFrame</code>.</li>
+              <li><code>gl.uniform3fv(locations.lightPosition, state.light)</code>: Memperbarui posisi koordinat lampu ke GPU setiap kali frame baru digambar.</li>
+              <li><code>normalize(u_lightPosition - v_worldPosition)</code>: Menghitung ulang vektor datang cahaya &theta; terhadap normal untuk setiap fragmen piksel poligon secara dinamis.</li>
+            </ul>
+
+            <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+            <p>
+              Sumber cahaya berputar melingkari objek secara konsisten. Garis batas terang-gelap (shadow terminator) dan kilapan highlight specular menyapu permukaan kubus, bola, torus, dan torus knot secara berkelanjutan. Kartu HUD indikator <b>LIGHT</b> menampilkan perubahan koordinat numerik <code>(X, Y, Z)</code> secara realtime.
+            </p>
+          </div>
+
+          <!-- CHALLENGE F -->
+          <div class="concept-block">
+            <h3>
+              Challenge F — Lighting Components Toggle
+              <span class="concept-badge">Additive Decomposition &bull; Boolean Uniforms &bull; Diagnostic Material Inspection</span>
+            </h3>
+
+            <h4>1. Konsep Teoretis Grafika Komputer</h4>
+            <p>
+              Phong Reflection Model bersifat aditif murni:
+              <code>C_final = C_base &times; (I_ambient + I_diffuse) + I_specular</code>.
+            </p>
+            <p>
+              Kemampuan untuk mengisolasi setiap komponen pencahayaan secara independen sangat esensial untuk keperluan inspeksi teknis material dan kalibrasi shader:
+            </p>
+            <ul>
+              <li><b>Ambient Murni:</b> Menguji kecerahan minimum tanpa pengaruh sudut kemiringan permukaan terhadap sumber sinar.</li>
+              <li><b>Diffuse Murni (Lambertian):</b> Menguji kurvatur permukaan 3D dan transisi kehalusan bayangan poligon.</li>
+              <li><b>Specular Murni:</b> Menguji konsentrasi pantulan kilau material dan keakuratan sudut pengamatan kamera.</li>
+            </ul>
+
+            <h4>2. Implementasi Kode</h4>
+            <pre><code>// 1. State Boolean Komponen & Event Listener Checkbox di main.js
+state.components = { ambient: true, diffuse: true, specular: true };
+
+["ambient", "diffuse", "specular"].forEach((name) =>
+  (document.querySelector(`#${name}Toggle`).onchange = (e) => {
+    state.components[name] = e.target.checked;
+  })
+);
+
+// Shortcut Keyboard: Tombol '1' (Ambient), '2' (Diffuse), '3' (Specular)
+if (key === "1") toggleComponent("ambient");
+if (key === "2") toggleComponent("diffuse");
+if (key === "3") toggleComponent("specular");
+
+// 2. Mengirimkan Boolean Flag ke Uniform WebGL (di fungsi draw)
+gl.uniform1i(locations.useAmbient, state.components.ambient);
+gl.uniform1i(locations.useDiffuse, state.components.diffuse);
+gl.uniform1i(locations.useSpecular, state.components.specular);
+
+// 3. Dekomposisi Aditif di Fragment Shader (GLSL ES 3.00)
+uniform bool u_useAmbient;
+uniform bool u_useDiffuse;
+uniform bool u_useSpecular;
+
+vec3 ambient  = u_useAmbient  ? u_ambientStrength * u_lightColor : vec3(0.0);
+vec3 diffuse  = u_useDiffuse  ? diffuseAmount * u_lightColor     : vec3(0.0);
+vec3 specular = u_useSpecular ? specularAmount * u_lightColor    : vec3(0.0);
+
+outColor = vec4(baseColor * (ambient + diffuse) + specular, 1.0);</code></pre>
+
+            <h4>3. Bedah Kode Baris per Baris</h4>
+            <ul>
+              <li><code>state.components[name] = e.target.checked</code>: Menyimpan status aktif masing-masing komponen pencahayaan ke state aplikasi.</li>
+              <li><code>gl.uniform1i(locations.useDiffuse, ...)</code>: Pada WebGL2 GLSL ES 3.00, seragam bertipe <code>bool</code> di-passing sebagai integer (1 = true, 0 = false) menggunakan fungsi <code>gl.uniform1i</code>.</li>
+              <li><code>u_useDiffuse ? diffuseAmount * u_lightColor : vec3(0.0)</code>: Operator ternary shader menihilkan kontribusi warna komponen terkait jika flag bernilai false tanpa menghentikan pipeline rendering.</li>
+            </ul>
+
+            <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+            <table class="obs-table">
+              <thead>
+                <tr>
+                  <th>Konfigurasi Aktif</th>
+                  <th>Karakteristik Tampilan Visual Objek</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>Ambient Saja</b></td>
+                  <td>Objek tampak datar menyerupai siluet 2D tanpa ada ilusi lekukan atau gradasi bayangan.</td>
+                </tr>
+                <tr>
+                  <td><b>Diffuse Saja</b></td>
+                  <td>Objek memiliki kedalaman 3D dengan shading matte (seperti kapur/tanah liat), tanpa kilau mengkilap.</td>
+                </tr>
+                <tr>
+                  <td><b>Specular Saja</b></td>
+                  <td>Seluruh badan objek tampak hitam pekat, hanya menyisakan titik kilauan putih terang di area pantulan.</td>
+                </tr>
+                <tr>
+                  <td><b>Ketiganya Aktif</b></td>
+                  <td>Render 3D fotorealistik lengkap dengan warna tekstur alami, kedalaman bayangan, dan kilap pencahayaan.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- CHALLENGE G -->
+          <div class="concept-block">
+            <h3>
+              Challenge G — Mipmap Filtering
+              <span class="concept-badge">Texture Minification &bull; Trilinear Filtering &bull; Moire Suppression &bull; GPU Pyramid</span>
+            </h3>
+
+            <h4>1. Konsep Teoretis Grafika Komputer</h4>
+            <p>
+              Ketika objek 3D bertekstur berada pada posisi jauh dari kamera atau dilihat pada sudut miring (oblique angle), area proyeksi satu piksel layar mencakup banyak texel citra asli (<i>Texture Minification</i>).
+            </p>
+            <ul>
+              <li><b>Filter Nearest:</b> Mengambil satu texel terdekat, menimbulkan artefak bergerigi kasar (pixelation) dan getaran piksel tajam (flickering/shimmering) saat kamera bergerak.</li>
+              <li><b>Filter Linear:</b> Merata-ratakan 4 texel terdekat pada resolusi penuh, namun tetap rentan menghasilkan pola interferensi Moire pada jarak ekstrem.</li>
+              <li>
+                <b>Solusi Mipmap (Hierarki Piramida Citra):</b> Teknik Mipmapping membuat deretan salinan tekstur prasetel yang resolusinya diturunkan setengahnya secara eksponensial (128&times;128 &rarr; 64&times;64 &rarr; 32&times;32 &rarr; ... &rarr; 1&times;1).
+              </li>
+            </ul>
+            <p>
+              Dengan filter <b>LINEAR_MIPMAP_LINEAR (Trilinear Filtering)</b>, GPU melakukan interpolasi bilinear pada dua level piramida terdekat, lalu menginterpolasi linear hasil kedua level tersebut berdasarkan laju turunan koordinat UV layar (<code>dFdx</code>, <code>dFdy</code>).
+            </p>
+
+            <h4>2. Implementasi Kode</h4>
+            <pre><code>// 1. Pengaturan Filter Tekstur & Generasi Mipmap di updateTextureState()
+function updateTextureState() {
+  const texture = state.textureSource === "image" ? imageTexture : checkerTexture;
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  const filter = state.filter === "nearest" ? gl.NEAREST : gl.LINEAR;
+  
+  // Konfigurasi Minification Filter (Pengecilan)
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_MIN_FILTER,
+    state.filter === "mipmap" ? gl.LINEAR_MIPMAP_LINEAR : filter
+  );
+
+  // Konfigurasi Magnification Filter (Pembesaran)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+
+  // Konfigurasi Wrapping Mode Sumbu S dan T
+  const wrapMode = state.wrap === "repeat" ? gl.REPEAT : gl.CLAMP_TO_EDGE;
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrapMode);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrapMode);
+
+  // Generasi otomatis seluruh hierarki Mipmap oleh GPU
+  if (state.filter === "mipmap") {
+    gl.generateMipmap(gl.TEXTURE_2D);
+  }
+}</code></pre>
+
+            <h4>3. Bedah Kode Baris per Baris</h4>
+            <ul>
+              <li><code>gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)</code>: Mengaktifkan mode penyaringan trilinear saat tekstur mengalami pengecilan (minification).</li>
+              <li><code>gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter)</code>: Mipmap tidak berlaku pada pembesaran (magnification), sehingga filter dibatasi pada <code>gl.LINEAR</code> atau <code>gl.NEAREST</code>.</li>
+              <li><code>gl.generateMipmap(gl.TEXTURE_2D)</code>: Memerintahkan driver WebGL2/GPU untuk mengompilasi dan mengalokasikan seluruh rantai piramida mipmap dari level 0 ke level 1x1.</li>
+              <li>Dukungan Native NPOT: Pada WebGL2, tekstur dengan dimensi bukan kelipatan pangkat dua (Non-Power of Two) didukung penuh secara native untuk mipmap dan repeat wrap.</li>
+            </ul>
+
+            <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+            <ul>
+              <li><b>Nearest:</b> Garis kotak-kotak checkerboard tampak patah-patah bergerigi kasar dan berkedip saat kubus berotasi.</li>
+              <li><b>Linear:</b> Tampilan tampak lebih baik dari dekat, tetapi pola ubin di kejauhan memunculkan garis distorsi moire yang mengganggu.</li>
+              <li><b>Mipmap (Trilinear):</b> Seluruh artefak getaran dan distorsi moire tereliminasi total. Tekstur di kejauhan tampak halus, bersih, dan stabil, mencerminkan kualitas grafika 3D profesional.</li>
+            </ul>
           </div>
         </div>
       </div>
