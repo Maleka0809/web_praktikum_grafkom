@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Praktikum 06 - Framework WebGL (Three.js)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="page-header">
+      <div class="header-content">
+        <a href="../halaman_awal/halaman_praktikum.html" class="back-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </a>
+        <div>
+          <div class="eyebrow">PRAKTIKUM 06</div>
+          <h1>Framework WebGL (Three.js)</h1>
+          <p>Eksplorasi pembuatan Mini 3D Scene interaktif menggunakan Three.js (Scene, Camera, Renderer, Light, Shadow, Material, Geometry & Animation)</p>
+        </div>
+      </div>
+      <div id="statusBadge" class="status-badge">INITIALIZING THREE.JS...</div>
+    </header>
+
+    <div class="workspace">
+      <div class="canvas-panel">
+        <div class="canvas-frame">
+          <canvas id="webglCanvas"></canvas>
+          <div class="hud-overlay">
+            <div class="hud-item">
+              <span class="hud-label">FPS</span>
+              <span class="hud-val" id="fpsDisplay">0</span>
+            </div>
+            <div class="hud-item">
+              <span class="hud-label">CAMERA POS</span>
+              <span class="hud-val" id="camPosDisplay">0.0, 0.0, 0.0</span>
+            </div>
+            <div class="hud-item">
+              <span class="hud-label">LIGHTING</span>
+              <span class="hud-val" id="lightStatusDisplay">ON</span>
+            </div>
+            <div class="hud-item">
+              <span class="hud-label">SHADOWS</span>
+              <span class="hud-val" id="shadowStatusDisplay">ENABLED</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-panel">
+          <div class="info-section">
+            <h3>Pusat Kontrol & Bantuan Interaksi</h3>
+            <div class="keyboard-help">
+              <div class="help-item">
+                <div class="key-combo"><span class="key">🖱️ Kiri</span></div>
+                <span class="help-desc">Orbit/Rotasi Kamera</span>
+              </div>
+              <div class="help-item">
+                <div class="key-combo"><span class="key">🖱️ Kanan</span></div>
+                <span class="help-desc">Pan/Geser Kamera</span>
+              </div>
+              <div class="help-item">
+                <div class="key-combo"><span class="key">🖱️ Scroll</span></div>
+                <span class="help-desc">Zoom In/Out</span>
+              </div>
+              <div class="help-item">
+                <div class="key-combo"><span class="key">Space</span></div>
+                <span class="help-desc">Toggle Animasi</span>
+              </div>
+              <div class="help-item">
+                <div class="key-combo"><span class="key">R</span></div>
+                <span class="help-desc">Reset Scene</span>
+              </div>
+            </div>
+          </div>
+          <div class="info-section explanation">
+            <h3>Konsep Three.js vs WebGL murni</h3>
+            <p>Three.js berjalan di atas WebGL dan menyediakan abstraksi tingkat tinggi. Kita tidak lagi perlu menulis shader GLSL dan mengatur buffer vertex secara manual untuk objek standar. Konsep intinya meliputi:</p>
+            <ul>
+              <li><strong>Scene</strong>: Wadah utama 3D tempat objek diletakkan.</li>
+              <li><strong>Camera</strong>: Menentukan sudut pandang (menggunakan PerspectiveCamera).</li>
+              <li><strong>Renderer</strong>: Menggambar Scene dari sudut pandang Camera ke Canvas HTML.</li>
+              <li><strong>Mesh</strong>: Objek visual yang dibentuk dari gabungan <strong>Geometry</strong> (bentuk) dan <strong>Material</strong> (tampilan/shader).</li>
+              <li><strong>Light & Shadow</strong>: Sumber cahaya yang berinteraksi dengan material fisik. Bayangan diproses melalui Shadow Map.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-panel">
+        <h2 class="panel-title">Pengaturan Scene</h2>
+        
+        <div class="control-group">
+          <h3>Geometri Utama</h3>
+          <div class="control-row">
+            <label for="shapeSelect">Pilih Objek:</label>
+            <select id="shapeSelect" class="styled-select">
+              <option value="cube">Cube (BoxGeometry)</option>
+              <option value="sphere">Sphere (SphereGeometry)</option>
+              <option value="torus">Torus (TorusGeometry)</option>
+              <option value="torusKnot">Torus Knot</option>
+              <option value="cone">Cone (ConeGeometry)</option>
+              <option value="cylinder">Cylinder</option>
+            </select>
+          </div>
+          <div class="control-row">
+            <label for="materialSelect">Material Objek:</label>
+            <select id="materialSelect" class="styled-select">
+              <option value="standard">MeshStandardMaterial (PBR)</option>
+              <option value="phong">MeshPhongMaterial (Shiny)</option>
+              <option value="lambert">MeshLambertMaterial (Matte)</option>
+              <option value="basic">MeshBasicMaterial (No Light)</option>
+              <option value="normal">MeshNormalMaterial</option>
+              <option value="wireframe">Wireframe Mode</option>
+            </select>
+          </div>
+          <div class="control-row checkbox-row">
+            <label class="custom-checkbox">
+              <input type="checkbox" id="animateToggle" checked>
+              <span class="checkmark"></span>
+              Animasi Objek Berputar & Bergerak (Bouncing)
+            </label>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <h3>Pencahayaan & Lingkungan (Lighting)</h3>
+          <div class="control-row checkbox-row">
+            <label class="custom-checkbox">
+              <input type="checkbox" id="ambientLightToggle" checked>
+              <span class="checkmark"></span>
+              Ambient Light
+            </label>
+          </div>
+          <div class="range-slider-container">
+            <div class="range-header">
+              <span>Intensitas Ambient</span>
+              <span id="ambientIntensityVal" class="val-display">0.40</span>
+            </div>
+            <input type="range" id="ambientIntensity" min="0" max="2" step="0.05" value="0.4">
+          </div>
+          
+          <div class="control-row checkbox-row" style="margin-top: 15px;">
+            <label class="custom-checkbox">
+              <input type="checkbox" id="dirLightToggle" checked>
+              <span class="checkmark"></span>
+              Directional Light (Matahari)
+            </label>
+          </div>
+          <div class="range-slider-container">
+            <div class="range-header">
+              <span>Intensitas Directional</span>
+              <span id="dirIntensityVal" class="val-display">1.50</span>
+            </div>
+            <input type="range" id="dirIntensity" min="0" max="5" step="0.1" value="1.5">
+          </div>
+          
+          <div class="control-row checkbox-row" style="margin-top: 15px;">
+            <label class="custom-checkbox">
+              <input type="checkbox" id="shadowToggle" checked>
+              <span class="checkmark"></span>
+              Aktifkan Bayangan (Shadow Mapping)
+            </label>
+          </div>
+          <div class="control-row checkbox-row">
+            <label class="custom-checkbox">
+              <input type="checkbox" id="lightHelperToggle">
+              <span class="checkmark"></span>
+              Tampilkan Light Helper
+            </label>
+          </div>
+          <button id="animateLightBtn" class="btn btn-outline" style="width: 100%; margin-top: 10px;">Orbit Directional Light</button>
+        </div>
+
+        <div class="control-group">
+          <h3>Material Permukaan Dasar (Ground)</h3>
+          <div class="control-row">
+            <label for="groundColor">Warna Ground:</label>
+            <input type="color" id="groundColor" value="#334455" class="styled-color-picker">
+          </div>
+          <div class="control-row">
+            <label for="bgColor">Warna Background Scene:</label>
+            <input type="color" id="bgColor" value="#0a0f1d" class="styled-color-picker">
+          </div>
+        </div>
+        
+        <div class="action-buttons">
+          <button id="resetCameraBtn" class="btn btn-secondary">Reset Kamera</button>
+          <button id="resetAllBtn" class="btn btn-primary">Reset Semua Pengaturan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
