@@ -71,7 +71,7 @@ configureControls();
 const mainCube = new THREE.Mesh(
   new THREE.BoxGeometry(1.25, 1.25, 1.25),
   new THREE.MeshStandardMaterial({
-    color: "#4df3ff",
+    color: "#ff5e57",
     roughness: 0.28,
     metalness: 0.25,
   }),
@@ -82,7 +82,7 @@ scene.add(mainCube);
 
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(14, 14),
-  new THREE.MeshLambertMaterial({ color: "#102a40" }),
+  new THREE.MeshLambertMaterial({ color: "#2c3e50" }),
 );
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
@@ -90,7 +90,7 @@ scene.add(ground);
 
 const sphere = new THREE.Mesh(
   new THREE.SphereGeometry(0.72, state.segment, state.segment),
-  new THREE.MeshPhongMaterial({ color: "#ff6584", shininess: 70 }),
+  new THREE.MeshPhongMaterial({ color: "#0fb9b1", shininess: 70 }),
 );
 sphere.position.set(0.0, 0.85, 0.5);
 sphere.castShadow = true;
@@ -99,7 +99,7 @@ scene.add(sphere);
 const cone = new THREE.Mesh(
   new THREE.ConeGeometry(0.65, 1.5, state.segment),
   new THREE.MeshStandardMaterial({
-    color: "#ffd166",
+    color: "#a55eea",
     roughness: 0.42,
     metalness: 0.08,
   }),
@@ -110,7 +110,7 @@ scene.add(cone);
 
 const torus = new THREE.Mesh(
   new THREE.TorusKnotGeometry(0.55, 0.18, 64, 12),
-  new THREE.MeshNormalMaterial(),
+  new THREE.MeshPhongMaterial({ color: "#f7b731", shininess: 80 }),
 );
 torus.position.set(1.5, 1.1, -2.5);
 torus.castShadow = true;
@@ -118,9 +118,9 @@ scene.add(torus);
 
 const gallery = new THREE.Group();
 const galleryMaterials = [
-  new THREE.MeshBasicMaterial({ color: "#74b9ff" }),
-  new THREE.MeshLambertMaterial({ color: "#55efc4" }),
-  new THREE.MeshPhongMaterial({ color: "#a78bfa", shininess: 90 }),
+  new THREE.MeshBasicMaterial({ color: "#fa8231" }),
+  new THREE.MeshLambertMaterial({ color: "#20bf6b" }),
+  new THREE.MeshPhongMaterial({ color: "#eb3b5a", shininess: 90 }),
 ];
 galleryMaterials.forEach((material, index) => {
   const mesh = new THREE.Mesh(
