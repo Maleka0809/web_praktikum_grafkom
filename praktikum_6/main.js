@@ -76,7 +76,7 @@ const mainCube = new THREE.Mesh(
     metalness: 0.25,
   }),
 );
-mainCube.position.set(-1.4, 1, 0);
+mainCube.position.set(-2.0, 1, 0.5);
 mainCube.castShadow = true;
 scene.add(mainCube);
 
@@ -92,7 +92,7 @@ const sphere = new THREE.Mesh(
   new THREE.SphereGeometry(0.72, state.segment, state.segment),
   new THREE.MeshPhongMaterial({ color: "#ff6584", shininess: 70 }),
 );
-sphere.position.set(0.5, 0.85, 0);
+sphere.position.set(0.0, 0.85, 0.5);
 sphere.castShadow = true;
 scene.add(sphere);
 
@@ -104,7 +104,7 @@ const cone = new THREE.Mesh(
     metalness: 0.08,
   }),
 );
-cone.position.set(1.9, 0.75, -0.2);
+cone.position.set(2.0, 0.75, 0.0);
 cone.castShadow = true;
 scene.add(cone);
 
@@ -112,7 +112,7 @@ const torus = new THREE.Mesh(
   new THREE.TorusKnotGeometry(0.55, 0.18, 64, 12),
   new THREE.MeshNormalMaterial(),
 );
-torus.position.set(2.1, 1.1, -2);
+torus.position.set(1.5, 1.1, -2.5);
 torus.castShadow = true;
 scene.add(torus);
 
@@ -311,7 +311,7 @@ function reset() {
   document.querySelector("#cameraSelect").value = "perspective";
   document.querySelector("#fovControl").value = 50;
   document.querySelector("#fovValue").textContent = "50°";
-  mainCube.position.set(-1.4, 1, 0);
+  mainCube.position.set(-2.0, 1, 0.5);
   mainCube.rotation.set(0, 0, 0);
   directionalLight.position.set(3, 6, 4);
   directionalLight.intensity = 1.2;
