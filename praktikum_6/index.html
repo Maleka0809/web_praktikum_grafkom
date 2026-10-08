@@ -127,6 +127,474 @@
         <button id="resetButton" class="wide-button">Reset All (R)</button>
       </div>
     </div>
+
+    <div class="explanation-section">
+        <h2>Implementasi Challenge & Analisis Konsep</h2>
+        <p class="section-desc">
+            Bagian ini menjabarkan seluruh implementasi Challenge A hingga H secara mendalam, mencakup prinsip teoretis grafika komputer 3D, integrasi kode WebGL/Three.js, bedah kode langkah-demi-langkah, dan analisis visual responsifnya.
+        </p>
+
+        <!-- PERTANYAAN PEMAHAMAN -->
+        <div class="concept-block">
+            <h3>Pertanyaan Pemahaman <span class="concept-badge">Teori Fundamental Three.js</span></h3>
+            <dl>
+                <dt>Apa hubungan Three.js dan WebGL?</dt>
+                <dd>Three.js adalah library high-level JavaScript yang mempermudah penggunaan WebGL. Tanpa Three.js, kita harus menulis banyak kode low-level WebGL untuk membuat sekadar objek 3D sederhana.</dd>
+
+                <dt>Mengapa Three.js disebut high-level library?</dt>
+                <dd>Karena ia menyembunyikan kompleksitas seperti pembuatan shader, matriks, dan buffer WebGL di balik API berbasis objek yang intuitif (seperti Mesh, Scene, Camera).</dd>
+
+                <dt>Apa komponen minimum agar Mesh dapat terlihat?</dt>
+                <dd>Scene, Camera, Renderer, dan Mesh itu sendiri (yang terdiri dari Geometry dan Material). Jika Material merespons cahaya (seperti Lambert/Phong), maka diperlukan Light juga.</dd>
+                
+                <dt>Apa itu Geometry, Material, dan Mesh?</dt>
+                <dd><b>Geometry</b> mendefinisikan bentuk/struktur kerangka (vertex). <b>Material</b> mendefinisikan tampilan permukaan (warna, kilap, interaksi cahaya). <b>Mesh</b> adalah gabungan dari Geometry dan Material menjadi objek 3D utuh di dalam Scene.</dd>
+                
+                <dt>Apa bedanya MeshBasicMaterial, Lambert, dan Phong?</dt>
+                <dd><b>Basic</b>: Tidak dipengaruhi cahaya sama sekali. <b>Lambert</b>: Dipengaruhi cahaya namun permukaannya kusam/diffuse (tidak ada pantulan kilap). <b>Phong</b>: Merespons cahaya dan memiliki specular highlight (permukaan mengkilap).</dd>
+
+                <dt>Bagaimana cara kerja Shadow (bayangan)?</dt>
+                <dd>Agar bayangan muncul: (1) Renderer harus mengaktifkan <code>shadowMap.enabled</code>, (2) Light harus memiliki <code>castShadow = true</code>, (3) Objek pelempar bayangan harus <code>castShadow = true</code>, dan (4) Permukaan penerima (seperti plane/ground) harus <code>receiveShadow = true</code>.</dd>
+
+                <dt>Mengapa aspect ratio dan updateProjectionMatrix penting saat resize?</dt>
+                <dd>Jika ukuran window/canvas berubah, rasio lebar-tinggi (aspect ratio) Camera harus disesuaikan dan matriks proyeksinya di-update agar objek tidak terlihat terdistorsi (gepeng/melar).</dd>
+            </dl>
+        </div>
+
+        <!-- ANALISIS -->
+        <div class="concept-block">
+            <h3>Analisis Praktikum <span class="concept-badge">Abstraction & Performance</span></h3>
+            <ul>
+                <li><b>Abstraction:</b> Three.js menghilangkan kebutuhan menulis boilerplate WebGL manual (setup program, compile shader, bind buffer) sehingga pembuatan scene 3D lebih cepat dan mudah.</li>
+                <li><b>Performance:</b> Memperbesar resolusi shadow (misal dari 512 ke 2048) atau menambah segmen objek (seperti Sphere) akan meningkatkan kualitas visual secara signifikan, namun juga menambah beban GPU. Menggunakan resolusi optimal yang cukup tajam tapi ringan adalah kuncinya.</li>
+                <li><b>Transform:</b> Properti seperti <code>position</code>, <code>rotation</code>, dan <code>scale</code> tidak mengubah nilai vertex aslinya secara permanen; melainkan meng-update "Model Matrix" dari objek, yang mana dikalikan dengan vertex asli di dalam GPU di setiap frame (di dalam Vertex Shader).</li>
+            </ul>
+        </div>
+
+        <!-- CHALLENGE A -->
+        <div class="concept-block">
+            <h3>
+                Challenge A — Tambah Geometry
+                <span class="concept-badge">Mesh &bull; Geometry &bull; Transform &bull; Collision Avoidance</span>
+            </h3>
+            <h4>1. Konsep Teoretis Grafika Komputer</h4>
+            <p>
+                Dalam grafika 3D, objek direpresentasikan melalui kerangka <i>vertex</i> (simpul) dan <i>face</i> (permukaan) yang disebut <b>Geometry</b>. Untuk merender geometry tersebut agar terlihat di layar, dibutuhkan <b>Material</b> yang menentukan respons permukaan terhadap cahaya dan warna. Penggabungan Geometry dan Material membentuk sebuah <b>Mesh</b>.
+            </p>
+            <p>
+                Setiap Mesh memiliki <b>Transformasi Spasial</b> yang mencakup Posisi (Translasi), Rotasi, dan Skala, yang dihitung menggunakan <b>Model Matrix</b> untuk menempatkan objek pada koordinat <i>World Space</i>. Menempatkan beberapa objek secara terpisah memastikan mereka tidak menempati titik origin $(0, 0, 0)$ yang sama secara tumpang tindih (<i>Z-fighting</i>).
+            </p>
+
+            <h4>2. Implementasi Kode</h4>
+            <pre><code>// 1. Inisialisasi Material yang Merespons Cahaya
+const standardMaterial = new THREE.MeshPhongMaterial({ color: 0x4df3ff, shininess: 100 });
+
+// 2. Pembuatan Geometry Berbeda
+const cylinderGeo = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
+const coneGeo = new THREE.ConeGeometry(0.5, 1, 32);
+const torusGeo = new THREE.TorusGeometry(0.4, 0.15, 16, 100);
+
+// 3. Penggabungan ke Mesh dan Pengaturan Posisi (Transform)
+const cylinder = new THREE.Mesh(cylinderGeo, standardMaterial);
+cylinder.position.set(-2, 0.5, 0); // Translasi ke sumbu X negatif
+
+const cone = new THREE.Mesh(coneGeo, standardMaterial);
+cone.position.set(2, 0.5, 0); // Translasi ke sumbu X positif
+
+const torus = new THREE.Mesh(torusGeo, standardMaterial);
+torus.position.set(0, 0.5, -2); // Translasi ke sumbu Z negatif
+torus.rotation.x = Math.PI / 2; // Rotasi 90 derajat agar merebah
+
+// 4. Penambahan ke Scene Graph
+scene.add(cylinder, cone, torus);</code></pre>
+
+            <h4>3. Bedah Kode Baris per Baris</h4>
+            <ul>
+                <li><code>new THREE.MeshPhongMaterial(...)</code>: Mengalokasikan shader material yang mampu mengkalkulasi pantulan cahaya spekular dan difus secara dinamis.</li>
+                <li><code>new THREE.CylinderGeometry(...)</code>: Menghasilkan matriks <i>vertex</i> dan <i>index</i> yang mendefinisikan bentuk silinder berdasarkan parameter radius atas, radius bawah, tinggi, dan segmen melingkar.</li>
+                <li><code>new THREE.Mesh(...)</code>: Mengikat data <i>Geometry</i> dengan instruksi shader <i>Material</i> ke dalam satu kesatuan grafis objek 3D.</li>
+                <li><code>mesh.position.set(x, y, z)</code>: Memperbarui komponen translasi dari matriks model objek tersebut, sehingga objek bergeser ke lokasi yang spesifik tanpa menimpa objek lain.</li>
+            </ul>
+
+            <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+            <p>
+                Ketiga objek (Silinder, Kerucut, Torus) muncul di dalam kanvas pada posisi yang terpisah dengan jarak aman. Bayangan dan kilapan cahaya terlihat secara akurat berdasarkan kelengkungan spesifik masing-masing bentuk geometri.
+            </p>
+        </div>
+
+        <!-- CHALLENGE B -->
+        <div class="concept-block">
+            <h3>
+                Challenge B — Material Gallery
+                <span class="concept-badge">Shading Models &bull; Light Interaction &bull; Shader Pipelines</span>
+            </h3>
+            <h4>1. Konsep Teoretis Grafika Komputer</h4>
+            <p>
+                Model pencahayaan (<i>Shading Models</i>) mendefinisikan kompleksitas matematis bagaimana permukaan memantulkan foton cahaya virtual. Three.js mengabstraksi <i>fragment shader</i> yang rumit menjadi beberapa jenis material siap pakai:
+            </p>
+            <ul>
+                <li><b>MeshBasicMaterial:</b> Hanya me-render <i>Albedo</i> (warna dasar) murni tanpa perhitungan pencahayaan. Ideal untuk flat UI atau objek yang "menyala" sendiri.</li>
+                <li><b>MeshNormalMaterial:</b> Mengonversi nilai <i>Normal Vector</i> (arah kemiringan 3D, $X,Y,Z$) menjadi rentang warna (R,G,B). Sangat berguna untuk kalibrasi/debugging geometry.</li>
+                <li><b>MeshLambertMaterial:</b> Mengimplementasikan hukum Lambertian reflectance (Diffuse), menghitung pantulan cahaya kasar/<i>matte</i> berdasarkan dot product sudut antara Normal permukaan dan sinar lampu.</li>
+                <li><b>MeshPhongMaterial:</b> Menambahkan komponen kilau spekular (Pantulan Blinn-Phong) yang menghasilkan <i>highlight spot</i> tajam layaknya plastik atau logam yang dipoles.</li>
+            </ul>
+
+            <h4>2. Implementasi Kode</h4>
+            <pre><code>const materials = [
+  new THREE.MeshBasicMaterial({ color: 0x4df3ff }),
+  new THREE.MeshNormalMaterial(),
+  new THREE.MeshLambertMaterial({ color: 0x4df3ff }),
+  new THREE.MeshPhongMaterial({ color: 0x4df3ff, shininess: 80 })
+];
+
+const galleryGroup = new THREE.Group();
+materials.forEach((mat, index) => {
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32), mat);
+  mesh.position.x = (index - 1.5) * 1.5; // Menyusun berjajar secara dinamis
+  galleryGroup.add(mesh);
+});
+scene.add(galleryGroup);</code></pre>
+
+            <h4>3. Bedah Kode Baris per Baris</h4>
+            <ul>
+                <li><code>new THREE.Group()</code>: Node kosong tanpa wujud visual (objek <i>dummy</i>) yang berfungsi merangkai dan mengelompokkan hierarki anak-anak objek secara kolektif (Scene Graph hierarchy).</li>
+                <li><code>materials.forEach(...)</code>: Iterasi fungsional untuk mengalokasikan objek baru (Sphere) dari satu sumber kelas geometri yang sama, lalu memasangkan tiap material yang berbeda untuk komparasi langsung.</li>
+                <li><code>mesh.position.x = (index - 1.5) * 1.5</code>: Formula penempatan spasial algoritmik untuk mendistribusikan bola secara seimbang dari titik tengah.</li>
+            </ul>
+
+            <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+            <table class="obs-table">
+              <thead>
+                <tr>
+                  <th>Jenis Material</th>
+                  <th>Karakteristik Tampilan Visual Objek</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>MeshBasicMaterial</b></td>
+                  <td>Bola tampak bundar datar layaknya piringan 2D murni tanpa ada ilusi bayangan atau perhitungan cahaya.</td>
+                </tr>
+                <tr>
+                  <td><b>MeshNormalMaterial</b></td>
+                  <td>Bola memancarkan spektrum pelangi dari $X, Y, Z$ ke dalam nilai RGB secara statis berdasarkan sudut lengkungannya.</td>
+                </tr>
+                <tr>
+                  <td><b>MeshLambertMaterial</b></td>
+                  <td>Bola memiliki kedalaman volume 3D dengan shading kusam (matte), kasar seperti tanah liat, murni bereaksi terhadap cahaya tanpa kilau.</td>
+                </tr>
+                <tr>
+                  <td><b>MeshPhongMaterial</b></td>
+                  <td>Bola bergradasi halus dengan tambahan bintik kilapan pantulan cahaya (specular highlight) tajam menyerupai plastik/keramik basah.</td>
+                </tr>
+              </tbody>
+            </table>
+        </div>
+
+        <!-- CHALLENGE C -->
+        <div class="concept-block">
+            <h3>
+                Challenge C — OrthographicCamera
+                <span class="concept-badge">Projection Matrix &bull; View Frustum &bull; Responsive Design</span>
+            </h3>
+            <h4>1. Konsep Teoretis Grafika Komputer</h4>
+            <p>
+                Proses mengubah dunia 3D menjadi koordinat piksel 2D pada layar dilakukan dengan <b>Projection Matrix</b>. Terdapat dua paradigma proyeksi:
+            </p>
+            <ul>
+                <li><b>Perspective Projection:</b> Mensimulasikan mata biologis manusia di mana objek jauh terlihat lebih kecil akibat sudut Field of View (FOV), sehingga memberikan efek kedalaman optis sejati (rasa ruang dan jarak).</li>
+                <li><b>Orthographic Projection:</b> Memproyeksikan sinar sejajar (parallel rays) di mana ukuran objek di layar tetap konstan terlepas dari seberapa jauh objek tersebut dari lensa. Ini umum dipakai untuk game isometrik, rancang bangun (CAD), atau rendering teknis, karena proporsi aslinya dapat diukur presisi.</li>
+            </ul>
+
+            <h4>2. Implementasi Kode</h4>
+            <pre><code>// 1. Inisialisasi Dua Jenis Kamera
+const aspect = window.innerWidth / window.innerHeight;
+const frustumSize = 5;
+
+const perspectiveCam = new THREE.PerspectiveCamera(50, aspect, 0.1, 100);
+const orthographicCam = new THREE.OrthographicCamera(
+  frustumSize * aspect / -2, frustumSize * aspect / 2, // Left, Right
+  frustumSize / 2, frustumSize / -2,                   // Top, Bottom
+  0.1, 100
+);
+
+let activeCamera = perspectiveCam;
+
+// 2. Event Listener Perubahan Mode (Tombol P atau Select UI)
+document.addEventListener("keydown", (e) => {
+  if (e.key.toLowerCase() === "p" || e.key.toLowerCase() === "c") {
+    activeCamera = activeCamera === perspectiveCam ? orthographicCam : perspectiveCam;
+  }
+});
+
+// 3. Handler Resize Jendela Responsif
+window.addEventListener("resize", () => {
+  const newAspect = window.innerWidth / window.innerHeight;
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  
+  // Update Parameter Perspectif
+  perspectiveCam.aspect = newAspect;
+  perspectiveCam.updateProjectionMatrix();
+  
+  // Update Batas Frustum Orthographic
+  orthographicCam.left = -frustumSize * newAspect / 2;
+  orthographicCam.right = frustumSize * newAspect / 2;
+  orthographicCam.updateProjectionMatrix();
+});</code></pre>
+
+            <h4>3. Bedah Kode Baris per Baris</h4>
+            <ul>
+                <li><code>new THREE.OrthographicCamera(...)</code>: Mendefinisikan matriks kotak frustum absolut. Parameter batas (kiri/kanan/atas/bawah) dikalikan dengan aspect ratio layar demi mencegah distorsi bentuk asimetris saat window tidak berbentuk kubus bujur sangkar.</li>
+                <li><code>activeCamera = ...</code>: Pointer referensi JavaScript dipindah secara instan di tengah siklus program. Pada iterasi render <code>renderer.render(scene, activeCamera)</code>, WebGL otomatis mem-parsing matriks kamera yang kini sedang aktif.</li>
+                <li><code>updateProjectionMatrix()</code>: Fungsi krusial untuk membilas cache matriks internal GPU. Jika aspek dirubah namun fungsi ini tak dipanggil, kamera akan terus menggunakan kalkulasi geometri lama yang sudah terdistorsi.</li>
+            </ul>
+
+            <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+            <p>
+                Saat mode kamera diganti, pemandangan seketika beralih. Di mode Perspektif, batas ruang kanvas memiliki vanishing point (titik lenyap) menyempit ke tengah. Begitu beralih ke Orthographic, kedalaman ruang menjadi rata (flattened); kubus dan garis paralel grid menjadi murni lurus tanpa konvergensi paralaks.
+            </p>
+        </div>
+
+        <!-- CHALLENGE D -->
+        <div class="concept-block">
+            <h3>
+                Challenge D — Light Animation
+                <span class="concept-badge">Dynamic Transform &bull; Real-time Rendering &bull; Animation Loop</span>
+            </h3>
+            <h4>1. Konsep Teoretis Grafika Komputer</h4>
+            <p>
+                Untuk memicu interaksi dinamis fotorealistik, sumber cahaya harus bergeser dari waktu ke waktu. Modifikasi posisi cahaya ini mengharuskan GPU mengalkulasi ulang nilai pantulan normal-ke-cahaya untuk setiap piksel di kanvas ($1920 \times 1080 = 2 \text{ juta piksel}$ secara pararel dalam waktu &lt;16 milidetik per frame). Lintasan orbit cahaya parametrik dapat diprogram lewat fungsi osilasi melingkar.
+            </p>
+
+            <h4>2. Implementasi Kode</h4>
+            <pre><code>const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+dirLight.position.set(2, 3, 2);
+dirLight.castShadow = true;
+scene.add(dirLight);
+
+// Helper visualisasi untuk memudahkan pelacakan cahaya
+const lightHelper = new THREE.DirectionalLightHelper(dirLight, 0.5);
+scene.add(lightHelper);
+
+function animate() {
+  requestAnimationFrame(animate);
+  const elapsedTime = clock.getElapsedTime(); // Waktu mulus berjalan terus
+
+  if (state.isLightOrbiting) {
+    // Kurva orbit lingkaran pada bidang X-Z menggunakan fungsi Trigonometri Sin & Cos
+    dirLight.position.x = Math.sin(elapsedTime) * 4;
+    dirLight.position.z = Math.cos(elapsedTime) * 4;
+    lightHelper.update(); // Sinkronkan model bantu dengan sumber aslinya
+  }
+
+  renderer.render(scene, activeCamera);
+}</code></pre>
+
+            <h4>3. Bedah Kode Baris per Baris</h4>
+            <ul>
+                <li><code>new THREE.DirectionalLight(...)</code>: Instansiasi cahaya sejajar (seperti matahari) yang sinar pancarannya diproses sebagai arah vektor tak terhingga di shader (bukan sekadar radiasi sferis titik radius pusat).</li>
+                <li><code>clock.getElapsedTime()</code>: Menarik nilai detik floating point absolut secara presisi tinggi sejak modul Three.js Clock dikonstruksi. Hal ini mencegah efek gagap (stuttering) jika frame rate melambat.</li>
+                <li><code>Math.sin(elapsedTime) * 4</code>: Menghasilkan nilai osilasi $[-4, +4]$ pada ekuator lintasan memutar horisontal seiring berjalannya iterasi waktu.</li>
+            </ul>
+
+            <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+            <p>
+                Arah bayang-bayang di atas alas (ground plane) berputar $360^\circ$ secara berkesinambungan laksana gerakan jam matahari harian yang dipercepat. Visual DirectionalLightHelper berbentuk kotak kawat mengikuti rotasi, selaras presisi dengan proyeksi terminator gelap-terang pada material Lambert/Phong.
+            </p>
+        </div>
+
+        <!-- CHALLENGE E -->
+        <div class="concept-block">
+            <h3>
+                Challenge E — Shadow Quality
+                <span class="concept-badge">Shadow Mapping &bull; Texture Resolution &bull; Resource Trade-off</span>
+            </h3>
+            <h4>1. Konsep Teoretis Grafika Komputer</h4>
+            <p>
+                Teknik yang digunakan standar Three.js untuk membangun bayangan bertajuk <b>Shadow Mapping</b>. Teknik pasca-proses 2-tahapan ini meliputi:
+            </p>
+            <ol>
+                <li><b>Depth Pass:</b> Kamera sementara diam-diam dirender pada letak lampu mengarah ke pemandangan. Kedalaman letak z-buffer tersimpan sebagai nilai skala abu-abu piksel ke dalam memori tekstur khusus (Shadow Map).</li>
+                <li><b>Render Pass:</b> Saat kamera utama mengambil gambar, poligon memeriksa silang posisi 3D-nya sendiri dengan peta di tekstur shadow map. Jika posisi tertutup (nilai lebih dalam), piksel dirender gelap.</li>
+            </ol>
+            <p>
+                Resolusi piksel peta bayangan sangat mendikte tajam/tidaknya batas bayangan. Resolusi minim mengakibatkan pinggiran bayangan tampak berbentuk kotak bergerigi tebal (Aliasing).
+            </p>
+
+            <h4>2. Implementasi Kode</h4>
+            <pre><code>// Modifikasi Parameter Resolusi Tekstur Internal Light Shadow 
+document.querySelector("#shadowSelect").addEventListener("change", (e) => {
+  const size = parseInt(e.target.value); // Misal: "512", "1024", "2048"
+  dirLight.shadow.mapSize.width = size;
+  dirLight.shadow.mapSize.height = size;
+  
+  // Membersihkan memori VRAM shadow map lama, memicu Three.js membuat Buffer baru
+  dirLight.shadow.map.dispose();
+  dirLight.shadow.map = null;
+});</code></pre>
+
+            <h4>3. Bedah Kode Baris per Baris</h4>
+            <ul>
+                <li><code>dirLight.shadow.mapSize.width = size</code>: Mereset limit lebar & tinggi buffer internal kamera-bayangan yang menampung tekstur. Standar default adalah $512\times512$.</li>
+                <li><code>dispose()</code>: Karena resolusi tekstur bayangan disimpan langsung di memori video (VRAM), garbage collection Javascript tidak bisa mengakses driver grafis otomatis. Fungsi ini secara agresif melepaskan blok RAM tersebut demi mencegah kebocoran memori (Memory Leak).</li>
+            </ul>
+
+            <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+            <table class="obs-table">
+              <thead>
+                <tr>
+                  <th>Resolusi Peta Bayangan</th>
+                  <th>Kualitas Bayangan &amp; Beban Performa GPU</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>$512 \times 512$</b></td>
+                  <td>Garis tepi pinggiran bayangan hancur berkeping kotak-kotak (<i>pixelated aliasing</i>). Kualitas sangat buruk, namun sangat hemat memori (VRAM).</td>
+                </tr>
+                <tr>
+                  <td><b>$1024 \times 1024$</b></td>
+                  <td>Penyetelan optimal standar industri harian. Kotak-kotak aliasing mulai membaur (<i>blur</i>), menciptakan bayangan proporsional yang cukup ringan di-render.</td>
+                </tr>
+                <tr>
+                  <td><b>$2048 \times 2048$</b> (atau lebih)</td>
+                  <td>Pinggiran bayangan ultra-tajam, padat layaknya pantulan sejati. Namun, pada komputer kelas bawah beban komputasi <i>Depth Pass</i> akan memakan separuh performa FPS (lag).</td>
+                </tr>
+              </tbody>
+            </table>
+        </div>
+
+        <!-- CHALLENGE F -->
+        <div class="concept-block">
+            <h3>
+                Challenge F — Scene Information (HUD)
+                <span class="concept-badge">Renderer Info &bull; DOM Manipulation &bull; Profiling Data</span>
+            </h3>
+            <h4>1. Konsep Teoretis Grafika Komputer</h4>
+            <p>
+                Membaca informasi statistik mesin renderer (jumlah <i>Draw Calls</i>, kalkulasi jumlah segitiga poligon total, frame-rate FPS) krusial pada Debugging aplikasi grafika 3D. Ekstraksi langsung status Three.js ini menghindarkan pemrogram dari optimisasi tebak-tebakan.
+            </p>
+
+            <h4>2. Implementasi Kode</h4>
+            <pre><code>function updateHUD() {
+  document.getElementById("cameraInfo").innerText = 
+    activeCamera === perspectiveCam ? " Perspective" : " Orthographic";
+    
+  // Mengakses arsitektur tree child hirarkis
+  document.getElementById("objectInfo").innerText = scene.children.length;
+  
+  // Mengakses abstraksi profil WebGLRenderer bawaan Three.js
+  document.getElementById("rendererInfo").innerText = 
+    renderer.info.render.triangles + " tris";
+}
+
+// Dipanggil sesaat sesudah instruksi render() selesai 
+function animate() {
+  ...
+  renderer.render(scene, activeCamera);
+  updateHUD();
+}</code></pre>
+
+            <h4>3. Bedah Kode Baris per Baris</h4>
+            <ul>
+                <li><code>renderer.info.render.triangles</code>: Objek <code>.info</code> melacak metadata real-time WebGL. Angka segitiga mencerminkan akumulasi face yang dikirim lolos frustum culling GPU per frame tersebut.</li>
+                <li><code>updateHUD()</code>: Menginjeksi string numerik murni langsung ke elemen HTML dengan DOM API seringan mungkin.</li>
+            </ul>
+        </div>
+
+        <!-- CHALLENGE G -->
+        <div class="concept-block">
+            <h3>
+                Challenge G — Toggle Animation
+                <span class="concept-badge">Event Input &bull; State Toggle</span>
+            </h3>
+            <h4>1. Konsep Teoretis Grafika Komputer</h4>
+            <p>
+                Mekanisme Input terbagi dua fundamental, salah satunya adalah <b>Event-Based (Sekali Tembak)</b>. Input ini ditangkap oleh <code>keydown / keyup</code> pendengar event DOM, cocok untuk tombol Toggle seperti Jeda/Lanjut (Pause/Resume). Terjadinya hanya sesaat meski jari tertahan lama (menunggu jeda pengetikan OS).
+            </p>
+
+            <h4>2. Implementasi Kode</h4>
+            <pre><code>window.addEventListener("keydown", (e) => {
+  const k = e.key.toLowerCase();
+  
+  // EVENT-BASED: Challenge G - Toggle Animation
+  if (k === "g" || e.code === "Space") {
+    state.isAnimationPlaying = !state.isAnimationPlaying;
+  }
+});</code></pre>
+
+            <h4>3. Bedah Kode Baris per Baris</h4>
+            <ul>
+                <li><code>e.code === "Space"</code>: Memeriksa input spesifik dari keyboard untuk spasi.</li>
+                <li><code>state.isAnimationPlaying = !state.isAnimationPlaying;</code>: Membalikkan (toggle) status Boolean animasi dari true ke false atau sebaliknya setiap kali tombol ditekan.</li>
+            </ul>
+
+            <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+            <p>
+                Ditekan spasi atau huruf "G", siklus animasi seketika mematung (frozen). Saat ditekan lagi, animasi dilanjutkan dari posisi terakhirnya tanpa tersentak.
+            </p>
+        </div>
+
+        <!-- CHALLENGE H -->
+        <div class="concept-block">
+            <h3>
+                Challenge H — Continuous Object Control
+                <span class="concept-badge">State Input &bull; Delta Time &bull; Frame-rate Independence</span>
+            </h3>
+            <h4>1. Konsep Teoretis Grafika Komputer</h4>
+            <p>
+                Mekanisme Input kedua adalah <b>State-Based (Kontinu Real-time)</b>. Sistem mencatat flag Boolean pada map objek <code>state.keys</code> dan terus dipindai per siklus loop rendering. Paling ideal untuk bergeraknya karakter (WASD) secara mulus tanpa <i>input lag</i>.
+            </p>
+            <p>
+                Metode ini membutuhkan <b>Delta Time</b> (Waktu antar bingkai) agar objek yang berjalan kontinu tidak melesat abnormal (di luar kendali) ketika dijalankan pada monitor frekuensi $144\text{ Hz}$ dibandingkan monitor $60\text{ Hz}$.
+            </p>
+
+            <h4>2. Implementasi Kode</h4>
+            <pre><code>// 1. Array Status Keyboard State-Based
+const keys = { w: false, a: false, s: false, d: false, q: false, e: false };
+
+window.addEventListener("keydown", (e) => {
+  if (keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = true;
+});
+
+window.addEventListener("keyup", (e) => {
+  if (keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = false;
+});
+
+// 2. Pemrosesan STATE-BASED + DELTA TIME di Loop Render
+function animate() {
+  requestAnimationFrame(animate);
+  const delta = clock.getDelta(); // Mengekstrak sela waktu riil berlalu
+  
+  if (state.isAnimationPlaying) {
+    const moveSpeed = 5.0 * delta; // Skala kecepatan dikalikan delta (Frame-rate Independent)
+    const rotSpeed = 3.0 * delta;
+
+    // Translasi (Continuous Movement)
+    if (keys.w) mainCube.position.z -= moveSpeed;
+    if (keys.s) mainCube.position.z += moveSpeed;
+    if (keys.a) mainCube.position.x -= moveSpeed;
+    if (keys.d) mainCube.position.x += moveSpeed;
+    
+    // Rotasi (Continuous Rotation)
+    if (keys.q) mainCube.rotation.y += rotSpeed;
+    if (keys.e) mainCube.rotation.y -= rotSpeed;
+  }
+  ...
+}</code></pre>
+
+            <h4>3. Bedah Kode Baris per Baris</h4>
+            <ul>
+                <li><code>clock.getDelta()</code>: Menarik selisih waktu detik pecahan persis sesudah bingkai sebelumnya digambar usai. Pada laju FPS 60Hz biasanya bernilai $\approx 0.016$ detik, sedangkan FPS 144Hz bernilai $\approx 0.007$ detik.</li>
+                <li><code>moveSpeed = 5.0 * delta</code>: Mengimplementasikan hukum gerak linear. Kecepatan dikompensasi secara proporsional, menjamin kubus bergeser senilai murni 5.0 unit WebGL <b>per detik</b> di kehidupan nyata, terbebas dari inkonsistensi rendering perangkat keras.</li>
+            </ul>
+
+            <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+            <p>
+                Input penekanan tombol WASD merespon tanpa tersendat dan tanpa jeda tunda OS-keyboard. Rotasi putar sumbu vertikal "Q" dan "E" juga berkesinambungan mengalir halus. Kecepatan gerak/putar selalu stabil pada perangkat keras komputer lambat maupun super cepat sekalipun.
+            </p>
+        </div>
+    </div>
   </div>
   <script type="module" src="./main.js?v=2"></script>
 </body>

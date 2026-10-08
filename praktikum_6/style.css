@@ -1,22 +1,42 @@
 :root {
   color-scheme: dark;
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-  background: #050d1a;
-  color: #dcecff;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background: #070b18;
+  color: #f8fafc;
+  --bg: #070b18;
+  --card: rgba(17, 25, 48, 0.78);
+  --primary: #8b5cf6;
+  --primary-light: #a78bfa;
+  --cyan: #22d3ee;
+  --pink: #f472b6;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --border: rgba(255, 255, 255, 0.09);
 }
+
 * {
   box-sizing: border-box;
 }
+
 body {
   margin: 0;
   padding: 20px;
-  background:
-    radial-gradient(circle at 80% 0, #123d61, transparent 40rem), #050d1a;
+  background: 
+    radial-gradient(circle at 10% 10%, rgba(139, 92, 246, 0.18), transparent 30%),
+    radial-gradient(circle at 90% 20%, rgba(34, 211, 238, 0.12), transparent 30%),
+    var(--bg);
+  color: var(--text);
+  line-height: 1.6;
 }
+
 .app-shell {
   max-width: 1280px;
   margin: auto;
 }
+
+/* ==========================================================================
+   Page Header
+   ========================================================================== */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -24,145 +44,221 @@ body {
   gap: 20px;
   margin-bottom: 18px;
 }
+
 .eyebrow {
-  color: #4df3ff;
+  color: var(--primary-light);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1.6px;
 }
+
 .page-header h1 {
   margin: 8px 0 5px;
   font-size: clamp(28px, 4vw, 46px);
   line-height: 1.05;
 }
+
 .page-header p {
   margin: 0;
-  color: #8ca7c1;
+  color: var(--muted);
   font-size: 13px;
 }
+
 .status-badge {
   padding: 9px 12px;
-  border: 1px solid #28647d;
+  border: 1px solid rgba(139, 92, 246, 0.3);
   border-radius: 999px;
-  color: #4df3ff;
+  color: var(--primary-light);
+  background: rgba(139, 92, 246, 0.08);
   font-size: 11px;
   white-space: nowrap;
 }
+
+/* ==========================================================================
+   Workspace Layout
+   ========================================================================== */
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 285px;
+  grid-template-columns: minmax(0, 1fr) 300px;
   gap: 14px;
 }
+
 .canvas-panel,
 .control-panel {
-  padding: 14px;
-  border: 1px solid #20445d;
+  padding: 16px;
+  border: 1px solid var(--border);
   border-radius: 18px;
-  background: #091a2a;
-  box-shadow: 0 18px 50px #0004;
+  background: var(--card);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(15px);
 }
+
 .scene-container {
   width: 100%;
   aspect-ratio: 16/10;
   overflow: hidden;
   border-radius: 12px;
   background: #020913;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
+
 .scene-container canvas {
   display: block;
   width: 100%;
   height: 100%;
+  cursor: crosshair;
 }
+
+/* ==========================================================================
+   HUD Display Cards
+   ========================================================================== */
 .hud-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   margin-top: 12px;
 }
+
 .hud-card {
   padding: 10px;
   border-radius: 9px;
-  background: #102b40;
-  color: #91adc7;
-  font:
-    11px ui-monospace,
-    monospace;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  color: #c4b5fd;
+  font: 11px ui-monospace, monospace;
 }
+
 .hud-card b {
   display: block;
   margin-top: 4px;
-  color: #4df3ff;
+  color: var(--primary-light);
 }
-.select-row {
-  display: block;
-  margin-top: 14px;
-  color: #8ca7c1;
-  font-size: 11px;
-}
-.select-row select {
-  width: 100%;
-  margin-top: 6px;
-  padding: 9px;
-  border: 1px solid #28647d;
-  border-radius: 9px;
-  background: #102d42;
-  color: #dcecff;
-}
+
+/* ==========================================================================
+   Controls & Form Inputs
+   ========================================================================== */
 .range-row {
   display: flex;
   justify-content: space-between;
   margin-top: 14px;
-  color: #8ca7c1;
+  color: var(--muted);
   font-size: 11px;
 }
+
 .range-row output {
-  color: #4df3ff;
-  font: 11px ui-monospace;
+  color: var(--primary-light);
+  font: 11px ui-monospace, monospace;
 }
+
 input[type="range"] {
   width: 100%;
-  accent-color: #4df3ff;
+  accent-color: var(--primary);
 }
+
 .button-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 7px;
-  margin-top: 17px;
+  margin-top: 16px;
 }
-button {
-  padding: 9px;
-  border: 1px solid #28647d;
+
+button,
+select {
+  padding: 9px 12px;
+  border: 1px solid var(--border);
   border-radius: 9px;
-  background: #102d42;
-  color: #dcecff;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
   cursor: pointer;
+  transition: 0.25s;
+  font-family: inherit;
+  font-size: 12px;
 }
+
 button:hover {
-  border-color: #4df3ff;
-  color: #4df3ff;
+  border-color: rgba(139, 92, 246, 0.5);
+  color: var(--primary-light);
+  background: rgba(139, 92, 246, 0.1);
 }
+
+select {
+  background: #111930;
+  color: var(--text);
+}
+
+select option {
+  background: #0d1427;
+  color: var(--text);
+}
+
+.select-row {
+  display: block;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.select-row select {
+  width: 100%;
+  margin-top: 6px;
+}
+
+.primary-button,
 .wide-button {
   width: 100%;
-  margin-top: 7px;
-  background: #4df3ff;
-  border-color: #4df3ff;
-  color: #04202c;
+  margin-top: 16px;
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+  border: none;
+  border-radius: 9px;
+  color: white;
   font-weight: 800;
+  box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);
+  transition: 0.25s;
 }
+
+.primary-button:hover,
+.wide-button:hover {
+  color: white;
+  border: none;
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  box-shadow: 0 12px 35px rgba(139, 92, 246, 0.4);
+}
+
 .keyboard-help {
   display: grid;
   gap: 5px;
   margin-top: 15px;
   padding: 12px;
-  border: 1px dashed #28647d;
+  border: 1px dashed rgba(139, 92, 246, 0.3);
   border-radius: 11px;
-  color: #8ca7c1;
+  color: var(--muted);
   font-size: 11px;
   line-height: 1.5;
+  background: rgba(139, 92, 246, 0.05);
 }
+
 .keyboard-help b {
-  color: #dcecff;
+  color: #e2e8f0;
 }
+
+.orbit-settings {
+  display: grid;
+  gap: 9px;
+  margin: 16px 0;
+  padding: 12px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 11px;
+}
+.orbit-settings legend { padding: 0 5px; font-weight: 700; color: var(--primary-light); }
+.orbit-settings > label { font-size: 12px; color: var(--muted); }
+.orbit-settings input[type="range"] { width: 100%; }
+.orbit-settings input[type="checkbox"] { margin-right: 6px; accent-color: var(--primary); }
+.orbit-settings input:disabled { opacity: 0.4; }
+
+/* ==========================================================================
+   Responsive Breakpoints
+   ========================================================================== */
 @media (max-width: 850px) {
   .workspace {
     grid-template-columns: 1fr;
@@ -174,6 +270,7 @@ button:hover {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
 @media (max-width: 500px) {
   body {
     padding: 10px;
@@ -186,16 +283,140 @@ button:hover {
     grid-template-columns: 1fr;
   }
 }
-.orbit-settings {
-  display: grid;
-  gap: 9px;
-  margin: 16px 0;
-  padding: 12px;
-  border: 1px solid #28647d;
-  border-radius: 11px;
+
+/* ==========================================================================
+   Explanation Section (Challenge Implementation & Analysis)
+   ========================================================================== */
+.explanation-section {
+  margin-top: 30px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(15px);
+  color: #e2e8f0;
+  line-height: 1.65;
 }
-.orbit-settings legend { padding: 0 5px; font-weight: 700; }
-.orbit-settings > label { font-size: 12px; }
-.orbit-settings input[type="range"] { width: 100%; }
-.orbit-settings input[type="checkbox"] { margin-right: 6px; }
-.orbit-settings input:disabled { opacity: 0.4; }
+
+.explanation-section h2 {
+  color: var(--primary-light);
+  margin-top: 0;
+  font-size: 24px;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+  padding-bottom: 12px;
+}
+
+.explanation-section p.section-desc {
+  color: var(--muted);
+  font-size: 13.5px;
+  margin-bottom: 24px;
+}
+
+.concept-block {
+  background: rgba(0, 0, 0, 0.25);
+  padding: 22px;
+  border-radius: 14px;
+  margin-bottom: 24px;
+  border-left: 4px solid var(--primary);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.concept-block h3 {
+  color: #60a5fa;
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.concept-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  border-radius: 6px;
+  color: #c4b5fd;
+}
+
+.concept-block h4 {
+  color: var(--primary-light);
+  margin: 18px 0 8px 0;
+  font-size: 13.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.concept-block p,
+.concept-block li,
+.concept-block dd {
+  color: #cbd5e1;
+  font-size: 13.5px;
+  margin: 6px 0;
+}
+
+.concept-block ul,
+.concept-block ol {
+  margin: 8px 0 14px 20px;
+  padding: 0;
+}
+
+.concept-block dt {
+  color: var(--primary-light);
+  font-weight: bold;
+  margin-top: 14px;
+}
+
+.concept-block dd {
+  margin-left: 0;
+  margin-bottom: 14px;
+}
+
+.concept-block pre {
+  background: #020913;
+  padding: 14px 16px;
+  border-radius: 9px;
+  overflow-x: auto;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  margin: 10px 0 16px 0;
+}
+
+.concept-block code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12.5px;
+  color: var(--primary-light);
+}
+
+.concept-block pre code {
+  color: #e2e8f0;
+}
+
+.obs-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.obs-table th,
+.obs-table td {
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  padding: 9px 12px;
+  text-align: left;
+}
+
+.obs-table th {
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+}
+
+.obs-table td {
+  background: rgba(0, 0, 0, 0.3);
+  color: #cbd5e1;
+}
