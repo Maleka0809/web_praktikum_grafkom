@@ -243,3 +243,49 @@ button:hover {
 .orbit-settings input[type="range"] { width: 100%; }
 .orbit-settings input[type="checkbox"] { margin-right: 6px; }
 .orbit-settings input:disabled { opacity: 0.4; }
+
+.hierarchy-monitor {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(16, 43, 64, 0.95), rgba(11, 33, 53, 0.95));
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  font-size: 11px;
+}
+.hierarchy-monitor .monitor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.hierarchy-monitor .monitor-tag {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.hierarchy-monitor .monitor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  font-family: ui-monospace, monospace;
+}
+.hierarchy-monitor .monitor-box {
+  background: rgba(5, 13, 26, 0.55);
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.hierarchy-monitor .monitor-box span {
+  color: #8ca7c1;
+  display: block;
+  font-size: 10px;
+  margin-bottom: 2px;
+}
+.hierarchy-monitor .monitor-box b {
+  color: #4df3ff;
+  font-size: 11px;
+}

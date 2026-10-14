@@ -193,42 +193,67 @@ ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
+// --- HIERARCHY DEMO SESUAI MODUL PRAKTIKUM 7 DR. DARLIS (SECTION 18-21 & 79-80) ---
 const hierarchyGroup = new THREE.Group();
-hierarchyGroup.name = "Hierarchy Parent Group";
-hierarchyGroup.position.set(-2.8, 1.4, 0);
-const parentMesh = new THREE.Mesh(
-  new THREE.BoxGeometry(1.4, 1.4, 1.4),
-  new THREE.MeshPhysicalMaterial({
-    color: "#c8f5ff",
-    roughness: 0.08,
-    metalness: 0,
-    transmission: 0.95,
-    thickness: 1.4,
-    ior: 1.45,
-    opacity: 1,
-  }),
-);
-parentMesh.name = "Parent Mesh - Glass (transmission 0.95)";
-// Transmission models glass; opacity stays 1 for physically based refraction.
-parentMesh.castShadow = false;
-const childMesh = new THREE.Mesh(
-  new THREE.SphereGeometry(0.42, 24, 16),
+hierarchyGroup.name = "Hierarchy Demo Group";
+hierarchyGroup.position.set(-2.5, 0, 0);
+
+// Body (Parent Mesh)
+const body = new THREE.Mesh(
+  new THREE.BoxGeometry(1.6, 0.6, 1.0),
   new THREE.MeshStandardMaterial({
-    color: "#ffdd22",
-    emissive: "#ffcc00",
-    emissiveIntensity: 5,
-    roughness: 0.3,
-    metalness: 0,
+    color: 0x0ea5e9, // Biru langit (#0ea5e9)
+    roughness: 0.45,
+    metalness: 0.15,
   }),
 );
-childMesh.name = "Child Mesh (local 1, 0.9, 0)";
-childMesh.position.set(1, 0.9, 0);
-childMesh.castShadow = false;
-childMesh.material.userData.preserveEmission = true;
-childMesh.add(new THREE.PointLight("#ffcc33", 5, 5, 2));
-hierarchyGroup.add(parentMesh, childMesh);
+body.name = "Body (Parent)";
+body.position.y = 0.8;
+body.castShadow = true;
+body.receiveShadow = true;
+body.userData.selectable = true;
+body.userData.label = "Body (Parent)";
+hierarchyGroup.add(body);
+
+// Child Object (Anak)
+const child = new THREE.Mesh(
+  new THREE.BoxGeometry(0.45, 0.45, 0.45),
+  new THREE.MeshStandardMaterial({
+    color: 0xf59e0b, // Amber / Oranye (#f59e0b)
+    roughness: 0.3,
+    metalness: 0.1,
+  }),
+);
+child.name = "Child Object";
+child.position.set(1.0, 0, 0); // Local position: 1, 0, 0
+child.rotation.z = Math.PI / 4; // Local rotation: PI / 4
+child.castShadow = true;
+child.receiveShadow = true;
+child.userData.selectable = true;
+child.userData.label = "Child Object";
+// Hubungkan ke body: child adalah anak langsung dari body!
+body.add(child);
+
 scene.add(hierarchyGroup);
-interactiveObjects.push(parentMesh, childMesh);
+interactiveObjects.push(body, child);
+
+// Baseline PBR Sphere dari Modul (Section 23)
+const pbrSphere = new THREE.Mesh(
+  new THREE.SphereGeometry(0.65, 48, 24),
+  new THREE.MeshStandardMaterial({
+    color: 0x22c55e, // Hijau (#22c55e)
+    roughness: 0.25,
+    metalness: 0.1,
+  }),
+);
+pbrSphere.name = "PBR Sphere (Section 23)";
+pbrSphere.position.set(0, 0.75, 0);
+pbrSphere.castShadow = true;
+pbrSphere.receiveShadow = true;
+pbrSphere.userData.selectable = true;
+pbrSphere.userData.label = "PBR Sphere";
+scene.add(pbrSphere);
+interactiveObjects.push(pbrSphere);
 
 const solarSystem = new THREE.Group();
 solarSystem.name = "Solar System (Hierarchy Challenge)";
@@ -323,6 +348,8 @@ loader.load(
   (gltf) => {
     const root = gltf.scene;
     root.name = "Imported Duck GLB";
+    root.userData.selectable = true;
+    root.userData.label = "Imported Duck GLB";
     fitImportedModel(root);
     root.traverse((object) => {
       if (!object.name) object.name = object.type;
@@ -484,15 +511,18 @@ function setScaleFeedback(object, scale) {
   object.userData.baseScale = base;
   object.scale.copy(base).multiplyScalar(scale);
 }
-function objectRoot(object) {
+function findSelectableRoot(object) {
   let current = object;
-  while (
-    current.parent &&
-    current.parent !== scene &&
-    current.parent.type !== "Scene"
-  )
+  while (current) {
+    if (current.userData && current.userData.selectable) {
+      return current;
+    }
+    if (current.parent === scene || !current.parent || current.parent.type === "Scene") {
+      break;
+    }
     current = current.parent;
-  return current;
+  }
+  return object;
 }
 function updateInfo(object) {
   if (!object) {
@@ -511,7 +541,8 @@ function updateInfo(object) {
   const infoTitle = $("#infoTitle");
   if (infoTitle) infoTitle.textContent = object.name || object.type;
   const infoPos = $("#infoPosition");
-  if (infoPos) infoPos.textContent = `local ${formatVector(object.position)} · world ${formatVector(world)}`;
+  const parentName = object.parent && object.parent !== scene ? ` (Parent: ${object.parent.name || object.parent.type})` : "";
+  if (infoPos) infoPos.textContent = `local ${formatVector(object.position)} · world ${formatVector(world)}${parentName}`;
   const infoRot = $("#infoRotation");
   if (infoRot) infoRot.textContent = formatVector(object.rotation);
   const infoScale = $("#infoScale");
@@ -529,7 +560,7 @@ function raycast(event) {
   pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
   raycaster.setFromCamera(pointer, activeCamera);
   const hit = raycaster.intersectObjects(interactiveObjects, true)[0];
-  return hit ? objectRoot(hit.object) : null;
+  return hit ? findSelectableRoot(hit.object) : null;
 }
 let selectionGesture = null;
 let suppressSelection = false;
@@ -653,8 +684,12 @@ if (orbitControl) {
 const bloomDefaults = { emissiveIntensity: 5, bloomIntensity: 0.55, bloomRadius: 0.3 };
 const bloomSettings = { ...bloomDefaults };
 function applyBloomSettings() {
-  childMesh.material.emissiveIntensity = bloomSettings.emissiveIntensity;
-  sun.material.emissiveIntensity = bloomSettings.emissiveIntensity;
+  if (child && child.material && "emissiveIntensity" in child.material) {
+    child.material.emissiveIntensity = bloomSettings.emissiveIntensity;
+  }
+  if (sun && sun.material) {
+    sun.material.emissiveIntensity = bloomSettings.emissiveIntensity;
+  }
   bloomPass.strength = bloomSettings.bloomIntensity;
   bloomPass.radius = bloomSettings.bloomRadius;
   for (const [key, value] of Object.entries(bloomSettings)) {
@@ -820,12 +855,34 @@ if (objInfo) objInfo.textContent = String(interactiveObjects.length);
 
 let frameCount = 0;
 let fpsTime = 0;
+let logTimer = 0;
+const childWorldPos = new THREE.Vector3();
+
 function animate() {
   requestAnimationFrame(animate);
   const delta = Math.min(clock.getDelta(), 0.05);
   state.time += delta;
   if (state.mixer) state.mixer.update(delta);
-  hierarchyGroup.rotation.y += delta * 0.35;
+
+  // Animasi Hierarchy Demo sesuai Modul Praktikum Dr. Darlis (Section 66):
+  hierarchyGroup.rotation.y += 0.25 * delta;
+  child.rotation.x += 1.2 * delta;
+
+  // Real-time Child World Position monitor (Milestone 3 & Eksperimen Wajib 1 & 2):
+  child.getWorldPosition(childWorldPos);
+  const childWorldElem = $("#childWorldPos");
+  if (childWorldElem) {
+    childWorldElem.textContent = `${childWorldPos.x.toFixed(2)}, ${childWorldPos.y.toFixed(2)}, ${childWorldPos.z.toFixed(2)}`;
+  }
+
+  // Periodic Console logging (Milestone 3):
+  logTimer += delta;
+  if (logTimer > 2.0) {
+    console.log("[Milestone 3] Child local position:", child.position);
+    console.log("[Milestone 3] Child world position:", childWorldPos);
+    logTimer = 0;
+  }
+
   if (state.solar) {
     solarSystem.rotation.y += delta * state.orbitSpeed;
     earth.rotation.y += delta;
