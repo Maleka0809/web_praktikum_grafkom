@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pertemuan 07 - Animasi Kompleks & Hierarchical Scene 3D</title>
+  
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.186.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.186.1/examples/jsm/"
+      }
+    }
+  </script>
+
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="page-header">
+      <div>
+        <div class="eyebrow">PERTEMUAN 07</div>
+        <h1>Animasi Kompleks & Hierarchical Scene 3D</h1>
+        <p>Eksplorasi Three.js Scene Graph bertingkat, PBR Gallery, Bloom Post-processing, HDR Environment, dan Interaksi Objek.</p>
+        <a href="../halaman_awal/halaman_praktikum.html" class="back-link">← Kembali ke Halaman Praktikum</a>
+      </div>
+      <div id="statusBadge" class="status-badge">MEMUAT SCENE...</div>
+    </header>
+
+    <main class="workspace">
+      <!-- PANEL KANVAS 3D & HUD -->
+      <section class="canvas-panel">
+        <div id="sceneContainer" class="scene-container"></div>
+
+        <div class="hud-grid">
+          <div class="hud-card">PANORAMA<b id="panoramaStatus">Memuat...</b></div>
+          <div class="hud-card">OBJEK<b id="objectInfo">0</b></div>
+          <div class="hud-card">REFLEKSI<b id="environmentInfo">ON</b></div>
+          <div class="hud-card">MODEL GLB<b id="modelInfo">-</b></div>
+          <div class="hud-card">HOVER<b id="hoverInfo">-</b></div>
+          <div class="hud-card">FPS<b id="fpsInfo">60</b></div>
+        </div>
+
+        <div id="logPanel" class="log-panel">Scene siap. Klik objek untuk berinteraksi.</div>
+
+        <div class="keyboard-help">
+          <div><b>P</b> toggle panorama | <b>E</b> toggle refleksi | <b>S</b> toggle solar animation</div>
+          <div><b>R</b> reset scene | <b>1, 2, 3</b> switch animation clips</div>
+          <div><b>Hover</b> sorot objek (emissive) | <b>Klik kiri</b> pilih objek & putar</div>
+        </div>
+
+        <div class="info-panel">
+          <div>
+            <span class="eyebrow">INSPEKTOR OBJEK</span>
+            <h2 id="infoTitle">Belum ada objek dipilih</h2>
+            <p style="font-size: 11px; color: #8ca7c1; margin-top: 4px;">Pilihan aktif: <b id="selectedInfo" style="color: #4df3ff;">-</b></p>
+          </div>
+          <div class="info-grid">
+            <span>Posisi:</span><b id="infoPosition">-</b>
+            <span>Rotasi:</span><b id="infoRotation">-</b>
+            <span>Skala:</span><b id="infoScale">-</b>
+            <span>Material:</span><b id="infoMaterial">-</b>
+          </div>
+        </div>
+      </section>
+
+      <!-- PANEL KONTROL INTERAKTIF -->
+      <aside class="control-panel">
+        <label class="select-row">
+          Panorama Environment
+          <select id="panoramaSelect">
+            <option value="studio" selected>Studio Small 09 - HDR 1K</option>
+            <option value="ladybrand">Ladybrand Heritage House - HDR 1K</option>
+            <option value="procedural">Panorama procedural</option>
+          </select>
+        </label>
+
+        <label class="select-row">
+          Kamera Proyeksi
+          <select id="cameraSelect">
+            <option value="perspective" selected>Perspective Camera</option>
+            <option value="orthographic">Orthographic Camera</option>
+          </select>
+        </label>
+
+        <div class="range-row">
+          <span>Camera FOV</span>
+          <output id="fovValue">52°</output>
+        </div>
+        <input type="range" id="fovControl" min="20" max="90" step="1" value="52" />
+
+        <div class="range-row">
+          <span>PBR Roughness (Gallery)</span>
+          <output id="roughnessValue">0.35</output>
+        </div>
+        <input type="range" id="roughnessControl" min="0" max="1" step="0.01" value="0.35" />
+
+        <div class="range-row">
+          <span>PBR Metalness (Gallery)</span>
+          <output id="metalnessValue">0.65</output>
+        </div>
+        <input type="range" id="metalnessControl" min="0" max="1" step="0.01" value="0.65" />
+
+        <div class="range-row">
+          <span>Solar Orbit Speed</span>
+          <output id="orbitValue">0.45</output>
+        </div>
+        <input type="range" id="orbitControl" min="0" max="2" step="0.05" value="0.45" />
+
+        <div class="range-row">
+          <span>Emissive Intensity</span>
+          <output id="emissiveIntensityValue">5.00</output>
+        </div>
+        <input type="range" id="emissiveIntensityControl" min="0" max="15" step="0.5" value="5" />
+
+        <div class="range-row">
+          <span>Bloom Intensity</span>
+          <output id="bloomIntensityValue">0.55</output>
+        </div>
+        <input type="range" id="bloomIntensityControl" min="0" max="2" step="0.05" value="0.55" />
+
+        <div class="range-row">
+          <span>Bloom Radius</span>
+          <output id="bloomRadiusValue">0.30</output>
+        </div>
+        <input type="range" id="bloomRadiusControl" min="0" max="1" step="0.05" value="0.30" />
+
+        <fieldset class="orbit-settings">
+          <legend>Orbit Controls</legend>
+          <label><input type="checkbox" data-orbit-setting="enabled" checked /> Enabled</label>
+          <label><input type="checkbox" data-orbit-setting="enablePan" checked /> Enable Pan</label>
+          <label><input type="checkbox" data-orbit-setting="enableDamping" checked /> Enable Damping</label>
+
+          <div class="range-row">
+            <span>Damping Factor</span>
+            <output id="cameraDampingFactorValue">0.05</output>
+          </div>
+          <input type="range" id="cameraDampingFactor" data-orbit-setting="dampingFactor" min="0.01" max="0.2" step="0.01" value="0.05" />
+
+          <div class="range-row">
+            <span>Rotate Speed</span>
+            <output id="cameraRotateSpeedValue">1.00</output>
+          </div>
+          <input type="range" id="cameraRotateSpeed" data-orbit-setting="rotateSpeed" min="0.1" max="3" step="0.1" value="1" />
+
+          <div class="range-row">
+            <span>Zoom Speed</span>
+            <output id="cameraZoomSpeedValue">1.00</output>
+          </div>
+          <input type="range" id="cameraZoomSpeed" data-orbit-setting="zoomSpeed" min="0.1" max="3" step="0.1" value="1" />
+        </fieldset>
+
+        <div class="button-grid">
+          <button id="panoramaButton" aria-pressed="true">Panorama: ON (P)</button>
+          <button id="environmentButton" aria-pressed="true">Refleksi: ON (E)</button>
+          <button id="bloomButton" aria-pressed="true">Bloom: ON</button>
+          <button id="solarButton">Solar Orbit</button>
+          <button id="clip1Button">Clip 1</button>
+          <button id="clip2Button">Clip 2</button>
+          <button id="clip3Button">Clip 3</button>
+          <button id="resetButton">Reset (R)</button>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
