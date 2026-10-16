@@ -110,6 +110,7 @@ scene.environmentIntensity = 0.3;
 applyEnvironment();
 pmrem.compileEquirectangularShader();
 const panoramaOptions = {
+  moonless: { label: "Moonless Golf Night (Three.js HDR 1K)", url: new URL("./assets/moonless_golf_1k.hdr", import.meta.url).href },
   nebula: { label: "Cosmic Nebula & Stars (Space)" },
   studio: { label: "Studio Small 09 - HDR 1K", url: new URL("./assets/studio_small_09_1k.hdr", import.meta.url).href },
   ladybrand: { label: "Ladybrand Heritage House - HDR 1K", url: new URL("./assets/ladybrand_heritage_house_1k.hdr", import.meta.url).href },
@@ -161,7 +162,7 @@ async function selectPanorama(key) {
   }
 }
 $("#panoramaSelect").addEventListener("change", (event) => selectPanorama(event.target.value));
-selectPanorama("nebula");
+selectPanorama("moonless");
 
 scene.add(new THREE.HemisphereLight("#38bdf8", "#3b0764", 0.85));
 const keyLight = new THREE.DirectionalLight("#ffffff", 1.8);
@@ -831,7 +832,7 @@ function resetScene() {
   state.bloom = true;
   Object.assign(bloomSettings, bloomDefaults);
   applyBloomSettings();
-  selectPanorama("nebula");
+  selectPanorama("moonless");
   applyEnvironment();
   applyBloom();
   $("#hoverInfo").textContent = "-";
