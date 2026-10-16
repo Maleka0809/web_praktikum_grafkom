@@ -1,1379 +1,171 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Praktikum 07 — Animasi Kompleks & Hierarchical Scene 3D | Grafika Komputer A</title>
-  
-  <!-- Import Three.js & Addons via unpkg -->
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Three.js Interactive 3D Application - Praktikum 7</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+        }
       }
-    }
-  </script>
-
-  <style>
-    :root {
-      --bg-dark: #0a0e17;
-      --panel-bg: rgba(15, 23, 42, 0.78);
-      --panel-border: rgba(56, 189, 248, 0.22);
-      --panel-glow: rgba(56, 189, 248, 0.12);
-      --accent-cyan: #38bdf8;
-      --accent-neon: #4df3ff;
-      --accent-purple: #a855f7;
-      --accent-pink: #ec4899;
-      --accent-emerald: #10b981;
-      --text-main: #f1f5f9;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      --font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background-color: var(--bg-dark);
-      color: var(--text-main);
-      font-family: var(--font-family);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow-x: hidden;
-      background-image: 
-        radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.08) 0%, transparent 45%);
-    }
-
-    /* Ambient animated orbs */
-    .ambient-glow-1 {
-      position: fixed;
-      top: -150px;
-      left: -150px;
-      width: 450px;
-      height: 450px;
-      background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .ambient-glow-2 {
-      position: fixed;
-      bottom: -150px;
-      right: -150px;
-      width: 450px;
-      height: 450px;
-      background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* Header Nav */
-    header.app-header {
-      position: relative;
-      z-index: 20;
-      background: rgba(10, 14, 23, 0.85);
-      backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 14px 28px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .badge-tag {
-      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(168, 85, 247, 0.2));
-      border: 1px solid var(--accent-cyan);
-      color: var(--accent-neon);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      text-transform: uppercase;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .header-title h1 {
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-      background: linear-gradient(120deg, #ffffff 40%, var(--accent-neon) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .header-title p {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .header-nav-links {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .nav-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 14px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-main);
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 8px;
-      text-decoration: none;
-      transition: all 0.2s ease;
-    }
-
-    .nav-btn:hover {
-      background: rgba(56, 189, 248, 0.15);
-      border-color: var(--accent-cyan);
-      color: var(--accent-neon);
-      transform: translateY(-1px);
-    }
-
-    /* Main Container */
-    main.main-workspace {
-      position: relative;
-      z-index: 10;
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 20px;
-      padding: 20px 28px;
-      flex: 1;
-      min-height: 720px;
-    }
-
-    @media (max-width: 1024px) {
-      main.main-workspace {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* Viewport Panel */
-    .viewport-panel {
-      position: relative;
-      background: #05070d;
-      border: 1px solid var(--panel-border);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 0 40px rgba(56, 189, 248, 0.04);
-      display: flex;
-      flex-direction: column;
-      min-height: 580px;
-    }
-
-    #webgl-canvas-container {
-      width: 100%;
-      height: 100%;
-      flex: 1;
-      cursor: grab;
-      position: relative;
-    }
-
-    #webgl-canvas-container:active {
-      cursor: grabbing;
-    }
-
-    /* HUD Bar (Top of 3D Canvas) */
-    .viewport-hud-top {
-      position: absolute;
-      top: 14px;
-      left: 14px;
-      right: 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      pointer-events: none;
-      z-index: 5;
-    }
-
-    .hud-stat-group {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .hud-badge {
-      pointer-events: auto;
-      background: rgba(15, 23, 42, 0.75);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      backdrop-filter: blur(12px);
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 11px;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .hud-badge b {
-      color: var(--accent-neon);
-      font-weight: 700;
-    }
-
-    /* Inspector Card on Canvas */
-    .hud-inspector {
-      position: absolute;
-      bottom: 14px;
-      left: 14px;
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(168, 85, 247, 0.35);
-      backdrop-filter: blur(12px);
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-size: 11px;
-      max-width: 320px;
-      pointer-events: none;
-      z-index: 5;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    }
-
-    .hud-inspector .ins-title {
-      color: var(--accent-pink);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .hud-inspector .ins-desc {
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
-
-    /* Controls Overlay Help */
-    .viewport-help-overlay {
-      position: absolute;
-      bottom: 14px;
-      right: 14px;
-      background: rgba(15, 23, 42, 0.7);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 10px;
-      color: var(--text-dim);
-      pointer-events: none;
-      z-index: 5;
-      line-height: 1.5;
-    }
-
-    .viewport-help-overlay kbd {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-      padding: 1px 4px;
-      color: var(--accent-neon);
-      font-family: monospace;
-    }
-
-    /* Right Sidebar Controls */
-    .control-sidebar {
-      background: var(--panel-bg);
-      border: 1px solid var(--panel-border);
-      backdrop-filter: blur(20px);
-      border-radius: 16px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      overflow-y: auto;
-      max-height: calc(100vh - 120px);
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-    }
-
-    .control-sidebar::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .control-sidebar::-webkit-scrollbar-thumb {
-      background: rgba(56, 189, 248, 0.25);
-      border-radius: 999px;
-    }
-
-    .sidebar-section-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--accent-cyan);
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      margin-top: 4px;
-    }
-
-    .control-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .btn-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .btn-control {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: var(--text-main);
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: all 0.2s ease;
-    }
-
-    .btn-control:hover {
-      background: rgba(56, 189, 248, 0.2);
-      border-color: var(--accent-cyan);
-      color: var(--accent-neon);
-      transform: translateY(-1px);
-    }
-
-    .btn-control.active {
-      background: linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(168, 85, 247, 0.3));
-      border-color: var(--accent-cyan);
-      color: #ffffff;
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
-    }
-
-    .range-box {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .range-box-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    .range-box-header output {
-      color: var(--accent-cyan);
-      font-weight: 600;
-    }
-
-    input[type="range"] {
-      -webkit-appearance: none;
-      width: 100%;
-      height: 5px;
-      background: rgba(255, 255, 255, 0.12);
-      border-radius: 4px;
-      outline: none;
-      cursor: pointer;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: var(--accent-cyan);
-      box-shadow: 0 0 8px var(--accent-cyan);
-      cursor: pointer;
-      transition: transform 0.1s ease;
-    }
-
-    input[type="range"]::-webkit-slider-thumb:hover {
-      transform: scale(1.2);
-    }
-
-    .select-box {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .select-box label {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    select.input-select {
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: var(--text-main);
-      padding: 7px 10px;
-      border-radius: 8px;
-      font-size: 11px;
-      outline: none;
-      cursor: pointer;
-    }
-
-    select.input-select:focus {
-      border-color: var(--accent-cyan);
-    }
-
-    .switch-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 11px;
-      color: var(--text-muted);
-      cursor: pointer;
-    }
-
-    .switch-label input[type="checkbox"] {
-      accent-color: var(--accent-cyan);
-      width: 14px;
-      height: 14px;
-      cursor: pointer;
-    }
-
-    /* Explanation & Theory Section */
-    section.theory-section {
-      position: relative;
-      z-index: 10;
-      padding: 0 28px 40px 28px;
-    }
-
-    .theory-card {
-      background: var(--panel-bg);
-      border: 1px solid var(--panel-border);
-      backdrop-filter: blur(20px);
-      border-radius: 16px;
-      padding: 28px;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-    }
-
-    .theory-card h2 {
-      font-size: 18px;
-      color: #ffffff;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .theory-card p.lead {
-      color: var(--text-muted);
-      font-size: 13px;
-      line-height: 1.6;
-      margin-bottom: 24px;
-    }
-
-    .concept-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
-      margin-top: 16px;
-    }
-
-    .concept-item {
-      background: rgba(10, 14, 23, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      padding: 16px;
-      transition: border-color 0.2s ease;
-    }
-
-    .concept-item:hover {
-      border-color: rgba(56, 189, 248, 0.4);
-    }
-
-    .concept-item h3 {
-      font-size: 13px;
-      color: var(--accent-neon);
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .concept-item p {
-      font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-
-    .concept-item code {
-      background: rgba(56, 189, 248, 0.12);
-      color: var(--accent-neon);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 11px;
-    }
-
-    /* Footer */
-    footer.app-footer {
-      position: relative;
-      z-index: 10;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(10, 14, 23, 0.9);
-      padding: 20px 28px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      font-size: 12px;
-      color: var(--text-dim);
-    }
-
-    footer.app-footer strong {
-      color: var(--text-muted);
-    }
-  </style>
-</head>
-<body>
-  <!-- Ambient Background Lighting -->
-  <div class="ambient-glow-1"></div>
-  <div class="ambient-glow-2"></div>
-
-  <!-- Header Navigation -->
-  <header class="app-header">
-    <div class="header-left">
-      <div class="badge-tag">
-        <span>✦</span> PRAKTIKUM 07
-      </div>
-      <div class="header-title">
-        <h1>Animasi Kompleks &amp; Hierarchical Scene 3D</h1>
-        <p>Grafika Komputer A • Three.js Dynamic Scene Graph, Orbit Hierarchy &amp; Interactive Shading</p>
-      </div>
-    </div>
-    <div class="header-nav-links">
-      <a href="../halaman_awal/halaman_praktikum.html" class="nav-btn">
-        <span>←</span> Daftar Praktikum
-      </a>
-      <a href="../praktikum_6/index.html" class="nav-btn">
-        <span>⚡</span> Praktikum 06
-      </a>
-      <a href="../index.html" class="nav-btn">
-        <span>🏠</span> Home
-      </a>
-    </div>
-  </header>
-
-  <!-- Main 3D Canvas Workspace -->
-  <main class="main-workspace">
-    <!-- Viewport Panel -->
-    <div class="viewport-panel">
-      <!-- 3D Canvas Mount Point -->
-      <div id="webgl-canvas-container"></div>
-
-      <!-- HUD Top Bar -->
-      <div class="viewport-hud-top">
-        <div class="hud-stat-group">
-          <div class="hud-badge">FPS: <b id="stat-fps">60</b></div>
-          <div class="hud-badge">Objects: <b id="stat-objects">24</b></div>
-          <div class="hud-badge">Triangles: <b id="stat-triangles">0</b></div>
-          <div class="hud-badge">Camera: <b id="stat-camera">Perspective</b></div>
-          <div class="hud-badge">Status: <b id="stat-anim-state" style="color: #10b981;">Running</b></div>
-        </div>
-      </div>
-
-      <!-- Live Inspector for Clicked/Hovered Mesh -->
-      <div class="hud-inspector" id="hud-inspector">
-        <div class="ins-title">
-          <span>🔍</span> <span id="insp-name">Cyber-Core Sun</span>
-        </div>
-        <div class="ins-desc" id="insp-desc">
-          Klik objek mana pun di viewport untuk menginspeksi posisi lokal, hierarki node, dan material.
-        </div>
-      </div>
-
-      <!-- Hotkeys Legend -->
-      <div class="viewport-help-overlay">
-        <div><kbd>Drag</kbd> Orbit Kamera | <kbd>Scroll</kbd> Zoom | <kbd>Right-Drag</kbd> Pan</div>
-        <div><kbd>Space</kbd> Pause/Play | <kbd>C</kbd> Ganti Kamera | <kbd>R</kbd> Reset Posisi</div>
-      </div>
-    </div>
-
-    <!-- Right Controls Sidebar -->
-    <aside class="control-sidebar">
-      <div class="sidebar-section-title">
-        <span>🎮</span> Kontrol Animasi &amp; Waktu
-      </div>
-      <div class="btn-grid">
-        <button class="btn-control active" id="btn-toggle-anim">⏸️ Pause</button>
-        <button class="btn-control" id="btn-reset-view">🔄 Reset Scene</button>
-      </div>
-
-      <div class="range-box">
-        <div class="range-box-header">
-          <span>Kecepatan Animasi Orbit</span>
-          <output id="out-speed">1.0x</output>
-        </div>
-        <input type="range" id="slider-speed" min="0" max="3" step="0.1" value="1.0">
-      </div>
-
-      <label class="switch-label">
-        <input type="checkbox" id="chk-reverse">
-        <span>Putar Balik Arah Orbit (Reverse)</span>
-      </label>
-
-      <div class="sidebar-section-title">
-        <span>📷</span> Kamera Virtual
-      </div>
-      <div class="select-box">
-        <label>Mode Proyeksi Kamera</label>
-        <select class="input-select" id="sel-camera-mode">
-          <option value="perspective" selected>Perspective (FOV Luas)</option>
-          <option value="orthographic">Orthographic (Aksonometrik)</option>
-        </select>
-      </div>
-
-      <div class="btn-grid">
-        <button class="btn-control" id="btn-cam-iso">Isometric</button>
-        <button class="btn-control" id="btn-cam-top">Top-Down</button>
-      </div>
-
-      <div class="sidebar-section-title">
-        <span>🎨</span> Material &amp; Rendering
-      </div>
-      <div class="select-box">
-        <label>Mode Shader / Tampilan Objek</label>
-        <select class="input-select" id="sel-shader-mode">
-          <option value="pbr" selected>PBR Standard (Metallic + Roughness)</option>
-          <option value="phong">Blinn-Phong (Specular Highlighting)</option>
-          <option value="normal">Normal Vector Map (Visual Vektor Normal)</option>
-          <option value="wireframe">Wireframe Matrix (Rangka Kawat)</option>
-        </select>
-      </div>
-
-      <label class="switch-label">
-        <input type="checkbox" id="chk-shadows" checked>
-        <span>Aktifkan Real-Time Shadow Map</span>
-      </label>
-
-      <label class="switch-label">
-        <input type="checkbox" id="chk-grid" checked>
-        <span>Tampilkan Grid &amp; Polar Plane</span>
-      </label>
-
-      <div class="sidebar-section-title">
-        <span>💡</span> Pencahayaan &amp; Efek Partikel
-      </div>
-      <div class="range-box">
-        <div class="range-box-header">
-          <span>Intensitas Sun PointLight</span>
-          <output id="out-sun-light">2.5</output>
-        </div>
-        <input type="range" id="slider-sun-light" min="0.5" max="5.0" step="0.1" value="2.5">
-      </div>
-
-      <div class="range-box">
-        <div class="range-box-header">
-          <span>Kecepatan Drift Partikel Kosmik</span>
-          <output id="out-particle-speed">1.0x</output>
-        </div>
-        <input type="range" id="slider-particle-speed" min="0" max="4" step="0.2" value="1.0">
-      </div>
-
-      <label class="switch-label">
-        <input type="checkbox" id="chk-light-orbit" checked>
-        <span>Orbitkan Sumber Cahaya Directional</span>
-      </label>
-    </aside>
-  </main>
-
-  <!-- Explanation & Theory Section -->
-  <section class="theory-section">
-    <div class="theory-card">
-      <h2><span>✦</span> Bedah Arsitektur &amp; Konsep Grafika Komputer</h2>
-      <p class="lead">
-        Praktikum 07 memperdalam konsep <strong>Hierarchical Modeling</strong> (Scene Graph), sistem orbit bertingkat (parent-child transform propagation), interaksi raycasting 3D berbasis frustum kamera, serta integrasi pencahayaan dinamis multi-sumber di WebGL melalui Three.js.
-      </p>
-
-      <div class="concept-grid">
-        <div class="concept-item">
-          <h3>🪐 1. Hierarchical Scene Graph</h3>
+    </script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="page-header">
+        <div>
+          <span class="eyebrow">PRAKTIKUM 07 · INTERACTIVE 3D</span>
+          <h1>Interactive Web 3D Prototype</h1>
           <p>
-            Objek disusun dalam relasi induk-anak (<code>parent.add(child)</code>). Saat induk berotasi, seluruh orbit anak (planet dan satelit/bulan) otomatis mewarisi transformasi matriks global tanpa perlu menghitung trigonometri manual untuk tiap anak.
+            Scene graph, PBR, GLB, animation, raycasting, selection, dan
+            environment.
           </p>
         </div>
-
-        <div class="concept-item">
-          <h3>📐 2. Local vs World Coordinate Space</h3>
-          <p>
-            Tiap satelit memiliki translasi lokal terhadap planet induknya. Three.js mengalikan <code>matrixWorld = parent.matrixWorld × child.matrix</code> pada setiap bingkai rendering (Frame render loop).
-          </p>
-        </div>
-
-        <div class="concept-item">
-          <h3>🎯 3. Raycasting &amp; Interaktivitas 3D</h3>
-          <p>
-            Koordinat layar 2D dinormalisasi ke NDC (Normalized Device Coordinates $[-1, 1]$). Garis proyeksi (ray) ditembakkan menembus frustum kamera untuk mendeteksi intersection dengan bounding box dan poligon mesh.
-          </p>
-        </div>
-
-        <div class="concept-item">
-          <h3>✨ 4. Particle System &amp; Shading</h3>
-          <p>
-            Ribuan titik partikel digambar dalam satu draw call menggunakan <code>THREE.Points</code> dan <code>BufferGeometry</code>. Mengurangi beban draw-call GPU secara signifikan dibanding merender mesh terpisah.
-          </p>
-        </div>
+        <span id="statusBadge" class="status-badge">LOADING SCENE</span>
+      </header>
+      <div class="workspace">
+        <section class="canvas-panel">
+          <div id="sceneContainer" class="scene-container"></div>
+          <div class="hud-grid">
+            <div class="hud-card">
+              <span>Hover</span><b id="hoverInfo">-</b>
+            </div>
+            <div class="hud-card">
+              <span>Selected</span><b id="selectedInfo">-</b>
+            </div>
+            <div class="hud-card">
+              <span>Environment</span><b id="environmentInfo">ON</b>
+            </div>
+            <div class="hud-card">
+              <span>GLB</span><b id="modelInfo">Loading...</b>
+            </div>
+            <div class="hud-card">
+              <span>Objects</span><b id="objectInfo">0</b>
+            </div>
+            <div class="hud-card"><span>FPS</span><b id="fpsInfo">0</b></div>
+          </div>
+          <section id="infoPanel" class="info-panel">
+            <div>
+              <span class="eyebrow">SELECTION INFORMATION</span>
+              <h2 id="infoTitle">Belum ada objek dipilih</h2>
+            </div>
+            <div class="info-grid">
+              <span>Position</span><b id="infoPosition">-</b
+              ><span>Rotation</span><b id="infoRotation">-</b><span>Scale</span
+              ><b id="infoScale">-</b><span>Material</span
+              ><b id="infoMaterial">-</b>
+            </div>
+          </section>
+        </section>
+        <aside class="control-panel">
+          <span class="eyebrow">PARAMETER CONTROL</span>
+          <label class="select-row"
+            >Active camera<select id="cameraSelect">
+              <option value="perspective">Perspective</option>
+              <option value="orthographic">Orthographic</option>
+            </select></label
+          >
+          <label class="range-row"
+            ><span>Camera FOV</span><output id="fovValue">52°</output></label
+          ><input id="fovControl" type="range" min="25" max="100" value="52" />
+          <label class="range-row"
+            ><span>Roughness</span
+            ><output id="roughnessValue">0.35</output></label
+          ><input
+            id="roughnessControl"
+            type="range"
+            min="0.05"
+            max="1"
+            step="0.05"
+            value="0.35"
+          />
+          <label class="range-row"
+            ><span>Metalness</span
+            ><output id="metalnessValue">0.65</output></label
+          ><input
+            id="metalnessControl"
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value="0.65"
+          />
+          <label class="range-row"
+            ><span>Orbit speed</span
+            ><output id="orbitValue">0.45</output></label
+          ><input
+            id="orbitControl"
+            type="range"
+            min="0"
+            max="1.5"
+            step="0.05"
+            value="0.45"
+          />
+          <fieldset class="orbit-settings">
+            <legend>OrbitControls · Camera</legend>
+            <label><input type="checkbox" data-orbit-setting="enabled" checked /> Aktifkan kontrol kamera</label>
+            <label><input type="checkbox" data-orbit-setting="enablePan" checked /> Izinkan pan</label>
+            <label><input type="checkbox" data-orbit-setting="enableDamping" checked /> Damping</label>
+            <label class="range-row" for="cameraDampingFactor"><span>Damping factor</span><output id="cameraDampingFactorValue">0.05</output></label>
+            <input id="cameraDampingFactor" data-orbit-setting="dampingFactor" type="range" min="0.01" max="0.25" step="0.01" value="0.05" />
+            <label class="range-row" for="cameraRotateSpeed"><span>Camera rotate speed</span><output id="cameraRotateSpeedValue">1.00</output></label>
+            <input id="cameraRotateSpeed" data-orbit-setting="rotateSpeed" type="range" min="0.1" max="3" step="0.1" value="1" />
+            <label class="range-row" for="cameraZoomSpeed"><span>Camera zoom speed</span><output id="cameraZoomSpeedValue">1.00</output></label>
+            <input id="cameraZoomSpeed" data-orbit-setting="zoomSpeed" type="range" min="0.1" max="3" step="0.1" value="1" />
+          </fieldset>
+          <label class="select-row" for="panoramaSelect">Skybox / panorama
+            <select id="panoramaSelect">
+              <option value="studio" selected>Studio Small 09 (HDR)</option>
+              <option value="ladybrand">Ladybrand Heritage House (HDR)</option>
+              <option value="procedural">Procedural</option>
+            </select>
+          </label>
+          <fieldset class="orbit-settings">
+            <legend>Sphere emissive &amp; bloom</legend>
+            <label class="range-row" for="emissiveIntensityControl"><span>Emissive intensity</span><output id="emissiveIntensityValue">5.00</output></label>
+            <input id="emissiveIntensityControl" type="range" min="0" max="20" step="0.1" value="5" />
+            <label class="range-row" for="bloomIntensityControl"><span>Bloom intensity</span><output id="bloomIntensityValue">0.55</output></label>
+            <input id="bloomIntensityControl" type="range" min="0" max="3" step="0.05" value="0.55" />
+            <label class="range-row" for="bloomRadiusControl"><span>Bloom radius</span><output id="bloomRadiusValue">0.30</output></label>
+            <input id="bloomRadiusControl" type="range" min="0" max="1" step="0.01" value="0.3" />
+            <small>Emisi: sphere kuning dan Sun. Bloom: kekuatan dan sebaran halo pada area terang.</small>
+          </fieldset>
+          <div class="button-grid">
+            <button id="panoramaButton" aria-pressed="true">Panorama: ON (P)</button>
+            <button id="bloomButton" aria-pressed="true">Bloom: ON</button>
+            <button id="environmentButton" aria-pressed="true">Refleksi: ON (E)</button
+            ><button id="resetButton">Reset (R)</button>
+            <button id="clip1Button">Clip 1</button
+            ><button id="clip2Button">Clip 2</button>
+            <button id="clip3Button">Clip 3</button
+            ><button id="solarButton">Solar (S)</button>
+          </div>
+          <div class="keyboard-help">
+            <b>Panorama equirectangular HDR</b>
+            <span id="panoramaStatus" role="status">Memuat HDR lokal...</span>
+            <span>P: latar 360 derajat - E: refleksi material</span>
+            <span>Kubus kaca - sphere silver - sphere kuning emissive</span>
+          </div>
+          <div class="keyboard-help">
+            <b>Interaksi</b>
+            <span>Drag kiri: orbit · scroll: zoom</span>
+            <span>Drag kanan: pan · drag tidak memilih objek</span>
+            <span>Hover: emissive + scale 1.06</span
+            ><span>Click: pilih objek + panel informasi</span
+            ><span>1 / 2 / 3: ganti animation clip</span
+            ><span>E: environment · S: solar system</span
+            ><span>R: reset scene dan kamera</span>
+          </div>
+          <div id="logPanel" class="log-panel">
+            Raycaster siap. Arahkan pointer ke objek.
+          </div>
+        </aside>
       </div>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="app-footer">
-    <div>
-      <strong>Praktikum Grafika Komputer A</strong> — Kelompok 01 &amp; 02
-    </div>
-    <div>
-      Maleka Ghaniya (5025241189) &amp; Jahhaza Assiqooyah Nurul Hidayah (5025241019)
-    </div>
-  </footer>
-
-  <!-- Three.js Interactive Logic -->
-  <script type="module">
-    import * as THREE from 'three';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-    // State Variables
-    let isPlaying = true;
-    let animSpeed = 1.0;
-    let particleSpeed = 1.0;
-    let reverseOrbit = false;
-    let orbitLightEnabled = true;
-    let currentCameraMode = 'perspective';
-    let currentShaderMode = 'pbr';
-
-    // Performance Stats
-    let frameCount = 0;
-    let lastTime = performance.now();
-    let fps = 60;
-
-    // DOM Elements
-    const container = document.getElementById('webgl-canvas-container');
-    const statFps = document.getElementById('stat-fps');
-    const statObjects = document.getElementById('stat-objects');
-    const statTriangles = document.getElementById('stat-triangles');
-    const statCamera = document.getElementById('stat-camera');
-    const statAnimState = document.getElementById('stat-anim-state');
-    const inspName = document.getElementById('insp-name');
-    const inspDesc = document.getElementById('insp-desc');
-
-    // Controls
-    const btnToggleAnim = document.getElementById('btn-toggle-anim');
-    const btnResetView = document.getElementById('btn-reset-view');
-    const sliderSpeed = document.getElementById('slider-speed');
-    const outSpeed = document.getElementById('out-speed');
-    const chkReverse = document.getElementById('chk-reverse');
-    const selCameraMode = document.getElementById('sel-camera-mode');
-    const btnCamIso = document.getElementById('btn-cam-iso');
-    const btnCamTop = document.getElementById('btn-cam-top');
-    const selShaderMode = document.getElementById('sel-shader-mode');
-    const chkShadows = document.getElementById('chk-shadows');
-    const chkGrid = document.getElementById('chk-grid');
-    const sliderSunLight = document.getElementById('slider-sun-light');
-    const outSunLight = document.getElementById('out-sun-light');
-    const sliderParticleSpeed = document.getElementById('slider-particle-speed');
-    const outParticleSpeed = document.getElementById('out-particle-speed');
-    const chkLightOrbit = document.getElementById('chk-light-orbit');
-
-    // 1. Scene Setup
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x06080f);
-    scene.fog = new THREE.FogExp2(0x06080f, 0.015);
-
-    // 2. Camera Setup
-    const aspect = container.clientWidth / container.clientHeight;
-    const perspectiveCamera = new THREE.PerspectiveCamera(55, aspect, 0.1, 1000);
-    perspectiveCamera.position.set(0, 22, 38);
-
-    const frustumSize = 40;
-    const orthographicCamera = new THREE.OrthographicCamera(
-      (frustumSize * aspect) / -2,
-      (frustumSize * aspect) / 2,
-      frustumSize / 2,
-      frustumSize / -2,
-      0.1,
-      1000
-    );
-    orthographicCamera.position.set(0, 26, 36);
-
-    let activeCamera = perspectiveCamera;
-
-    // 3. WebGL Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.1;
-    container.appendChild(renderer.domElement);
-
-    // OrbitControls
-    let controls = new OrbitControls(activeCamera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.maxDistance = 120;
-    controls.minDistance = 6;
-    controls.maxPolarAngle = Math.PI / 2 + 0.05;
-
-    // Helper to switch camera
-    function setCamera(mode) {
-      currentCameraMode = mode;
-      const prevPos = activeCamera.position.clone();
-      const prevTarget = controls.target.clone();
-
-      if (mode === 'perspective') {
-        activeCamera = perspectiveCamera;
-        statCamera.textContent = 'Perspective';
-      } else {
-        activeCamera = orthographicCamera;
-        statCamera.textContent = 'Orthographic';
-      }
-
-      activeCamera.position.copy(prevPos);
-      controls.dispose();
-      controls = new OrbitControls(activeCamera, renderer.domElement);
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.05;
-      controls.target.copy(prevTarget);
-      selCameraMode.value = mode;
-    }
-
-    // 4. Lighting System
-    const ambientLight = new THREE.AmbientLight(0x1e293b, 1.2);
-    scene.add(ambientLight);
-
-    // Central Sun PointLight
-    const sunLight = new THREE.PointLight(0x38bdf8, 2.5, 90, 1.2);
-    sunLight.position.set(0, 0, 0);
-    sunLight.castShadow = true;
-    sunLight.shadow.bias = -0.002;
-    sunLight.shadow.mapSize.width = 1024;
-    sunLight.shadow.mapSize.height = 1024;
-    scene.add(sunLight);
-
-    // Orbiting Directional Light
-    const dirLight = new THREE.DirectionalLight(0xa855f7, 2.0);
-    dirLight.position.set(15, 20, 15);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 1024;
-    dirLight.shadow.mapSize.height = 1024;
-    dirLight.shadow.camera.near = 0.5;
-    dirLight.shadow.camera.far = 80;
-    dirLight.shadow.camera.left = -25;
-    dirLight.shadow.camera.right = 25;
-    dirLight.shadow.camera.top = 25;
-    dirLight.shadow.camera.bottom = -25;
-    scene.add(dirLight);
-
-    // Light marker mesh
-    const lightMarker = new THREE.Mesh(
-      new THREE.SphereGeometry(0.4, 16, 16),
-      new THREE.MeshBasicMaterial({ color: 0xa855f7 })
-    );
-    dirLight.add(lightMarker);
-
-    // Soft Fill Light
-    const fillLight = new THREE.DirectionalLight(0x0284c7, 0.8);
-    fillLight.position.set(-20, -10, -20);
-    scene.add(fillLight);
-
-    // 5. Environmental Grid & Reflective Ground
-    const gridHelper = new THREE.GridHelper(60, 60, 0x38bdf8, 0x1e293b);
-    gridHelper.position.y = -8;
-    scene.add(gridHelper);
-
-    const groundGeo = new THREE.PlaneGeometry(80, 80);
-    const groundMat = new THREE.MeshStandardMaterial({
-      color: 0x050811,
-      roughness: 0.85,
-      metalness: 0.2
-    });
-    const groundMesh = new THREE.Mesh(groundGeo, groundMat);
-    groundMesh.rotation.x = -Math.PI / 2;
-    groundMesh.position.y = -8.05;
-    groundMesh.receiveShadow = true;
-    scene.add(groundMesh);
-
-    // 6. Particle Field (Cosmic Dust / Stars)
-    const particleCount = 1200;
-    const particleGeo = new THREE.BufferGeometry();
-    const particlePositions = new Float32Array(particleCount * 3);
-    const particleColors = new Float32Array(particleCount * 3);
-
-    for (let i = 0; i < particleCount * 3; i += 3) {
-      particlePositions[i] = (Math.random() - 0.5) * 120;
-      particlePositions[i + 1] = (Math.random() - 0.5) * 60;
-      particlePositions[i + 2] = (Math.random() - 0.5) * 120;
-
-      // Tint particles with cyan / purple
-      const t = Math.random();
-      particleColors[i] = 0.2 + t * 0.4;
-      particleColors[i + 1] = 0.6 + t * 0.4;
-      particleColors[i + 2] = 0.9;
-    }
-
-    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-    particleGeo.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
-
-    const particleMat = new THREE.PointsMaterial({
-      size: 0.22,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.8,
-      blending: THREE.AdditiveBlending
-    });
-    const particleField = new THREE.Points(particleGeo, particleMat);
-    scene.add(particleField);
-
-    // 7. Hierarchical 3D Scene Assembly
-    const interactiveObjects = [];
-    const materialsCache = new Map();
-
-    function registerObject(mesh, name, desc) {
-      mesh.userData = { name, desc, origMat: mesh.material };
-      interactiveObjects.push(mesh);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-    }
-
-    // A. Central Star / Cyber-Core
-    const coreGroup = new THREE.Group();
-    scene.add(coreGroup);
-
-    const sunGeo = new THREE.IcosahedronGeometry(3.2, 3);
-    const sunMat = new THREE.MeshStandardMaterial({
-      color: 0x38bdf8,
-      emissive: 0x0284c7,
-      emissiveIntensity: 0.9,
-      roughness: 0.2,
-      metalness: 0.8,
-      wireframe: false
-    });
-    const sunMesh = new THREE.Mesh(sunGeo, sunMat);
-    coreGroup.add(sunMesh);
-    registerObject(sunMesh, "Cyber-Core Central Sun", "Pusat hierarki sistem 3D. Memancarkan cahaya point light ke seluruh orbit anak di sekitarnya.");
-
-    // Outer Gyroscope Cage for Core
-    const cageGeo = new THREE.TorusGeometry(4.2, 0.08, 16, 100);
-    const cageMat = new THREE.MeshStandardMaterial({ color: 0x4df3ff, metalness: 0.9, roughness: 0.1 });
-    const cageRing1 = new THREE.Mesh(cageGeo, cageMat);
-    const cageRing2 = new THREE.Mesh(cageGeo, cageMat);
-    cageRing2.rotation.x = Math.PI / 2;
-    coreGroup.add(cageRing1);
-    coreGroup.add(cageRing2);
-
-    // B. Planetary Orbits (Hierarchical Nodes)
-    const planets = [];
-
-    // Orbit Ring Visualizer
-    function createOrbitTrack(radius, color = 0x1e293b) {
-      const trackGeo = new THREE.RingGeometry(radius - 0.04, radius + 0.04, 96);
-      const trackMat = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, transparent: true, opacity: 0.4 });
-      const track = new THREE.Mesh(trackGeo, trackMat);
-      track.rotation.x = Math.PI / 2;
-      scene.add(track);
-      return track;
-    }
-
-    // --- Planet 1: Terra-Tech (with 1 Moon) ---
-    const orbitPivot1 = new THREE.Group();
-    scene.add(orbitPivot1);
-    createOrbitTrack(9, 0x38bdf8);
-
-    const planet1Mesh = new THREE.Mesh(
-      new THREE.SphereGeometry(1.2, 32, 32),
-      new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.4, metalness: 0.6 })
-    );
-    planet1Mesh.position.x = 9;
-    orbitPivot1.add(planet1Mesh);
-    registerObject(planet1Mesh, "Planet Terra-Tech", "Node tingkat 1 berjarak 9 unit dari Sun. Memiliki satu satelit bulan buatan yang berotasi mengitarinya.");
-
-    // Terra Moon Pivot (Sub-Hierarchy)
-    const moonPivot1 = new THREE.Group();
-    planet1Mesh.add(moonPivot1); // Child of Planet!
-
-    const moon1Mesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.35, 16, 16),
-      new THREE.MeshStandardMaterial({ color: 0xa855f7, roughness: 0.3, metalness: 0.8 })
-    );
-    moon1Mesh.position.x = 2.4;
-    moonPivot1.add(moon1Mesh);
-    registerObject(moon1Mesh, "Terra Lunar Satellite", "Node tingkat 2 (Satelit). Menunjukkan propagasi transformasi matriks lokal terhadap planet induk.");
-
-    planets.push({ pivot: orbitPivot1, speed: 0.02, mesh: planet1Mesh, selfSpin: 0.03, moonPivot: moonPivot1, moonSpeed: 0.06 });
-
-    // --- Planet 2: Chronos Ring (with Planetary Ring + Dual Moons) ---
-    const orbitPivot2 = new THREE.Group();
-    orbitPivot2.rotation.z = THREE.MathUtils.degToRad(8); // Orbital inclination!
-    scene.add(orbitPivot2);
-    createOrbitTrack(16, 0xa855f7);
-
-    const planet2Mesh = new THREE.Mesh(
-      new THREE.SphereGeometry(1.8, 32, 32),
-      new THREE.MeshStandardMaterial({ color: 0x9333ea, roughness: 0.3, metalness: 0.7 })
-    );
-    planet2Mesh.position.x = 16;
-    orbitPivot2.add(planet2Mesh);
-    registerObject(planet2Mesh, "Planet Chronos (Ringed)", "Planet gas bercincin dengan orbit inklinasi 8°. Memiliki ring partisi dan dua satelit biner.");
-
-    // Chronos Ring
-    const ringGeo = new THREE.RingGeometry(2.3, 3.4, 64);
-    const ringMat = new THREE.MeshStandardMaterial({ color: 0xc084fc, side: THREE.DoubleSide, roughness: 0.5, metalness: 0.5 });
-    const pRing = new THREE.Mesh(ringGeo, ringMat);
-    pRing.rotation.x = Math.PI / 2.3;
-    planet2Mesh.add(pRing);
-
-    // Chronos Moons
-    const moonPivot2A = new THREE.Group();
-    planet2Mesh.add(moonPivot2A);
-    const moon2AMesh = new THREE.Mesh(
-      new THREE.DodecahedronGeometry(0.4),
-      new THREE.MeshStandardMaterial({ color: 0xec4899, roughness: 0.2, metalness: 0.9 })
-    );
-    moon2AMesh.position.x = 4.0;
-    moonPivot2A.add(moon2AMesh);
-    registerObject(moon2AMesh, "Chronos Moon Alpha", "Satelit bergeometri Dodecahedron di orbit terluar Planet Chronos.");
-
-    planets.push({ pivot: orbitPivot2, speed: 0.012, mesh: planet2Mesh, selfSpin: 0.02, moonPivot: moonPivot2A, moonSpeed: 0.04 });
-
-    // --- Planet 3: Helios Octa (Outer Kinetic Crystal) ---
-    const orbitPivot3 = new THREE.Group();
-    orbitPivot3.rotation.x = THREE.MathUtils.degToRad(-12);
-    scene.add(orbitPivot3);
-    createOrbitTrack(23, 0x10b981);
-
-    const planet3Mesh = new THREE.Mesh(
-      new THREE.OctahedronGeometry(1.5, 0),
-      new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.2, metalness: 0.9 })
-    );
-    planet3Mesh.position.x = 23;
-    orbitPivot3.add(planet3Mesh);
-    registerObject(planet3Mesh, "Helios Crystal Station", "Stasiun kristal oktahedron di lingkar orbit luar (23 unit). Memiliki rotasi ganda di dua sumbu.");
-
-    planets.push({ pivot: orbitPivot3, speed: 0.007, mesh: planet3Mesh, selfSpin: 0.04 });
-
-    // C. Kinetic Articulated Mechanical Arm (Local Coordinate Transformations)
-    const armBase = new THREE.Group();
-    armBase.position.set(-14, -8, 10);
-    scene.add(armBase);
-
-    const basePedestal = new THREE.Mesh(
-      new THREE.CylinderGeometry(2, 2.4, 1.2, 32),
-      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.3 })
-    );
-    basePedestal.position.y = 0.6;
-    armBase.add(basePedestal);
-    registerObject(basePedestal, "Kinetic Robot Base", "Basis struktur robot artikulatif dengan pergerakan sendi hierarki (Kinematics).");
-
-    const armJoint1 = new THREE.Group();
-    armJoint1.position.y = 1.2;
-    armBase.add(armJoint1);
-
-    const armSegment1 = new THREE.Mesh(
-      new THREE.BoxGeometry(0.8, 4, 0.8),
-      new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.7, roughness: 0.3 })
-    );
-    armSegment1.position.y = 2;
-    armJoint1.add(armSegment1);
-
-    const armJoint2 = new THREE.Group();
-    armJoint2.position.y = 4;
-    armJoint1.add(armJoint2);
-
-    const armSegment2 = new THREE.Mesh(
-      new THREE.BoxGeometry(0.6, 3.2, 0.6),
-      new THREE.MeshStandardMaterial({ color: 0xa855f7, metalness: 0.7, roughness: 0.3 })
-    );
-    armSegment2.position.y = 1.6;
-    armJoint2.add(armSegment2);
-
-    const armTip = new THREE.Mesh(
-      new THREE.SphereGeometry(0.6, 16, 16),
-      new THREE.MeshStandardMaterial({ color: 0x4df3ff, emissive: 0x0284c7, emissiveIntensity: 0.6 })
-    );
-    armTip.position.y = 3.2;
-    armJoint2.add(armTip);
-    registerObject(armTip, "Articulated End-Effector", "Ujung efektor robot 3D yang posisinya dipengaruhi oleh rotasi sendi 1 dan sendi 2 secara berantai.");
-
-    // 8. Raycaster & Interactive Selection
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-    let hoveredMesh = null;
-    let selectedMesh = null;
-
-    function applyShaderMode(mode) {
-      currentShaderMode = mode;
-      interactiveObjects.forEach(obj => {
-        if (!obj.userData.origMat) return;
-        const origColor = obj.userData.origMat.color || new THREE.Color(0x38bdf8);
-
-        if (mode === 'pbr') {
-          obj.material = obj.userData.origMat;
-          obj.material.wireframe = false;
-        } else if (mode === 'phong') {
-          obj.material = new THREE.MeshPhongMaterial({
-            color: origColor,
-            shininess: 90,
-            specular: 0xffffff
-          });
-        } else if (mode === 'normal') {
-          obj.material = new THREE.MeshNormalMaterial({ wireframe: false });
-        } else if (mode === 'wireframe') {
-          obj.material = new THREE.MeshStandardMaterial({
-            color: origColor,
-            wireframe: true
-          });
-        }
-      });
-    }
-
-    function onPointerMove(event) {
-      const rect = renderer.domElement.getBoundingClientRect();
-      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-      raycaster.setFromCamera(mouse, activeCamera);
-      const intersects = raycaster.intersectObjects(interactiveObjects, false);
-
-      if (intersects.length > 0) {
-        const hit = intersects[0].object;
-        if (hoveredMesh !== hit) {
-          if (hoveredMesh && hoveredMesh !== selectedMesh && hoveredMesh.material.emissive) {
-            hoveredMesh.material.emissiveIntensity = hoveredMesh.userData.origMat.emissiveIntensity || 0;
-          }
-          hoveredMesh = hit;
-          if (hoveredMesh.material.emissive) {
-            hoveredMesh.material.emissiveIntensity = 1.4;
-          }
-        }
-      } else {
-        if (hoveredMesh && hoveredMesh !== selectedMesh && hoveredMesh.material.emissive) {
-          hoveredMesh.material.emissiveIntensity = hoveredMesh.userData.origMat.emissiveIntensity || 0;
-        }
-        hoveredMesh = null;
-      }
-    }
-
-    function onPointerClick(event) {
-      raycaster.setFromCamera(mouse, activeCamera);
-      const intersects = raycaster.intersectObjects(interactiveObjects, false);
-
-      if (intersects.length > 0) {
-        const hit = intersects[0].object;
-        selectedMesh = hit;
-        const worldPos = new THREE.Vector3();
-        hit.getWorldPosition(worldPos);
-
-        inspName.textContent = hit.userData.name || "3D Object";
-        inspDesc.innerHTML = `
-          ${hit.userData.desc || "Objek dalam Scene Graph."}<br>
-          <strong style="color: #38bdf8;">Posisi Global:</strong> [X: ${worldPos.x.toFixed(2)}, Y: ${worldPos.y.toFixed(2)}, Z: ${worldPos.z.toFixed(2)}]<br>
-          <strong style="color: #a855f7;">Geometri:</strong> ${hit.geometry.type} (${hit.geometry.attributes.position.count} vertices)
-        `;
-      }
-    }
-
-    renderer.domElement.addEventListener('pointermove', onPointerMove);
-    renderer.domElement.addEventListener('click', onPointerClick);
-
-    // 9. UI Control Listeners
-    btnToggleAnim.addEventListener('click', () => {
-      isPlaying = !isPlaying;
-      btnToggleAnim.innerHTML = isPlaying ? '⏸️ Pause' : '▶️ Resume';
-      btnToggleAnim.classList.toggle('active', isPlaying);
-      statAnimState.textContent = isPlaying ? 'Running' : 'Paused';
-      statAnimState.style.color = isPlaying ? '#10b981' : '#f59e0b';
-    });
-
-    btnResetView.addEventListener('click', () => {
-      activeCamera.position.set(0, 22, 38);
-      controls.target.set(0, 0, 0);
-      controls.update();
-      sliderSpeed.value = 1.0;
-      animSpeed = 1.0;
-      outSpeed.textContent = '1.0x';
-      reverseOrbit = false;
-      chkReverse.checked = false;
-    });
-
-    sliderSpeed.addEventListener('input', (e) => {
-      animSpeed = parseFloat(e.target.value);
-      outSpeed.textContent = animSpeed.toFixed(1) + 'x';
-    });
-
-    chkReverse.addEventListener('change', (e) => {
-      reverseOrbit = e.target.checked;
-    });
-
-    selCameraMode.addEventListener('change', (e) => {
-      setCamera(e.target.value);
-    });
-
-    btnCamIso.addEventListener('click', () => {
-      activeCamera.position.set(30, 26, 30);
-      controls.target.set(0, 0, 0);
-      controls.update();
-    });
-
-    btnCamTop.addEventListener('click', () => {
-      activeCamera.position.set(0, 48, 0.1);
-      controls.target.set(0, 0, 0);
-      controls.update();
-    });
-
-    selShaderMode.addEventListener('change', (e) => {
-      applyShaderMode(e.target.value);
-    });
-
-    chkShadows.addEventListener('change', (e) => {
-      renderer.shadowMap.enabled = e.target.checked;
-      sunLight.castShadow = e.target.checked;
-      dirLight.castShadow = e.target.checked;
-    });
-
-    chkGrid.addEventListener('change', (e) => {
-      gridHelper.visible = e.target.checked;
-      groundMesh.visible = e.target.checked;
-    });
-
-    sliderSunLight.addEventListener('input', (e) => {
-      const val = parseFloat(e.target.value);
-      sunLight.intensity = val;
-      outSunLight.textContent = val.toFixed(1);
-    });
-
-    sliderParticleSpeed.addEventListener('input', (e) => {
-      particleSpeed = parseFloat(e.target.value);
-      outParticleSpeed.textContent = particleSpeed.toFixed(1) + 'x';
-    });
-
-    chkLightOrbit.addEventListener('change', (e) => {
-      orbitLightEnabled = e.target.checked;
-    });
-
-    // Keyboard Shortcuts
-    window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space') {
-        e.preventDefault();
-        btnToggleAnim.click();
-      } else if (e.code === 'KeyC') {
-        setCamera(currentCameraMode === 'perspective' ? 'orthographic' : 'perspective');
-      } else if (e.code === 'KeyR') {
-        btnResetView.click();
-      }
-    });
-
-    // Window Resize Handler
-    window.addEventListener('resize', () => {
-      const width = container.clientWidth;
-      const height = container.clientHeight;
-      const aspect = width / height;
-
-      perspectiveCamera.aspect = aspect;
-      perspectiveCamera.updateProjectionMatrix();
-
-      orthographicCamera.left = (frustumSize * aspect) / -2;
-      orthographicCamera.right = (frustumSize * aspect) / 2;
-      orthographicCamera.top = frustumSize / 2;
-      orthographicCamera.bottom = frustumSize / -2;
-      orthographicCamera.updateProjectionMatrix();
-
-      renderer.setSize(width, height);
-    });
-
-    // 10. Main Animation Render Loop
-    let clock = new THREE.Clock();
-    let totalTime = 0;
-
-    function animate() {
-      requestAnimationFrame(animate);
-
-      const delta = clock.getDelta();
-      const dirMult = reverseOrbit ? -1 : 1;
-
-      if (isPlaying) {
-        const step = delta * animSpeed * dirMult;
-        totalTime += delta * animSpeed;
-
-        // Core Rotation
-        sunMesh.rotation.y += 0.008 * dirMult;
-        cageRing1.rotation.y += 0.015 * dirMult;
-        cageRing1.rotation.x += 0.008;
-        cageRing2.rotation.z += 0.012 * dirMult;
-
-        // Hierarchical Planets Orbiting & Self-Spin
-        planets.forEach((p) => {
-          p.pivot.rotation.y += p.speed * animSpeed * dirMult;
-          p.mesh.rotation.y += p.selfSpin * animSpeed;
-          if (p.moonPivot) {
-            p.moonPivot.rotation.y += p.moonSpeed * animSpeed * dirMult;
-          }
-        });
-
-        // Kinetic Robot Arm Hierarchy Oscillations
-        armJoint1.rotation.z = Math.sin(totalTime * 1.2) * 0.45;
-        armJoint2.rotation.z = Math.cos(totalTime * 1.5) * 0.6;
-        armJoint1.rotation.y = Math.sin(totalTime * 0.8) * 0.8;
-
-        // Orbiting Light
-        if (orbitLightEnabled) {
-          const lightAngle = totalTime * 0.6;
-          dirLight.position.x = Math.cos(lightAngle) * 22;
-          dirLight.position.z = Math.sin(lightAngle) * 22;
-        }
-
-        // Particle Drift
-        if (particleSpeed > 0) {
-          particleField.rotation.y += 0.0006 * particleSpeed;
-          particleField.rotation.x += 0.0002 * particleSpeed;
-        }
-      }
-
-      controls.update();
-      renderer.render(scene, activeCamera);
-
-      // FPS & Diagnostic Stats calculation
-      frameCount++;
-      const now = performance.now();
-      if (now - lastTime >= 500) {
-        fps = Math.round((frameCount * 1000) / (now - lastTime));
-        statFps.textContent = fps;
-        statTriangles.textContent = renderer.info.render.triangles.toLocaleString();
-        statObjects.textContent = scene.children.length;
-        frameCount = 0;
-        lastTime = now;
-      }
-    }
-
-    animate();
-  </script>
-</body>
+    </main>
+    <script type="module" src="./main.js"></script>
+  </body>
 </html>
