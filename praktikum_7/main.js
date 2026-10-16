@@ -110,14 +110,16 @@ scene.environmentIntensity = 0.3;
 applyEnvironment();
 pmrem.compileEquirectangularShader();
 const panoramaOptions = {
+  nebula: { label: "Cosmic Nebula & Stars (Space)" },
   studio: { label: "Studio Small 09 - HDR 1K", url: new URL("./assets/studio_small_09_1k.hdr", import.meta.url).href },
   ladybrand: { label: "Ladybrand Heritage House - HDR 1K", url: new URL("./assets/ladybrand_heritage_house_1k.hdr", import.meta.url).href },
-  procedural: { label: "Panorama procedural" },
+  procedural: { label: "Procedural Cyberpunk Gradient" },
 };
 let activePanorama = "procedural";
 let panoramaRequest = 0;
 async function selectPanorama(key) {
   const option = panoramaOptions[key];
+  if (!option) return;
   const request = ++panoramaRequest;
   $("#panoramaSelect").value = key;
   if (key === activePanorama) {
@@ -127,9 +129,13 @@ async function selectPanorama(key) {
   $("#panoramaStatus").textContent = `Memuat ${option.label}...`;
   let texture;
   try {
-    texture = option.url
-      ? await new HDRLoader().loadAsync(option.url)
-      : createEnvironmentTexture();
+    if (key === "nebula") {
+      texture = createNebulaTexture();
+    } else if (option.url) {
+      texture = await new HDRLoader().loadAsync(option.url);
+    } else {
+      texture = createEnvironmentTexture();
+    }
     // Only the latest selection may replace the active environment.
     if (request !== panoramaRequest) {
       texture.dispose();
@@ -155,7 +161,7 @@ async function selectPanorama(key) {
   }
 }
 $("#panoramaSelect").addEventListener("change", (event) => selectPanorama(event.target.value));
-selectPanorama("studio");
+selectPanorama("nebula");
 
 scene.add(new THREE.HemisphereLight("#38bdf8", "#3b0764", 0.85));
 const keyLight = new THREE.DirectionalLight("#ffffff", 1.8);
@@ -191,6 +197,41 @@ scene.add(ground);
 const polarGrid = new THREE.PolarGridHelper(13.5, 16, 8, 64, 0x8b5cf6, 0x1f143d);
 polarGrid.position.y = 0.01;
 scene.add(polarGrid);
+
+// --- 3D COSMIC STARFIELD PARTICLES ---
+const starGeometry = new THREE.BufferGeometry();
+const starCount = 1200;
+const starPositions = new Float32Array(starCount * 3);
+const starColors = new Float32Array(starCount * 3);
+
+for (let i = 0; i < starCount; i++) {
+  const radius = 22 + Math.random() * 35;
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos(2 * Math.random() - 1);
+
+  starPositions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+  starPositions[i * 3 + 1] = Math.abs(radius * Math.cos(phi)) + 0.5;
+  starPositions[i * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
+
+  const colType = Math.random();
+  if (colType < 0.45) {
+    starColors[i * 3] = 0.4; starColors[i * 3 + 1] = 0.9; starColors[i * 3 + 2] = 1.0;
+  } else if (colType < 0.75) {
+    starColors[i * 3] = 0.95; starColors[i * 3 + 1] = 0.35; starColors[i * 3 + 2] = 0.85;
+  } else {
+    starColors[i * 3] = 1.0; starColors[i * 3 + 1] = 1.0; starColors[i * 3 + 2] = 1.0;
+  }
+}
+starGeometry.setAttribute("position", new THREE.BufferAttribute(starPositions, 3));
+starGeometry.setAttribute("color", new THREE.BufferAttribute(starColors, 3));
+const starMaterial = new THREE.PointsMaterial({
+  size: 0.25,
+  vertexColors: true,
+  transparent: true,
+  opacity: 0.9,
+});
+const starField = new THREE.Points(starGeometry, starMaterial);
+scene.add(starField);
 
 const hierarchyGroup = new THREE.Group();
 hierarchyGroup.name = "Hierarchy Parent Group";
@@ -358,6 +399,77 @@ loader.load(
     console.warn("GLB loading error", error);
   },
 );
+
+function createNebulaTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext("2d");
+
+  // Deep space void base
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, 512);
+  bgGrad.addColorStop(0, "#030009");
+  bgGrad.addColorStop(0.5, "#070216");
+  bgGrad.addColorStop(1, "#020006");
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, 1024, 512);
+
+  // Soft glowing radial nebula gas clouds
+  function drawNebulaCloud(cx, cy, r, colorStart, colorEnd) {
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    grad.addColorStop(0, colorStart);
+    grad.addColorStop(0.6, colorEnd);
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  drawNebulaCloud(250, 180, 200, "rgba(168, 85, 247, 0.45)", "rgba(147, 51, 234, 0.12)");
+  drawNebulaCloud(380, 240, 170, "rgba(244, 63, 94, 0.38)", "rgba(225, 29, 72, 0.09)");
+  drawNebulaCloud(650, 200, 230, "rgba(6, 182, 212, 0.4)", "rgba(14, 116, 144, 0.12)");
+  drawNebulaCloud(820, 260, 180, "rgba(139, 92, 246, 0.38)", "rgba(109, 40, 217, 0.09)");
+  drawNebulaCloud(110, 290, 150, "rgba(217, 70, 239, 0.35)", "rgba(192, 38, 211, 0.08)");
+
+  // Stardust & twinkling star specks
+  let seed = 7331;
+  const rand = () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+
+  for (let i = 0; i < 480; i++) {
+    const x = rand() * 1024;
+    const y = rand() * 512;
+    const size = rand() < 0.88 ? rand() * 1.5 + 0.4 : rand() * 2.8 + 1.2;
+    const starType = rand();
+
+    let fill;
+    if (starType < 0.4) fill = "rgba(255, 255, 255, 0.95)";
+    else if (starType < 0.7) fill = "rgba(165, 243, 252, 0.95)";
+    else if (starType < 0.9) fill = "rgba(244, 114, 182, 0.9)";
+    else fill = "rgba(253, 224, 71, 0.9)";
+
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (size > 2.2) {
+      ctx.strokeStyle = fill;
+      ctx.lineWidth = 0.6;
+      ctx.beginPath();
+      ctx.moveTo(x - size * 2.5, y);
+      ctx.lineTo(x + size * 2.5, y);
+      ctx.moveTo(x, y - size * 2.5);
+      ctx.lineTo(x, y + size * 2.5);
+      ctx.stroke();
+    }
+  }
+
+  return new THREE.CanvasTexture(canvas);
+}
 
 function createEnvironmentTexture() {
   const canvas = document.createElement("canvas");
@@ -719,7 +831,7 @@ function resetScene() {
   state.bloom = true;
   Object.assign(bloomSettings, bloomDefaults);
   applyBloomSettings();
-  selectPanorama("studio");
+  selectPanorama("nebula");
   applyEnvironment();
   applyBloom();
   $("#hoverInfo").textContent = "-";
@@ -760,6 +872,9 @@ function animate() {
   const delta = Math.min(clock.getDelta(), 0.05);
   state.time += delta;
   if (state.mixer) state.mixer.update(delta);
+  if (typeof starField !== "undefined" && starField) {
+    starField.rotation.y += delta * 0.02;
+  }
   hierarchyGroup.rotation.y += delta * 0.35;
   if (state.solar) {
     solarSystem.rotation.y += delta * state.orbitSpeed;
