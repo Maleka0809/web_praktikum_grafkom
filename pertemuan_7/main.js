@@ -63,20 +63,16 @@ const orbitDefaults = {
 const orbitSettings = { ...orbitDefaults };
 function applyOrbitSettings() {
   Object.assign(controls, orbitSettings);
-  const dampingInput = document.querySelector("#cameraDampingFactor");
-  if (dampingInput) dampingInput.disabled = !orbitSettings.enableDamping;
+  document.querySelector("#cameraDampingFactor").disabled = !orbitSettings.enableDamping;
 }
 function resetOrbitSettings() {
   Object.assign(orbitSettings, orbitDefaults);
   for (const [key, value] of Object.entries(orbitSettings)) {
     const input = document.querySelector(`[data-orbit-setting="${key}"]`);
-    if (input) {
-      if (typeof value === "boolean") input.checked = value;
-      else {
-        input.value = value;
-        const valElem = document.querySelector(`#${input.id}Value`);
-        if (valElem) valElem.textContent = value.toFixed(2);
-      }
+    if (typeof value === "boolean") input.checked = value;
+    else {
+      input.value = value;
+      document.querySelector(`#${input.id}Value`).textContent = value.toFixed(2);
     }
   }
 }
@@ -84,10 +80,8 @@ document.querySelectorAll("[data-orbit-setting]").forEach((input) => {
   input.addEventListener("input", () => {
     orbitSettings[input.dataset.orbitSetting] =
       input.type === "checkbox" ? input.checked : Number(input.value);
-    if (input.type !== "checkbox") {
-      const valElem = document.querySelector(`#${input.id}Value`);
-      if (valElem) valElem.textContent = Number(input.value).toFixed(2);
-    }
+    if (input.type !== "checkbox")
+      document.querySelector(`#${input.id}Value`).textContent = Number(input.value).toFixed(2);
     applyOrbitSettings();
   });
 });
@@ -125,15 +119,12 @@ let panoramaRequest = 0;
 async function selectPanorama(key) {
   const option = panoramaOptions[key];
   const request = ++panoramaRequest;
-  const selectElem = $("#panoramaSelect");
-  if (selectElem) selectElem.value = key;
+  $("#panoramaSelect").value = key;
   if (key === activePanorama) {
-    const statusElem = $("#panoramaStatus");
-    if (statusElem) statusElem.textContent = option.label;
+    $("#panoramaStatus").textContent = option.label;
     return;
   }
-  const statusElem = $("#panoramaStatus");
-  if (statusElem) statusElem.textContent = `Memuat ${option.label}...`;
+  $("#panoramaStatus").textContent = `Memuat ${option.label}...`;
   let texture;
   try {
     texture = option.url
@@ -154,19 +145,16 @@ async function selectPanorama(key) {
     environmentTexture = nextTarget.texture;
     activePanorama = key;
     applyEnvironment();
-    if (statusElem) statusElem.textContent = option.label;
+    $("#panoramaStatus").textContent = option.label;
   } catch (error) {
     texture?.dispose();
     if (request !== panoramaRequest) return;
-    if (selectElem) selectElem.value = activePanorama;
-    if (statusElem) statusElem.textContent = `HDR gagal dimuat - ${panoramaOptions[activePanorama].label} tetap aktif`;
+    $("#panoramaSelect").value = activePanorama;
+    $("#panoramaStatus").textContent = `HDR gagal dimuat - ${panoramaOptions[activePanorama].label} tetap aktif`;
     console.warn("HDR loading error", error);
   }
 }
-const panoramaSelect = $("#panoramaSelect");
-if (panoramaSelect) {
-  panoramaSelect.addEventListener("change", (event) => selectPanorama(event.target.value));
-}
+$("#panoramaSelect").addEventListener("change", (event) => selectPanorama(event.target.value));
 selectPanorama("studio");
 
 scene.add(new THREE.HemisphereLight("#c9edff", "#12304a", 0.7));
@@ -193,67 +181,42 @@ ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// --- HIERARCHY DEMO SESUAI MODUL PRAKTIKUM 7 DR. DARLIS (SECTION 18-21 & 79-80) ---
 const hierarchyGroup = new THREE.Group();
-hierarchyGroup.name = "Hierarchy Demo Group";
-hierarchyGroup.position.set(-2.5, 0, 0);
-
-// Body (Parent Mesh)
-const body = new THREE.Mesh(
-  new THREE.BoxGeometry(1.6, 0.6, 1.0),
-  new THREE.MeshStandardMaterial({
-    color: 0x0ea5e9, // Biru langit (#0ea5e9)
-    roughness: 0.45,
-    metalness: 0.15,
+hierarchyGroup.name = "Hierarchy Parent Group";
+hierarchyGroup.position.set(-2.8, 1.4, 0);
+const parentMesh = new THREE.Mesh(
+  new THREE.BoxGeometry(1.4, 1.4, 1.4),
+  new THREE.MeshPhysicalMaterial({
+    color: "#c8f5ff",
+    roughness: 0.08,
+    metalness: 0,
+    transmission: 0.95,
+    thickness: 1.4,
+    ior: 1.45,
+    opacity: 1,
   }),
 );
-body.name = "Body (Parent)";
-body.position.y = 0.8;
-body.castShadow = true;
-body.receiveShadow = true;
-body.userData.selectable = true;
-body.userData.label = "Body (Parent)";
-hierarchyGroup.add(body);
-
-// Child Object (Anak)
-const child = new THREE.Mesh(
-  new THREE.BoxGeometry(0.45, 0.45, 0.45),
+parentMesh.name = "Parent Mesh - Glass (transmission 0.95)";
+// Transmission models glass; opacity stays 1 for physically based refraction.
+parentMesh.castShadow = false;
+const childMesh = new THREE.Mesh(
+  new THREE.SphereGeometry(0.42, 24, 16),
   new THREE.MeshStandardMaterial({
-    color: 0xf59e0b, // Amber / Oranye (#f59e0b)
+    color: "#ffdd22",
+    emissive: "#ffcc00",
+    emissiveIntensity: 5,
     roughness: 0.3,
-    metalness: 0.1,
+    metalness: 0,
   }),
 );
-child.name = "Child Object";
-child.position.set(1.0, 0, 0); // Local position: 1, 0, 0
-child.rotation.z = Math.PI / 4; // Local rotation: PI / 4
-child.castShadow = true;
-child.receiveShadow = true;
-child.userData.selectable = true;
-child.userData.label = "Child Object";
-// Hubungkan ke body: child adalah anak langsung dari body!
-body.add(child);
-
+childMesh.name = "Child Mesh (local 1, 0.9, 0)";
+childMesh.position.set(1, 0.9, 0);
+childMesh.castShadow = false;
+childMesh.material.userData.preserveEmission = true;
+childMesh.add(new THREE.PointLight("#ffcc33", 5, 5, 2));
+hierarchyGroup.add(parentMesh, childMesh);
 scene.add(hierarchyGroup);
-interactiveObjects.push(body, child);
-
-// Baseline PBR Sphere dari Modul (Section 23)
-const pbrSphere = new THREE.Mesh(
-  new THREE.SphereGeometry(0.65, 48, 24),
-  new THREE.MeshStandardMaterial({
-    color: 0x22c55e, // Hijau (#22c55e)
-    roughness: 0.25,
-    metalness: 0.1,
-  }),
-);
-pbrSphere.name = "PBR Sphere (Section 23)";
-pbrSphere.position.set(0, 0.75, 0);
-pbrSphere.castShadow = true;
-pbrSphere.receiveShadow = true;
-pbrSphere.userData.selectable = true;
-pbrSphere.userData.label = "PBR Sphere";
-scene.add(pbrSphere);
-interactiveObjects.push(pbrSphere);
+interactiveObjects.push(parentMesh, childMesh);
 
 const solarSystem = new THREE.Group();
 solarSystem.name = "Solar System (Hierarchy Challenge)";
@@ -348,8 +311,6 @@ loader.load(
   (gltf) => {
     const root = gltf.scene;
     root.name = "Imported Duck GLB";
-    root.userData.selectable = true;
-    root.userData.label = "Imported Duck GLB";
     fitImportedModel(root);
     root.traverse((object) => {
       if (!object.name) object.name = object.type;
@@ -362,15 +323,14 @@ loader.load(
     scene.add(root);
     state.gltfRoot = root;
     state.mixer = new THREE.AnimationMixer(root);
-    const clips = gltf.animations && gltf.animations.length
+    const clips = gltf.animations.length
       ? gltf.animations
       : createFallbackClips();
     state.actions = clips.map((clip) => state.mixer.clipAction(clip));
     if (state.actions.length) playClip(0);
-    const modelInfo = $("#modelInfo");
-    if (modelInfo) modelInfo.textContent = `${clips.length} clip${clips.length === 1 ? "" : "s"}`;
-    const statusBadge = $("#statusBadge");
-    if (statusBadge) statusBadge.textContent = "GLB LOADED · READY";
+    $("#modelInfo").textContent =
+      `${clips.length} clip${clips.length === 1 ? "" : "s"}`;
+    $("#statusBadge").textContent = "GLB LOADED · READY";
     log(`GLB loaded: ${root.name}; ${countDescendants(root)} descendants.`);
     console.log("GLB hierarchy", {
       root: root.name,
@@ -380,10 +340,8 @@ loader.load(
   },
   undefined,
   (error) => {
-    const modelInfo = $("#modelInfo");
-    if (modelInfo) modelInfo.textContent = "Fallback procedural";
-    const statusBadge = $("#statusBadge");
-    if (statusBadge) statusBadge.textContent = "FALLBACK SCENE · READY";
+    $("#modelInfo").textContent = "Fallback procedural";
+    $("#statusBadge").textContent = "FALLBACK SCENE · READY";
     log("Duck.glb tidak dapat dimuat; scene procedural tetap aktif.");
     console.warn("GLB loading error", error);
   },
@@ -474,8 +432,7 @@ function playClip(index) {
   log(`Animation clip aktif: ${next.getClip().name || index + 1}`);
 }
 function log(message) {
-  const logElem = $("#logPanel");
-  if (logElem) logElem.textContent = message;
+  $("#logPanel").textContent = message;
 }
 function materialName(object) {
   return object.material?.type || "Group / tanpa material";
@@ -511,44 +468,32 @@ function setScaleFeedback(object, scale) {
   object.userData.baseScale = base;
   object.scale.copy(base).multiplyScalar(scale);
 }
-function findSelectableRoot(object) {
+function objectRoot(object) {
   let current = object;
-  while (current) {
-    if (current.userData && current.userData.selectable) {
-      return current;
-    }
-    if (current.parent === scene || !current.parent || current.parent.type === "Scene") {
-      break;
-    }
+  while (
+    current.parent &&
+    current.parent !== scene &&
+    current.parent.type !== "Scene"
+  )
     current = current.parent;
-  }
-  return object;
+  return current;
 }
 function updateInfo(object) {
   if (!object) {
-    const infoTitle = $("#infoTitle");
-    if (infoTitle) infoTitle.textContent = "Belum ada objek dipilih";
+    $("#infoTitle").textContent = "Belum ada objek dipilih";
     ["#infoPosition", "#infoRotation", "#infoScale", "#infoMaterial"].forEach(
-      (id) => {
-        const el = $(id);
-        if (el) el.textContent = "-";
-      },
+      (id) => ($(id).textContent = "-"),
     );
     return;
   }
   const world = new THREE.Vector3();
   object.getWorldPosition(world);
-  const infoTitle = $("#infoTitle");
-  if (infoTitle) infoTitle.textContent = object.name || object.type;
-  const infoPos = $("#infoPosition");
-  const parentName = object.parent && object.parent !== scene ? ` (Parent: ${object.parent.name || object.parent.type})` : "";
-  if (infoPos) infoPos.textContent = `local ${formatVector(object.position)} · world ${formatVector(world)}${parentName}`;
-  const infoRot = $("#infoRotation");
-  if (infoRot) infoRot.textContent = formatVector(object.rotation);
-  const infoScale = $("#infoScale");
-  if (infoScale) infoScale.textContent = formatVector(object.scale);
-  const infoMat = $("#infoMaterial");
-  if (infoMat) infoMat.textContent = materialName(object);
+  $("#infoTitle").textContent = object.name || object.type;
+  $("#infoPosition").textContent =
+    `local ${formatVector(object.position)} · world ${formatVector(world)}`;
+  $("#infoRotation").textContent = formatVector(object.rotation);
+  $("#infoScale").textContent = formatVector(object.scale);
+  $("#infoMaterial").textContent = materialName(object);
 }
 function formatVector(vector) {
   return `${vector.x.toFixed(2)}, ${vector.y.toFixed(2)}, ${vector.z.toFixed(2)}`;
@@ -560,7 +505,7 @@ function raycast(event) {
   pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
   raycaster.setFromCamera(pointer, activeCamera);
   const hit = raycaster.intersectObjects(interactiveObjects, true)[0];
-  return hit ? findSelectableRoot(hit.object) : null;
+  return hit ? objectRoot(hit.object) : null;
 }
 let selectionGesture = null;
 let suppressSelection = false;
@@ -590,8 +535,7 @@ renderer.domElement.addEventListener("pointermove", (event) => {
     setScaleFeedback(state.hovered, 1);
   }
   state.hovered = next;
-  const hoverInfo = $("#hoverInfo");
-  if (hoverInfo) hoverInfo.textContent = next?.name || "-";
+  $("#hoverInfo").textContent = next?.name || "-";
   if (next && next !== state.selected) {
     setEmissive(next, true);
     setScaleFeedback(next, 1.06);
@@ -606,8 +550,7 @@ renderer.domElement.addEventListener("pointerleave", () => {
     setScaleFeedback(state.hovered, 1);
   }
   state.hovered = null;
-  const hoverInfo = $("#hoverInfo");
-  if (hoverInfo) hoverInfo.textContent = "-";
+  $("#hoverInfo").textContent = "-";
 });
 renderer.domElement.addEventListener("click", (event) => {
   if (suppressSelection || event.button !== 0) return;
@@ -617,8 +560,7 @@ renderer.domElement.addEventListener("click", (event) => {
     setScaleFeedback(state.selected, 1);
   }
   state.selected = next;
-  const selectedInfo = $("#selectedInfo");
-  if (selectedInfo) selectedInfo.textContent = next?.name || "-";
+  $("#selectedInfo").textContent = next?.name || "-";
   updateInfo(next);
   if (next) {
     setEmissive(next, true);
@@ -632,111 +574,69 @@ renderer.domElement.addEventListener("click", (event) => {
   }
 });
 
-const cameraSelect = $("#cameraSelect");
-if (cameraSelect) {
-  cameraSelect.addEventListener("change", (event) => {
-    const previousCamera = activeCamera;
-    const target = controls.target.clone();
-    activeCamera =
-      event.target.value === "orthographic"
-        ? orthographicCamera
-        : perspectiveCamera;
-    activeCamera.position.copy(previousCamera.position);
-    configureControls(target);
-    updateCamera();
-  });
-}
-const fovControl = $("#fovControl");
-if (fovControl) {
-  fovControl.addEventListener("input", (event) => {
-    const fovVal = $("#fovValue");
-    if (fovVal) fovVal.textContent = `${event.target.value}°`;
-    perspectiveCamera.fov = Number(event.target.value);
-    perspectiveCamera.updateProjectionMatrix();
-  });
-}
-const roughnessControl = $("#roughnessControl");
-if (roughnessControl) {
-  roughnessControl.addEventListener("input", (event) => {
-    state.roughness = Number(event.target.value);
-    const valElem = $("#roughnessValue");
-    if (valElem) valElem.textContent = state.roughness.toFixed(2);
-    updatePbrGallery();
-  });
-}
-const metalnessControl = $("#metalnessControl");
-if (metalnessControl) {
-  metalnessControl.addEventListener("input", (event) => {
-    state.metalness = Number(event.target.value);
-    const valElem = $("#metalnessValue");
-    if (valElem) valElem.textContent = state.metalness.toFixed(2);
-    updatePbrGallery();
-  });
-}
-const orbitControl = $("#orbitControl");
-if (orbitControl) {
-  orbitControl.addEventListener("input", (event) => {
-    state.orbitSpeed = Number(event.target.value);
-    const valElem = $("#orbitValue");
-    if (valElem) valElem.textContent = state.orbitSpeed.toFixed(2);
-  });
-}
+$("#cameraSelect").addEventListener("change", (event) => {
+  const previousCamera = activeCamera;
+  const target = controls.target.clone();
+  activeCamera =
+    event.target.value === "orthographic"
+      ? orthographicCamera
+      : perspectiveCamera;
+  activeCamera.position.copy(previousCamera.position);
+  configureControls(target);
+  updateCamera();
+});
+$("#fovControl").addEventListener("input", (event) => {
+  $("#fovValue").textContent = `${event.target.value}°`;
+  perspectiveCamera.fov = Number(event.target.value);
+  perspectiveCamera.updateProjectionMatrix();
+});
+$("#roughnessControl").addEventListener("input", (event) => {
+  state.roughness = Number(event.target.value);
+  $("#roughnessValue").textContent = state.roughness.toFixed(2);
+  updatePbrGallery();
+});
+$("#metalnessControl").addEventListener("input", (event) => {
+  state.metalness = Number(event.target.value);
+  $("#metalnessValue").textContent = state.metalness.toFixed(2);
+  updatePbrGallery();
+});
+$("#orbitControl").addEventListener("input", (event) => {
+  state.orbitSpeed = Number(event.target.value);
+  $("#orbitValue").textContent = state.orbitSpeed.toFixed(2);
+});
 const bloomDefaults = { emissiveIntensity: 5, bloomIntensity: 0.55, bloomRadius: 0.3 };
 const bloomSettings = { ...bloomDefaults };
 function applyBloomSettings() {
-  if (child && child.material && "emissiveIntensity" in child.material) {
-    child.material.emissiveIntensity = bloomSettings.emissiveIntensity;
-  }
-  if (sun && sun.material) {
-    sun.material.emissiveIntensity = bloomSettings.emissiveIntensity;
-  }
+  childMesh.material.emissiveIntensity = bloomSettings.emissiveIntensity;
+  sun.material.emissiveIntensity = bloomSettings.emissiveIntensity;
   bloomPass.strength = bloomSettings.bloomIntensity;
   bloomPass.radius = bloomSettings.bloomRadius;
   for (const [key, value] of Object.entries(bloomSettings)) {
-    const ctrl = $(`#${key}Control`);
-    if (ctrl) ctrl.value = value;
-    const valElem = $(`#${key}Value`);
-    if (valElem) valElem.textContent = value.toFixed(2);
+    $(`#${key}Control`).value = value;
+    $(`#${key}Value`).textContent = value.toFixed(2);
   }
 }
 for (const key of Object.keys(bloomSettings)) {
-  const ctrl = $(`#${key}Control`);
-  if (ctrl) {
-    ctrl.addEventListener("input", (event) => {
-      bloomSettings[key] = Number(event.target.value);
-      applyBloomSettings();
-    });
-  }
+  $(`#${key}Control`).addEventListener("input", (event) => {
+    bloomSettings[key] = Number(event.target.value);
+    applyBloomSettings();
+  });
 }
 applyBloomSettings();
-
-const panoramaBtn = $("#panoramaButton");
-if (panoramaBtn) panoramaBtn.addEventListener("click", togglePanorama);
-const bloomBtn = $("#bloomButton");
-if (bloomBtn) {
-  bloomBtn.addEventListener("click", () => {
-    state.bloom = !state.bloom;
-    applyBloom();
-  });
-}
-const envBtn = $("#environmentButton");
-if (envBtn) envBtn.addEventListener("click", toggleEnvironment);
-const resetBtn = $("#resetButton");
-if (resetBtn) resetBtn.addEventListener("click", resetScene);
-const solarBtn = $("#solarButton");
-if (solarBtn) {
-  solarBtn.addEventListener("click", () => {
-    state.solar = !state.solar;
-    log(`Solar hierarchy: ${state.solar ? "playing" : "paused"}`);
-  });
-}
-const clip1Btn = $("#clip1Button");
-if (clip1Btn) clip1Btn.addEventListener("click", () => playClip(0));
-const clip2Btn = $("#clip2Button");
-if (clip2Btn) clip2Btn.addEventListener("click", () => playClip(1));
-const clip3Btn = $("#clip3Button");
-if (clip3Btn) clip3Btn.addEventListener("click", () => playClip(2));
-
+$("#panoramaButton").addEventListener("click", togglePanorama);
+$("#bloomButton").addEventListener("click", () => {
+  state.bloom = !state.bloom;
+  applyBloom();
+});
+$("#environmentButton").addEventListener("click", toggleEnvironment);
+$("#resetButton").addEventListener("click", resetScene);
+$("#solarButton").addEventListener("click", () => {
+  state.solar = !state.solar;
+  log(`Solar hierarchy: ${state.solar ? "playing" : "paused"}`);
+});
+$("#clip1Button").addEventListener("click", () => playClip(0));
+$("#clip2Button").addEventListener("click", () => playClip(1));
+$("#clip3Button").addEventListener("click", () => playClip(2));
 window.addEventListener("keydown", (event) => {
   if (event.target.matches("input, select")) return;
   if (event.key.toLowerCase() === "p") togglePanorama();
@@ -757,18 +657,11 @@ function updatePbrGallery() {
 function applyEnvironment() {
   scene.environment = state.environment ? environmentTexture : null;
   scene.background = state.panorama ? panoramaTexture : new THREE.Color("#020812");
-  const envInfo = $("#environmentInfo");
-  if (envInfo) envInfo.textContent = state.environment ? "ON" : "OFF";
-  const envBtnEl = $("#environmentButton");
-  if (envBtnEl) {
-    envBtnEl.textContent = `Refleksi: ${state.environment ? "ON" : "OFF"} (E)`;
-    envBtnEl.setAttribute("aria-pressed", String(state.environment));
-  }
-  const panBtnEl = $("#panoramaButton");
-  if (panBtnEl) {
-    panBtnEl.textContent = `Panorama: ${state.panorama ? "ON" : "OFF"} (P)`;
-    panBtnEl.setAttribute("aria-pressed", String(state.panorama));
-  }
+  $("#environmentInfo").textContent = state.environment ? "ON" : "OFF";
+  $("#environmentButton").textContent = `Refleksi: ${state.environment ? "ON" : "OFF"} (E)`;
+  $("#environmentButton").setAttribute("aria-pressed", String(state.environment));
+  $("#panoramaButton").textContent = `Panorama: ${state.panorama ? "ON" : "OFF"} (P)`;
+  $("#panoramaButton").setAttribute("aria-pressed", String(state.panorama));
 }
 function togglePanorama() {
   state.panorama = !state.panorama;
@@ -777,11 +670,8 @@ function togglePanorama() {
 }
 function applyBloom() {
   bloomPass.enabled = state.bloom;
-  const bloomBtnEl = $("#bloomButton");
-  if (bloomBtnEl) {
-    bloomBtnEl.textContent = `Bloom: ${state.bloom ? "ON" : "OFF"}`;
-    bloomBtnEl.setAttribute("aria-pressed", String(state.bloom));
-  }
+  $("#bloomButton").textContent = `Bloom: ${state.bloom ? "ON" : "OFF"}`;
+  $("#bloomButton").setAttribute("aria-pressed", String(state.bloom));
 }
 function toggleEnvironment() {
   state.environment = !state.environment;
@@ -798,12 +688,9 @@ function resetScene() {
   configureControls();
   resize();
   updateCamera();
-  const camSel = $("#cameraSelect");
-  if (camSel) camSel.value = "perspective";
-  const fovCtrl = $("#fovControl");
-  if (fovCtrl) fovCtrl.value = 52;
-  const fovVal = $("#fovValue");
-  if (fovVal) fovVal.textContent = "52°";
+  $("#cameraSelect").value = "perspective";
+  $("#fovControl").value = 52;
+  $("#fovValue").textContent = "52°";
   state.environment = true;
   state.solar = true;
   [state.selected, state.hovered].forEach((object) => {
@@ -819,10 +706,8 @@ function resetScene() {
   selectPanorama("studio");
   applyEnvironment();
   applyBloom();
-  const hoverInfo = $("#hoverInfo");
-  if (hoverInfo) hoverInfo.textContent = "-";
-  const selectedInfo = $("#selectedInfo");
-  if (selectedInfo) selectedInfo.textContent = "-";
+  $("#hoverInfo").textContent = "-";
+  $("#selectedInfo").textContent = "-";
   updateInfo(null);
   hierarchyGroup.rotation.set(0, 0, 0);
   solarSystem.rotation.set(0, 0, 0);
@@ -850,39 +735,16 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 updateCamera();
-const objInfo = $("#objectInfo");
-if (objInfo) objInfo.textContent = String(interactiveObjects.length);
+$("#objectInfo").textContent = String(interactiveObjects.length);
 
 let frameCount = 0;
 let fpsTime = 0;
-let logTimer = 0;
-const childWorldPos = new THREE.Vector3();
-
 function animate() {
   requestAnimationFrame(animate);
   const delta = Math.min(clock.getDelta(), 0.05);
   state.time += delta;
   if (state.mixer) state.mixer.update(delta);
-
-  // Animasi Hierarchy Demo sesuai Modul Praktikum Dr. Darlis (Section 66):
-  hierarchyGroup.rotation.y += 0.25 * delta;
-  child.rotation.x += 1.2 * delta;
-
-  // Real-time Child World Position monitor (Milestone 3 & Eksperimen Wajib 1 & 2):
-  child.getWorldPosition(childWorldPos);
-  const childWorldElem = $("#childWorldPos");
-  if (childWorldElem) {
-    childWorldElem.textContent = `${childWorldPos.x.toFixed(2)}, ${childWorldPos.y.toFixed(2)}, ${childWorldPos.z.toFixed(2)}`;
-  }
-
-  // Periodic Console logging (Milestone 3):
-  logTimer += delta;
-  if (logTimer > 2.0) {
-    console.log("[Milestone 3] Child local position:", child.position);
-    console.log("[Milestone 3] Child world position:", childWorldPos);
-    logTimer = 0;
-  }
-
+  hierarchyGroup.rotation.y += delta * 0.35;
   if (state.solar) {
     solarSystem.rotation.y += delta * state.orbitSpeed;
     earth.rotation.y += delta;
@@ -898,8 +760,7 @@ function animate() {
   frameCount += 1;
   fpsTime += delta;
   if (fpsTime > 0.5) {
-    const fpsElem = $("#fpsInfo");
-    if (fpsElem) fpsElem.textContent = String(Math.round(frameCount / fpsTime));
+    $("#fpsInfo").textContent = String(Math.round(frameCount / fpsTime));
     frameCount = 0;
     fpsTime = 0;
   }
