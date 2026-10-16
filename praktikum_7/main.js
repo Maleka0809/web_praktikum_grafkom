@@ -11,10 +11,10 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 const $ = (selector) => document.querySelector(selector);
 const container = $("#sceneContainer");
 const scene = new THREE.Scene();
-scene.background = new THREE.Color("#020812");
+scene.background = new THREE.Color("#080214");
 
 const perspectiveCamera = new THREE.PerspectiveCamera(52, 1, 0.1, 100);
-perspectiveCamera.position.set(7.5, 5.2, 9.5);
+perspectiveCamera.position.set(0, 4.6, 8.8);
 const orthographicCamera = new THREE.OrthographicCamera(-6, 6, 6, -6, 0.1, 100);
 orthographicCamera.position.copy(perspectiveCamera.position);
 let activeCamera = perspectiveCamera;
@@ -54,7 +54,7 @@ const state = {
   actions: [],
   activeAction: null,
 };
-const cameraTarget = new THREE.Vector3(0, 1, 0);
+const cameraTarget = new THREE.Vector3(0, 0.9, 0);
 let controls;
 const orbitDefaults = {
   enabled: true, enableDamping: true, enablePan: true,
@@ -157,7 +157,7 @@ async function selectPanorama(key) {
 $("#panoramaSelect").addEventListener("change", (event) => selectPanorama(event.target.value));
 selectPanorama("studio");
 
-scene.add(new THREE.HemisphereLight("#c9edff", "#12304a", 0.7));
+scene.add(new THREE.HemisphereLight("#38bdf8", "#3b0764", 0.85));
 const keyLight = new THREE.DirectionalLight("#ffffff", 1.8);
 keyLight.position.set(5, 8, 4);
 keyLight.castShadow = true;
@@ -167,86 +167,96 @@ keyLight.shadow.camera.right = 10;
 keyLight.shadow.camera.top = 10;
 keyLight.shadow.camera.bottom = -10;
 scene.add(keyLight);
-scene.add(new THREE.PointLight("#4df3ff", 12, 14, 2).translateX(-4));
+
+const cyanPoint = new THREE.PointLight("#00f0ff", 10, 15, 2);
+cyanPoint.position.set(-5, 3, 2);
+scene.add(cyanPoint);
+
+const magentaPoint = new THREE.PointLight("#f43f5e", 10, 15, 2);
+magentaPoint.position.set(5, 3, 2);
+scene.add(magentaPoint);
 
 const ground = new THREE.Mesh(
-  new THREE.CircleGeometry(13, 64),
+  new THREE.CircleGeometry(14, 64),
   new THREE.MeshStandardMaterial({
-    color: "#0b263b",
-    roughness: 0.85,
-    metalness: 0.1,
+    color: "#0a0618",
+    roughness: 0.45,
+    metalness: 0.55,
   }),
 );
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
+const polarGrid = new THREE.PolarGridHelper(13.5, 16, 8, 64, 0x8b5cf6, 0x1f143d);
+polarGrid.position.y = 0.01;
+scene.add(polarGrid);
+
 const hierarchyGroup = new THREE.Group();
 hierarchyGroup.name = "Hierarchy Parent Group";
-hierarchyGroup.position.set(-2.8, 1.4, 0);
+hierarchyGroup.position.set(3.2, 1.2, 0);
 const parentMesh = new THREE.Mesh(
-  new THREE.BoxGeometry(1.4, 1.4, 1.4),
+  new THREE.BoxGeometry(1.3, 1.3, 1.3),
   new THREE.MeshPhysicalMaterial({
-    color: "#c8f5ff",
-    roughness: 0.08,
-    metalness: 0,
-    transmission: 0.95,
+    color: "#c084fc",
+    roughness: 0.05,
+    metalness: 0.05,
+    transmission: 0.96,
     thickness: 1.4,
-    ior: 1.45,
+    ior: 1.55,
     opacity: 1,
   }),
 );
-parentMesh.name = "Parent Mesh - Glass (transmission 0.95)";
-// Transmission models glass; opacity stays 1 for physically based refraction.
+parentMesh.name = "Parent Mesh - Amethyst Glass (transmission 0.96)";
 parentMesh.castShadow = false;
 const childMesh = new THREE.Mesh(
-  new THREE.SphereGeometry(0.42, 24, 16),
+  new THREE.SphereGeometry(0.38, 24, 16),
   new THREE.MeshStandardMaterial({
-    color: "#ffdd22",
-    emissive: "#ffcc00",
+    color: "#34d399",
+    emissive: "#10b981",
     emissiveIntensity: 5,
-    roughness: 0.3,
+    roughness: 0.25,
     metalness: 0,
   }),
 );
-childMesh.name = "Child Mesh (local 1, 0.9, 0)";
-childMesh.position.set(1, 0.9, 0);
+childMesh.name = "Child Mesh - Emerald Neon (local 0.9, 0.8, 0)";
+childMesh.position.set(0.9, 0.8, 0);
 childMesh.castShadow = false;
 childMesh.material.userData.preserveEmission = true;
-childMesh.add(new THREE.PointLight("#ffcc33", 5, 5, 2));
+childMesh.add(new THREE.PointLight("#10b981", 6, 6, 2));
 hierarchyGroup.add(parentMesh, childMesh);
 scene.add(hierarchyGroup);
 interactiveObjects.push(parentMesh, childMesh);
 
 const solarSystem = new THREE.Group();
 solarSystem.name = "Solar System (Hierarchy Challenge)";
-solarSystem.position.set(1.8, 0, -2.4);
+solarSystem.position.set(-3.2, 0, 0);
 const sun = mesh(
-  new THREE.SphereGeometry(0.7, 32, 20),
+  new THREE.SphereGeometry(0.68, 32, 20),
   new THREE.MeshStandardMaterial({
-    color: "#ffdd22",
-    emissive: "#ffcc00",
+    color: "#ff007f",
+    emissive: "#f43f5e",
     emissiveIntensity: 5,
-    roughness: 0.35,
-    metalness: 0.05,
+    roughness: 0.2,
+    metalness: 0.1,
   }),
-  "Sun",
+  "Cyber Sun (Neon Magenta)",
 );
 sun.position.y = 1.1;
 sun.castShadow = false;
 sun.material.userData.preserveEmission = true;
-sun.add(new THREE.PointLight("#ffcc33", 8, 6, 2));
+sun.add(new THREE.PointLight("#ff007f", 9, 7, 2));
 const earthOrbit = new THREE.Group();
 earthOrbit.name = "Earth Orbit";
 earthOrbit.position.y = 1.1;
 const earth = mesh(
   new THREE.SphereGeometry(0.28, 24, 16),
   new THREE.MeshStandardMaterial({
-    color: "#4287ff",
-    roughness: 0.48,
-    metalness: 0.15,
+    color: "#00f0ff",
+    roughness: 0.35,
+    metalness: 0.3,
   }),
-  "Earth",
+  "Cyber Earth (Cyan)",
 );
 earth.position.x = 1.45;
 const moonOrbit = new THREE.Group();
@@ -255,11 +265,11 @@ moonOrbit.position.x = 1.45;
 const moon = mesh(
   new THREE.SphereGeometry(0.11, 16, 12),
   new THREE.MeshStandardMaterial({
-    color: "#b7c4d0",
-    roughness: 0.9,
-    metalness: 0,
+    color: "#e2e8f0",
+    roughness: 0.5,
+    metalness: 0.2,
   }),
-  "Moon",
+  "Cyber Moon (Platinum)",
 );
 moon.position.x = 0.55;
 moonOrbit.add(moon);
@@ -272,19 +282,22 @@ const gallery = new THREE.Group();
 gallery.name = "PBR Material Gallery";
 const roughnessValues = [0.1, 0.5, 0.9];
 const metalnessValues = [0, 0.5, 1];
+const columnColors = ["#f43f5e", "#a855f7", "#00f0ff"];
 roughnessValues.forEach((roughness, row) =>
   metalnessValues.forEach((metalness, column) => {
     const material = new THREE.MeshStandardMaterial({
-      color: column === 2 ? "#4df3ff" : "#ff6584",
+      color: columnColors[column],
       roughness,
       metalness,
     });
     const sphere = mesh(
-      new THREE.SphereGeometry(0.3, 24, 16),
+      new THREE.SphereGeometry(0.28, 24, 16),
       material,
       `PBR r${roughness} m${metalness}`,
     );
-    sphere.position.set(-1.4 + column * 0.8, 0.35 + (2 - row) * 0.8, -1.9);
+    const colX = (column - 1) * 0.95;
+    const arcZ = -2.3 + Math.abs(column - 1) * 0.35;
+    sphere.position.set(colX, 0.35 + (2 - row) * 0.75, arcZ);
     sphere.castShadow = true;
     gallery.add(sphere);
     interactiveObjects.push(sphere);
@@ -292,15 +305,14 @@ roughnessValues.forEach((roughness, row) =>
 );
 scene.add(gallery);
 
-// Dedicated silver sample remains independent of the gallery sliders.
 const silver = mesh(
-  new THREE.SphereGeometry(0.85, 64, 40),
+  new THREE.SphereGeometry(0.82, 64, 40),
   new THREE.MeshStandardMaterial({
-    color: "#eeeeee", metalness: 1, roughness: 0.08, envMapIntensity: 1,
+    color: "#f5a896", metalness: 1, roughness: 0.03, envMapIntensity: 1.3,
   }),
-  "Silver - HDR reflection",
+  "Rose-Gold - HDR Reflection",
 );
-silver.position.set(3.1, 0.9, 1.4);
+silver.position.set(-1.3, 0.85, 1.0);
 scene.add(silver);
 interactiveObjects.push(silver);
 
@@ -353,14 +365,17 @@ function createEnvironmentTexture() {
   canvas.height = 256;
   const context = canvas.getContext("2d");
   const gradient = context.createLinearGradient(0, 0, 0, 256);
-  gradient.addColorStop(0, "#031322");
-  gradient.addColorStop(0.52, "#0b3b4a");
-  gradient.addColorStop(1, "#01060c");
+  gradient.addColorStop(0, "#080214");
+  gradient.addColorStop(0.5, "#250a47");
+  gradient.addColorStop(1, "#05010c");
   context.fillStyle = gradient;
   context.fillRect(0, 0, 512, 256);
-  for (let i = 0; i < 22; i += 1) {
-    context.fillStyle = `rgba(77,243,255,${0.04 + i * 0.002})`;
-    context.fillRect(i * 27, 45 + (i % 5) * 21, 3, 130);
+  for (let i = 0; i < 24; i += 1) {
+    context.fillStyle =
+      i % 2 === 0
+        ? `rgba(0,240,255,${0.05 + i * 0.002})`
+        : `rgba(244,63,94,${0.05 + i * 0.002})`;
+    context.fillRect(i * 22, 40 + (i % 6) * 18, 3, 140);
   }
   return new THREE.CanvasTexture(canvas);
 }
@@ -394,10 +409,11 @@ function fitImportedModel(root) {
   const fittedBounds = new THREE.Box3().setFromObject(root);
   const fittedCenter = fittedBounds.getCenter(new THREE.Vector3());
   root.position.set(
-    0.5 - fittedCenter.x,
+    0.4 - fittedCenter.x,
     0.05 - fittedBounds.min.y,
-    0.4 - fittedCenter.z,
+    1.1 - fittedCenter.z,
   );
+  root.rotation.y = -Math.PI / 8;
 }
 function createFallbackClips() {
   const times = [0, 0.5, 1];
@@ -681,7 +697,7 @@ function toggleEnvironment() {
 function resetScene() {
   resetOrbitSettings();
   activeCamera = perspectiveCamera;
-  perspectiveCamera.position.set(7.5, 5.2, 9.5);
+  perspectiveCamera.position.set(0, 4.6, 8.8);
   orthographicCamera.position.copy(perspectiveCamera.position);
   perspectiveCamera.fov = 52;
   perspectiveCamera.zoom = orthographicCamera.zoom = 1;

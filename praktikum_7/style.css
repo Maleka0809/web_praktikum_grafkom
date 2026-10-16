@@ -1,8 +1,8 @@
 :root {
   color-scheme: dark;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-  background: #050d1a;
-  color: #dcecff;
+  background: #090317;
+  color: #f1f5f9;
 }
 * {
   box-sizing: border-box;
@@ -11,7 +11,7 @@ body {
   margin: 0;
   padding: 20px;
   background:
-    radial-gradient(circle at 80% 0, #123d61, transparent 40rem), #050d1a;
+    radial-gradient(circle at 85% 0, #3b0764, transparent 40rem), #090317;
 }
 .app-shell {
   max-width: 1500px;
@@ -25,7 +25,7 @@ body {
   margin-bottom: 18px;
 }
 .eyebrow {
-  color: #4df3ff;
+  color: #00f0ff;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1.6px;
@@ -37,14 +37,15 @@ body {
 }
 .page-header p {
   margin: 0;
-  color: #8ca7c1;
+  color: #a78bfa;
   font-size: 13px;
 }
 .status-badge {
   padding: 9px 12px;
-  border: 1px solid #28647d;
+  border: 1px solid #632c96;
   border-radius: 999px;
-  color: #4df3ff;
+  color: #00f0ff;
+  background: #190a36;
   font-size: 11px;
   white-space: nowrap;
 }
@@ -56,17 +57,18 @@ body {
 .canvas-panel,
 .control-panel {
   padding: 14px;
-  border: 1px solid #20445d;
+  border: 1px solid #3b1d64;
   border-radius: 18px;
-  background: #091a2a;
-  box-shadow: 0 18px 50px #0004;
+  background: #110729;
+  box-shadow: 0 18px 50px #0008;
 }
 .scene-container {
   width: 100%;
   aspect-ratio: 16 / 10;
   overflow: hidden;
   border-radius: 12px;
-  background: #020913;
+  border: 1px solid #2a1050;
+  background: #080214;
   cursor: crosshair;
 }
 .scene-container canvas {
@@ -84,8 +86,9 @@ body {
   min-width: 0;
   padding: 10px;
   border-radius: 9px;
-  background: #102b40;
-  color: #91adc7;
+  background: #1d0d40;
+  border: 1px solid #311666;
+  color: #c4b5fd;
   font:
     11px ui-monospace,
     monospace;
