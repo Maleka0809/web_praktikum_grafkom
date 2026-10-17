@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Praktikum 07 — Animasi Kompleks & Hierarchical Scene 3D (Three.js)</title>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module" crossorigin src="/assets/index-DHrQyESb.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-KREwH-cE.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <!-- HEADER -->
+      <header class="page-header">
+        <div>
+          <span class="eyebrow">PRAKTIKUM 07 · INTERACTIVE 3D & SCENE GRAPH</span>
+          <h1>Interactive Web 3D Prototype</h1>
+          <p>
+            Scene Graph, PBR Materials, GLB Loading, AnimationMixer, Raycasting Selection, dan Image-Based Lighting.
+          </p>
+          <a href="../halaman_awal/halaman_praktikum.html" style="color: #4df3ff; font-size: 11px; text-decoration: none; margin-top: 10px; display: inline-block; font-weight: bold;">← Kembali ke Daftar Praktikum</a>
+        </div>
+        <span id="statusBadge" class="status-badge">INITIALIZING SCENE...</span>
+      </header>
+
+      <!-- WORKSPACE -->
+      <div class="workspace">
+        <!-- CANVAS PANEL -->
+        <section class="canvas-panel">
+          <div id="sceneContainer" class="scene-container"></div>
+          
+          <!-- HUD GRID -->
+          <div class="hud-grid">
+            <div class="hud-card">
+              <span>Hover</span><b id="hoverInfo">-</b>
+            </div>
+            <div class="hud-card">
+              <span>Selected</span><b id="selectedInfo">-</b>
+            </div>
+            <div class="hud-card">
+              <span>Environment</span><b id="environmentInfo">ON</b>
+            </div>
+            <div class="hud-card">
+              <span>GLB Animation</span><b id="modelInfo">Loading...</b>
+            </div>
+            <div class="hud-card">
+              <span>Objects</span><b id="objectInfo">0</b>
+            </div>
+            <div class="hud-card">
+              <span>FPS</span><b id="fpsInfo">0</b>
+            </div>
+          </div>
+
+          <!-- SELECTION INFO PANEL (Challenge C) -->
+          <section id="infoPanel" class="info-panel">
+            <div>
+              <span class="eyebrow">SELECTION INFORMATION</span>
+              <h2 id="infoTitle">Belum ada objek dipilih</h2>
+              <div id="infoRootBadge" class="info-root-badge" style="display: none;">Root Model: Imported Duck GLB</div>
+            </div>
+            <div class="info-grid">
+              <span>Position</span><b id="infoPosition">-</b>
+              <span>Rotation</span><b id="infoRotation">-</b>
+              <span>Scale</span><b id="infoScale">-</b>
+              <span>Material</span><b id="infoMaterial">-</b>
+            </div>
+          </section>
+        </section>
+
+        <!-- CONTROL PANEL -->
+        <aside class="control-panel">
+          <span class="eyebrow">PARAMETER CONTROLS</span>
+          
+          <label class="select-row">Active camera
+            <select id="cameraSelect">
+              <option value="perspective">Perspective Camera</option>
+              <option value="orthographic">Orthographic Camera</option>
+            </select>
+          </label>
+          
+          <div class="range-row">
+            <span>Camera FOV</span><output id="fovValue">52°</output>
+          </div>
+          <input id="fovControl" type="range" min="25" max="100" value="52" />
+          
+          <div class="range-row">
+            <span>Inspector Roughness</span><output id="roughnessValue">0.35</output>
+          </div>
+          <input id="roughnessControl" type="range" min="0.05" max="1" step="0.05" value="0.35" />
+          
+          <div class="range-row">
+            <span>Inspector Metalness</span><output id="metalnessValue">0.65</output>
+          </div>
+          <input id="metalnessControl" type="range" min="0" max="1" step="0.05" value="0.65" />
+          
+          <div class="range-row">
+            <span>Solar Orbit Speed</span><output id="orbitValue">0.45</output>
+          </div>
+          <input id="orbitControl" type="range" min="0" max="1.5" step="0.05" value="0.45" />
+          
+          <!-- ORBIT SETTINGS -->
+          <fieldset class="orbit-settings">
+            <legend>OrbitControls · Camera</legend>
+            <label><input type="checkbox" data-orbit-setting="enabled" checked /> Aktifkan kontrol kamera</label>
+            <label><input type="checkbox" data-orbit-setting="enablePan" checked /> Izinkan panning (geser)</label>
+            <label><input type="checkbox" data-orbit-setting="enableDamping" checked /> Damping halus</label>
+            
+            <div class="range-row"><span>Damping factor</span><output id="cameraDampingFactorValue">0.05</output></div>
+            <input id="cameraDampingFactor" data-orbit-setting="dampingFactor" type="range" min="0.01" max="0.25" step="0.01" value="0.05" />
+            
+            <div class="range-row"><span>Rotate speed</span><output id="cameraRotateSpeedValue">1.00</output></div>
+            <input id="cameraRotateSpeed" data-orbit-setting="rotateSpeed" type="range" min="0.1" max="3" step="0.1" value="1" />
+            
+            <div class="range-row"><span>Zoom speed</span><output id="cameraZoomSpeedValue">1.00</output></div>
+            <input id="cameraZoomSpeed" data-orbit-setting="zoomSpeed" type="range" min="0.1" max="3" step="0.1" value="1" />
+          </fieldset>
+
+          <!-- PANORAMA SELECT -->
+          <label class="select-row" for="panoramaSelect">Skybox / HDR Panorama
+            <select id="panoramaSelect">
+              <option value="moonless" selected>Moonless Golf Night (Three.js HDR)</option>
+              <option value="nebula">Cosmic Nebula &amp; Stars (Space)</option>
+              <option value="studio">Studio Small 09 (HDR)</option>
+              <option value="ladybrand">Ladybrand Heritage House (HDR)</option>
+              <option value="procedural">Procedural Cyberpunk Gradient</option>
+            </select>
+          </label>
+
+          <!-- BLOOM SETTINGS -->
+          <fieldset class="orbit-settings">
+            <legend>Sphere Emissive &amp; Bloom</legend>
+            <div class="range-row"><span>Emissive intensity</span><output id="emissiveIntensityValue">5.00</output></div>
+            <input id="emissiveIntensityControl" type="range" min="0" max="20" step="0.1" value="5" />
+            <div class="range-row"><span>Bloom intensity</span><output id="bloomIntensityValue">0.55</output></div>
+            <input id="bloomIntensityControl" type="range" min="0" max="3" step="0.05" value="0.55" />
+            <div class="range-row"><span>Bloom radius</span><output id="bloomRadiusValue">0.30</output></div>
+            <input id="bloomRadiusControl" type="range" min="0" max="1" step="0.01" value="0.3" />
+            <small>Emisi mengatur kecerahan neon Sun &amp; Child sphere. Bloom mengatur pendaran cahaya (glow).</small>
+          </fieldset>
+
+          <!-- BUTTON GRID -->
+          <div class="button-grid">
+            <button id="clip1Button" class="active-clip">1 · Idle</button>
+            <button id="clip2Button">2 · Walk</button>
+            <button id="clip3Button">3 · Run</button>
+            <button id="solarButton">Solar (S)</button>
+            <button id="environmentButton" aria-pressed="true">Refleksi: ON (E)</button>
+            <button id="panoramaButton" aria-pressed="true">Panorama: ON (P)</button>
+            <button id="bloomButton" aria-pressed="true">Bloom: ON</button>
+            <button id="resetButton">Reset All (R)</button>
+          </div>
+
+          <!-- KEYBOARD HELP -->
+          <div class="keyboard-help">
+            <b>Pintasan Keyboard &amp; Interaksi</b>
+            <span><b>1 / 2 / 3</b>: Ganti Animation Clip (Idle / Walk / Run)</span>
+            <span><b>E</b>: Toggle Refleksi Environment (ON/OFF)</span>
+            <span><b>P</b>: Toggle Skybox/Panorama (ON/OFF)</span>
+            <span><b>S</b>: Pause / Resume Orbit Tata Surya</span>
+            <span><b>R</b>: Reset posisi kamera &amp; parameter</span>
+            <span><b>Hover</b>: Emissive glow + feedback skala 1.06</span>
+            <span><b>Click</b>: Seleksi objek + auto rotasi (Challenge G)</span>
+            <span><b>Click Duck</b>: Memainkan animasi imported model (Challenge B)</span>
+            <span><b>Klik Area Kosong</b>: Deselect &amp; hentikan rotasi tambahan</span>
+          </div>
+
+          <!-- LIVE LOG -->
+          <div id="logPanel" class="log-panel">
+            Raycaster siap. Arahkan kursor atau klik objek di scene.
+          </div>
+        </aside>
+      </div>
+
+      <!-- EXPLANATION SECTION (Implementasi Challenge & Analisis Konsep) -->
+      <section class="explanation-section">
+        <h2>Implementasi Challenge &amp; Analisis Konsep Praktikum 7</h2>
+        <p class="section-desc">
+          Bagian ini menjabarkan seluruh implementasi Challenge 92 hingga 99 (Challenge A s/d H) serta jawaban komprehensif atas Pertanyaan Analisis 112 (A s/d H) mencakup konsep grafika komputer 3D, transformasi hierarki scene graph, model shading PBR Cook-Torrance, decoupling timeline animasi, raycasting NDC, dan Image-Based Lighting.
+        </p>
+
+        <!-- ==========================================================================
+             PERTANYAAN ANALISIS 112
+             ========================================================================== -->
+        <div class="concept-block">
+          <h3>
+            Pertanyaan Analisis 112
+            <span class="concept-badge">Teori Fundamental &amp; Arsitektur Scene Graph</span>
+          </h3>
+          <dl>
+            <dt>A — Hierarchy: Sebuah wheel adalah child dari car. Jika car bergerak 10 unit, apakah local position wheel harus diubah? Jelaskan.</dt>
+            <dd>
+              <b>Jawab: TIDAK.</b> Nilai <code>local position</code> dari wheel sama sekali tidak perlu diubah.
+              <br /><br />
+              <b>Penjelasan Matematis &amp; Konseptual:</b>
+              Dalam grafika komputer berbasis <i>Scene Graph</i>, setiap objek memiliki dua representasi matriks transformasi:
+              <ol>
+                <li><b>Local Matrix ($M_{local}$):</b> Merepresentasikan posisi, rotasi, dan skala objek relatif terhadap sistem koordinat lokal <i>parent</i>-nya.</li>
+                <li><b>World Matrix ($M_{world}$):</b> Merepresentasikan posisi, rotasi, dan skala absolut objek terhadap titik origin semesta $(0, 0, 0)$ pada <i>World Space</i>.</li>
+              </ol>
+              Hubungan matematis antara parent (car) dan child (wheel) dihitung melalui perkalian matriks secara hierarkis:
+              <pre><code>M_world(wheel) = M_world(car) × M_local(wheel)</code></pre>
+              Ketika mobil bergerak sejauh 10 unit, perubahan translasi hanya diaplikasikan pada <code>car.position</code> sehingga $M_{world}(car)$ bergeser 10 unit. Melalui perkalian matriks di atas saat <i>scene graph update</i>, $M_{world}(wheel)$ secara otomatis ikut bergeser 10 unit di ruang dunia tanpa menyentuh atau merubah nilai pada <code>wheel.position</code> lokalnya. Roda tetap berada pada posisi offset relatifnya terhadap bodi mobil (misalnya di pojok kanan depan mobil).
+            </dd>
+
+            <dt>B — Scene Graph: Mengapa object kompleks seperti robot atau kendaraan lebih mudah dikelola menggunakan hierarchy daripada semua part langsung menjadi child Scene?</dt>
+            <dd>
+              <b>Jawab: Karena prinsip Pewarisan Transformasi (Transform Inheritance) dan Pengelompokan Logis Relatif.</b>
+              <br /><br />
+              Jika seluruh bagian (seperti roda, pintu, wiper, setir pada mobil, atau bahu, lengan, telapak tangan, jari pada robot) dimasukkan langsung sebagai <i>child</i> dari <code>Scene</code>:
+              <ul>
+                <li><b>Kompleksitas Perhitungan Kinematika:</b> Setiap kali bodi mobil bergerak maju, berbelok, atau berguncang melewati tanjakan, pengembang harus menghitung ulang posisi dan orientasi absolut 3D setiap komponen secara manual menggunakan trigonometri matriks yang sangat rumit dan rawan kesalahan (*error-prone*).</li>
+                <li><b>Isolasi Artikulasi Sendi:</b> Dengan hierarki (misal: <code>Bahu → Lengan Atas → Lengan Bawah → Jari</code>), untuk menganimasikan gerakan melambaikan tangan, kita cukup memutar sendi pergelangan tangan pada sumbu lokalnya. Jari-jemari tangan secara otomatis akan ikut berputar mengikuti pergelangan tangan tanpa memengaruhi posisi lengan atas atau tubuh utama.</li>
+                <li><b>Efisiensi Transformasi Global:</b> Seluruh karakter robot atau kendaraan dapat dipindahkan, diputar, dan diskalakan secara menyeluruh hanya dengan satu baris instruksi pada root group (misal: <code>robot.position.add(...)</code>).</li>
+              </ul>
+            </dd>
+
+            <dt>C — PBR: Dua sphere mempunyai color sama, tetapi roughness dan metalness berbeda. Mengapa keduanya dapat terlihat sangat berbeda?</dt>
+            <dd>
+              <b>Jawab: Karena metalness dan roughness mengontrol parameter fisik interaksi foton cahaya yang berbeda secara fundamental dalam persamaan Cook-Torrance BRDF.</b>
+              <br /><br />
+              Meskipun nilai warna albedo dasar sama (misalnya biru cyan <code>#00f0ff</code>):
+              <ul>
+                <li><b>Metalness (Konduktivitas Listrik &amp; Tipe Material):</b>
+                  <ul>
+                    <li><i>Dielektrik (metalness: 0):</i> Memiliki pantulan baur (*diffuse reflection*) yang sangat kuat. Warna albedo terlihat jelas di bawah pencahayaan langsung. Pantulan spekularnya kecil (sekitar 4% Fresnel $F_0$) dan selalu memantulkan warna cahaya lampu (putih netral).</li>
+                    <li><i>Konduktor/Logam (metalness: 1):</i> Tidak memiliki pantulan diffuse sama sekali (semua foton yang menembus permukaan diserap oleh elektron bebas). Seluruh tampilan permukaannya berasal dari pantulan spekular lingkungan yang diwarnai (*tinted*) oleh warna albedo dasar.</li>
+                  </ul>
+                </li>
+                <li><b>Roughness (Kekasaran Mikro-Permukaan / Microfacet Distribution):</b>
+                  <ul>
+                    <li><i>Roughness Rendah (0.1):</i> Orientasi normal mikro-facet seragam dan sejajar layaknya cermin sempurna. Sinar dipantulkan terfokus dan rapat, menghasilkan <i>specular highlight</i> tajam dan pantulan lingkungan HDR yang sangat jernih dan bening.</li>
+                    <li><i>Roughness Tinggi (0.9):</i> Orientasi mikro-facet acak dan bergelombang. Sinar dipantulkan menyebar ke segala arah (*scattered*), menghasilkan highlight yang sangat melebar lembut dan pantulan lingkungan yang buram/kabur (*matte/chalky*).</li>
+                  </ul>
+                </li>
+              </ul>
+              Akibatnya, bola dengan metalness 1 dan roughness 0.1 tampak seperti bola krom cermin biru mengkilap, sedangkan bola dengan metalness 0 dan roughness 0.9 tampak seperti bola tanah liat/karet kusam tanpa kilap.
+            </dd>
+
+            <dt>D — Asset: Mengapa imported GLB sebaiknya diperlakukan sebagai hierarchy dan bukan diasumsikan hanya satu Mesh?</dt>
+            <dd>
+              <b>Jawab: Karena format glTF/GLB adalah standar representasi Scene Graph 3D utuh, bukan sekadar berkas geometri tunggal.</b>
+              <br /><br />
+              Di dalam sebuah file <code>.glb</code>, data tersimpan dalam pohon hierarki node (Node Tree) yang mencakup:
+              <ul>
+                <li>Root scene node (<code>gltf.scene</code>) sebagai wadah utama transformasi.</li>
+                <li>Multiple sub-mesh terpisah (misalnya bodi mobil terpisah dari roda-roda, atau kepala karakter terpisah dari mata dan topi).</li>
+                <li>Setiap mesh dapat memiliki geometri, material, tekstur, dan matriks offset lokal masing-masing.</li>
+                <li>Rangkaian tulang artikulasi (*bones / skeleton*) dan bobot skinning (*vertex skin weights*) untuk animasi skeletal.</li>
+              </ul>
+              Jika kita mengasumsikan GLB adalah satu Mesh tunggal (misal langsung mengakses <code>gltf.scene.material</code>), kode akan menghasilkan error <code>undefined</code>. Penanganan bayangan (<code>castShadow/receiveShadow</code>), raycasting picking, manipulasi material non-destruktif, serta animasi harus dilakukan dengan menelusuri seluruh hierarki menggunakan traversal: <code>root.traverse((node) => { if (node.isMesh) ... })</code>.
+            </dd>
+
+            <dt>E — Animation: Mengapa action.play() saja belum cukup tanpa mixer.update(delta) di animation loop?</dt>
+            <dd>
+              <b>Jawab: Karena <code>action.play()</code> hanya menjadwalkan/mengaktifkan status pemutaran, sedangkan <code>mixer.update(delta)</code> adalah mesin yang menghitung interpolasi keyframe terhadap waktu.</b>
+              <br /><br />
+              Three.js memisahkan secara tegas antara status kontrol aksi (<code>AnimationAction</code>) dan mesin pembaruan timeline matematika (<code>AnimationMixer</code>):
+              <ul>
+                <li><code>action.play()</code> memberitahu mixer bahwa clip tersebut harus dievaluasi pada frame berikutnya dan dimasukkan ke dalam daftar aktif.</li>
+                <li><code>mixer.update(delta)</code> bertugas memajukan waktu playback internal sebesar $\Delta t$ (delta time), mengevaluasi kurva keyframe (posisi, rotasi kuaternion, skala) pada <code>AnimationClip</code>, menghitung pembobotan fading (*crossfade blending*), dan menuliskan nilai transformasi baru langsung ke matriks node 3D target.</li>
+              </ul>
+              Tanpa pemanggilan <code>mixer.update(delta)</code> di dalam loop <code>requestAnimationFrame</code>, waktu timeline mixer membeku di detik 0, sehingga model 3D akan tetap diam tanpa gerakan apapun.
+            </dd>
+
+            <dt>F — Raycasting: Mengapa coordinate mouse pixel tidak dapat langsung digunakan sebagai coordinate raycaster?</dt>
+            <dd>
+              <b>Jawab: Karena koordinat piksel layar berada pada sistem 2D Screen Space, sedangkan kamera 3D Three.js dan Raycaster beroperasi pada Normalized Device Coordinates (NDC) di dalam ruang 3D Clip Space.</b>
+              <br /><br />
+              Perbedaan sistem koordinat tersebut:
+              <ul>
+                <li><b>Screen Space (Piksel Mouse):</b> Origin $(0, 0)$ terletak di pojok kiri-atas kanvas. Rentang sumbu X adalah $[0, \text{lebar}]$ piksel, dan sumbu Y mengarah ke bawah $[0, \text{tinggi}]$ piksel.</li>
+                <li><b>Normalized Device Coordinates (NDC):</b> Origin $(0, 0)$ terletak persis di tengah kanvas. Rentang sumbu X adalah $[-1, 1]$ (kiri ke kanan) dan sumbu Y adalah $[-1, 1]$ (bawah ke atas).</li>
+              </ul>
+              Rumus normalisasi yang wajib diterapkan:
+              <pre><code>pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;</code></pre>
+              Setelah koordinat berada dalam rentang NDC $[-1, 1]$, fungsi <code>raycaster.setFromCamera(pointer, camera)</code> akan mengalikan vektor NDC tersebut dengan <i>Inverse Projection Matrix</i> dan <i>Inverse View Matrix</i> kamera untuk memproyeksikan garis sinar (ray) 3D dari mata kamera menembus kedalaman dunia virtual (*World Space*).
+            </dd>
+
+            <dt>G — Interaction State: Mengapa hoveredObject dan selectedObject sebaiknya disimpan pada variabel berbeda?</dt>
+            <dd>
+              <b>Jawab: Karena hover dan selection memiliki semantik interaksi, durasi hidup (lifecycle), dan konsekuensi visual yang berbeda secara fundamental.</b>
+              <br /><br />
+              Perbandingan peran keduanya:
+              <ul>
+                <li><b>Hover State (Transient / Sementara):</b> Bersifat sementara mengikuti letak kursor mouse. Aktif saat kursor melintas di atas objek dan langsung berakhir seketika saat kursor bergeser menjauh (<code>pointerleave</code>). Tujuannya adalah memberikan umpan balik visual instan bahwa objek tersebut dapat diklik (<i>affordance</i>).</li>
+                <li><b>Selected State (Persistent / Menetap):</b> Bersifat permanen setelah tindakan klik dieksekusi. Objek tetap berstatus terpilih meskipun mouse sudah dipindahkan ke tempat lain, digunakan untuk memutar kamera, atau menggeser slider di kontrol panel. Status ini baru berakhir jika pengguna memilih objek lain atau mengklik area kosong.</li>
+              </ul>
+              Jika disatukan ke dalam satu variabel, maka efek seleksi (seperti rotasi aktif Challenge G atau data pada Information Panel Challenge C) akan langsung terhapus begitu kursor meninggalkan objek, dan pengguna tidak dapat melakukan preview hover pada objek lain saat sebuah objek sedang dianalisis.
+            </dd>
+
+            <dt>H — Environment: Mengapa scene.background dan scene.environment dipisahkan walaupun keduanya dapat memakai texture yang sama?</dt>
+            <dd>
+              <b>Jawab: Karena fungsi grafis keduanya berada pada tahapan pipeline rendering yang berbeda secara fundamental.</b>
+              <br /><br />
+              Perbedaan fungsinya:
+              <ul>
+                <li><b><code>scene.background</code>:</b> Hanya berfungsi sebagai kanvas latar belakang (visual backdrop) yang digambar di belakang seluruh objek 3D. Objek ini tidak memancarkan foton cahaya dan tidak memantul pada permukaan material PBR.</li>
+                <li><b><code>scene.environment</code>:</b> Berfungsi sebagai <i>Radiance Environment Map</i> untuk <b>Image-Based Lighting (IBL)</b>. Tekstur diproses melalui pre-filtered MIP-map (PMREM) untuk menghitung pantulan spekular lingkungan pada material reflektif (logam, kaca) dan pencahayaan ambien tak langsung (*diffuse irradiance*).</li>
+              </ul>
+              Pemisahan ini memungkinkan fleksibilitas visual: kita dapat menonaktifkan refleksi (<code>scene.environment = null</code>) untuk melihat bagaimana material merespons hanya lampu terarah (Challenge H), atau menggunakan latar flat hitam minimalis sambil tetap mempertahankan refleksi studio HDR yang tajam pada material objek 3D.
+            </dd>
+          </dl>
+        </div>
+
+        <!-- ==========================================================================
+             CHALLENGE A
+             ========================================================================== -->
+        <div class="concept-block">
+          <h3>
+            Challenge A — Multiple Animation Clips
+            <span class="concept-badge">AnimationMixer &bull; AnimationAction &bull; Crossfading &bull; Keyframes</span>
+          </h3>
+          <h4>1. Konsep Teoretis Grafika Komputer</h4>
+          <p>
+            Dalam animasi 3D modern, animasi tidak disimpan sebagai perpindahan posisi langsung di loop render, melainkan sebagai berkas data <b>AnimationClip</b> yang berisi rangkaian <i>Keyframe Tracks</i> (kurva perpindahan posisi, rotasi kuaternion, dan skala terhadap waktu).
+          </p>
+          <p>
+            Satu instans <b>AnimationMixer</b> bertindak sebagai konduktor musik utama yang mengontrol seluruh animasi pada sebuah root hierarki. Mixer ini dapat mengalokasikan beberapa <b>AnimationAction</b> sekaligus (misalnya Idle, Walk, dan Run). Agar perpindahan antar gerakan tidak patah atau tersentak (*jerky transition*), digunakan teknik <b>Crossfading</b>: aksi lama diturunkan bobotnya secara bertahap (<code>fadeOut</code>) sementara aksi baru dinaikkan bobotnya (<code>fadeIn</code>).
+          </p>
+
+          <h4>2. Implementasi Kode</h4>
+          <pre><code>// 1. Inisialisasi AnimationMixer pada Root Model GLB
+state.mixer = new THREE.AnimationMixer(root);
+
+// 2. Pembuatan AnimationClip Prosedural (Idle, Walk, Run)
+const clips = gltf.animations.length ? gltf.animations : createFallbackClips();
+state.actions = clips.map((clip) => state.mixer.clipAction(clip));
+
+// 3. Fungsi Crossfading Antar Clip
+function playClip(index) {
+  if (!state.actions.length) return;
+  const next = state.actions[index % state.actions.length];
+  state.clipIndex = index % state.actions.length;
+
+  if (state.activeAction && state.activeAction !== next) {
+    state.activeAction.fadeOut(0.25); // Fade out aksi lama
+  }
+  next.reset().fadeIn(0.25).play(); // Fade in aksi baru
+  state.activeAction = next;
+}
+
+// 4. Integrasi Keyboard Event 1, 2, 3
+window.addEventListener("keydown", (e) => {
+  if (["1", "2", "3"].includes(e.key)) playClip(Number(e.key) - 1);
+});</code></pre>
+
+          <h4>3. Bedah Kode Baris per Baris</h4>
+          <ul>
+            <li><code>new THREE.AnimationMixer(root)</code>: Mengalokasikan mesin pengelola animasi pada hierarki root objek GLB Duck.</li>
+            <li><code>createFallbackClips()</code>: Menghasilkan 3 klip animasi berbasis <code>NumberKeyframeTrack</code>: Clip 1 (Idle bernapas/mengangguk lembut), Clip 2 (Walk goyang langkah bebek side-to-side), dan Clip 3 (Run sprint cepat berfrekuensi tinggi).</li>
+            <li><code>state.mixer.clipAction(clip)</code>: Menghubungkan klip data dengan mixer untuk menghasilkan objek pengontrol <code>AnimationAction</code>.</li>
+            <li><code>fadeOut(0.25) &amp; fadeIn(0.25)</code>: Melakukan interpolasi bobot pengaruh animasi (*blending weight*) secara linear selama 0.25 detik sehingga pergantian gerak mengalir mulus tanpa patahan visual.</li>
+            <li><code>state.mixer.update(delta)</code>: Dipanggil di loop <code>animate()</code> menggunakan delta time untuk mengevaluasi posisi keyframe setiap frame.</li>
+          </ul>
+
+          <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+          <p>
+            Pengguna dapat menekan tombol <b>1</b>, <b>2</b>, <b>3</b> pada keyboard atau mengklik tombol UI di kontrol panel. Model bebek bertransisi secara mulus dari posisi mengangguk santai (Idle), melangkah berirama (Walk), hingga berlari kencang (Run). Tombol aktif di UI menyala dengan aksen border cyan glow.
+          </p>
+        </div>
+
+        <!-- ==========================================================================
+             CHALLENGE B
+             ========================================================================== -->
+        <div class="concept-block">
+          <h3>
+            Challenge B — Click Menjalankan Animasi
+            <span class="concept-badge">Raycast Picking &bull; Action Dispatch &bull; Event Integration</span>
+          </h3>
+          <h4>1. Konsep Teoretis Grafika Komputer</h4>
+          <p>
+            Mekanisme <i>Event-driven 3D Interaction</i> menghubungkan input fisik pengguna (klik mouse) dengan logika state pada model virtual. Urutan eksekusi mengikuti alur:
+          </p>
+          <pre><code>Click Pointer &rarr; Raycast Intersection &rarr; Identifikasi Root Model &rarr; Select &rarr; Dispatch Animation Action</code></pre>
+          <p>
+            Karena model GLB terdiri dari beberapa sub-mesh, fungsi raycasting harus mampu mengenali bahwa mesh yang terbentur kursor adalah bagian dari model imported yang sama, lalu memicu transisi klip animasi pada root mixer.
+          </p>
+
+          <h4>2. Implementasi Kode</h4>
+          <pre><code>renderer.domElement.addEventListener("click", (event) => {
+  if (suppressSelection || event.button !== 0) return;
+  const next = raycast(event);
+  
+  if (next) {
+    state.selected = next;
+    updateInfo(next);
+    
+    // Periksa apakah objek yang diklik adalah Model Bebek GLB
+    const isDuck = state.gltfRoot && (next === state.gltfRoot || isDescendantOf(next, state.gltfRoot));
+    if (isDuck) {
+      // Siklus berpindah ke animasi berikutnya saat diklik
+      state.clipIndex = (state.clipIndex + 1) % (state.actions.length || 1);
+      playClip(state.clipIndex);
+      log(`Click imported model: ${state.gltfRoot.name} &bull; Memainkan klip ${state.clipIndex + 1}!`);
+    }
+  }
+});</code></pre>
+
+          <h4>3. Bedah Kode Baris per Baris</h4>
+          <ul>
+            <li><code>suppressSelection</code>: Mencegah trigger klik yang tidak disengaja ketika pengguna sebenarnya sedang melakukan drag orbit kamera.</li>
+            <li><code>raycast(event)</code>: Menembakkan sinar ray 3D dari kursor mouse dan mengembalikan objek terdepan yang berinterseksi.</li>
+            <li><code>isDescendantOf(next, state.gltfRoot)</code>: Menelusuri hierarki parent ke atas untuk memastikan apakah mesh yang disentuh merupakan anak dari root GLB model.</li>
+            <li><code>playClip(state.clipIndex)</code>: Memicu pemutaran klip animasi baru dengan crossfade halus secara instan saat model berhasil diklik.</li>
+          </ul>
+
+          <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+          <p>
+            Saat model bebek diklik di viewport 3D, bebek langsung terpilih dengan feedback skala membesar (1.12x), glow warna emas aktif, data model muncul di Information Panel, dan animasinya langsung berganti secara interaktif (Idle &rarr; Walk &rarr; Run).
+          </p>
+        </div>
+
+        <!-- ==========================================================================
+             CHALLENGE C
+             ========================================================================== -->
+        <div class="concept-block">
+          <h3>
+            Challenge C — Information Panel
+            <span class="concept-badge">Scene Graph Inspection &bull; Local vs World Transform &bull; Material Introspection</span>
+          </h3>
+          <h4>1. Konsep Teoretis Grafika Komputer</h4>
+          <p>
+            Setiap simpul dalam Scene Graph menyimpan transformasi dalam bentuk <b>Local Transform</b> (vektor <code>position</code>, <code>rotation</code> Euler, <code>scale</code> relatif terhadap parent) dan <b>World Transform</b> yang dihitung dari perkalian rantai matriks menuju root scene. Panel informasi mengurai data spasial internal ini dan menampilkannya dalam format koordinat yang terstandarisasi.
+          </p>
+
+          <h4>2. Implementasi Kode</h4>
+          <pre><code>function updateInfo(object) {
+  if (!object) {
+    $("#infoTitle").textContent = "Belum ada objek dipilih";
+    $("#infoRootBadge").style.display = "none";
+    ["#infoPosition", "#infoRotation", "#infoScale", "#infoMaterial"].forEach((id) => $(id).textContent = "-");
+    return;
+  }
+
+  const world = new THREE.Vector3();
+  object.getWorldPosition(world); // Ekstraksi koordinat World Space
+  
+  $("#infoTitle").textContent = object.name || object.type;
+  
+  // Tampilkan label root jika merupakan imported model GLB
+  if (state.gltfRoot && (object === state.gltfRoot || isDescendantOf(object, state.gltfRoot))) {
+    $("#infoRootBadge").style.display = "inline-block";
+    $("#infoRootBadge").textContent = `Root Model: ${state.gltfRoot.name}`;
+  } else {
+    $("#infoRootBadge").style.display = "none";
+  }
+
+  $("#infoPosition").textContent = `local [${formatVector(object.position)}] &bull; world [${formatVector(world)}]`;
+  $("#infoRotation").textContent = `[${(object.rotation.x * 57.3).toFixed(1)}°, ${(object.rotation.y * 57.3).toFixed(1)}°, ${(object.rotation.z * 57.3).toFixed(1)}°]`;
+  $("#infoScale").textContent = `[${formatVector(object.scale)}]`;
+  $("#infoMaterial").textContent = materialName(object);
+}</code></pre>
+
+          <h4>3. Bedah Kode Baris per Baris</h4>
+          <ul>
+            <li><code>object.getWorldPosition(world)</code>: Mengambil nilai translasi absolut pada sumbu $(X, Y, Z)$ setelah seluruh matriks parent dikalikan.</li>
+            <li><code>formatVector(object.position)</code>: Memformat nilai float koordinat lokal menjadi 2 angka di belakang koma untuk kemudahan inspeksi.</li>
+            <li><code>rotation * 57.3</code>: Mengonversi nilai sudut rotasi internal radian menjadi derajat busur agar intuitif dipahami.</li>
+            <li><code>#infoRootBadge</code>: Badge visual yang menyala otomatis jika objek yang dipilih adalah root atau turunan dari GLB Duck yang diimpor.</li>
+          </ul>
+
+          <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+          <p>
+            Setiap kali objek di scene diklik (Bumi, Bulan, Matahari, Bola PBR, Kubus Kaca, Bebek GLB), panel informasi di bawah kanvas langsung terisi secara real-time menampilkan nama objek, koordinat lokal vs dunia, rotasi derajat, skala, tipe material, serta badge root model imported.
+          </p>
+        </div>
+
+        <!-- ==========================================================================
+             CHALLENGE D
+             ========================================================================== -->
+        <div class="concept-block">
+          <h3>
+            Challenge D — Hierarchical Solar System
+            <span class="concept-badge">Parent-Child Hierarchy &bull; Forward Kinematics &bull; Orbital Simulation</span>
+          </h3>
+          <h4>1. Konsep Teoretis Grafika Komputer</h4>
+          <p>
+            Simulasi tata surya adalah demonstrasi paling murni dari kekuatan <b>Kinematika Maju (Forward Kinematics)</b> berbasis Scene Graph. Tanpa hierarki, posisi Bulan di ruang dunia harus dihitung menggunakan persamaan trigonometri berganda yang rumit:
+          </p>
+          <pre><code>x_moon = x_sun + r_earth * cos(theta_earth) + r_moon * cos(theta_moon)</code></pre>
+          <p>
+            Dengan hierarki parent-child Three.js:
+          </p>
+          <pre><code>Sun (Center)
+└── Earth Orbit (Group at Sun center, rotasi orbit Bumi)
+    └── Earth (Mesh di radius X = 2.0, rotasi aksial Bumi)
+        └── Moon Orbit (Group di pusat Bumi, rotasi orbit Bulan)
+            └── Moon (Mesh di radius X = 0.65, rotasi aksial Bulan)</code></pre>
+          <p>
+            Cukup dengan memutar rotasi sumbu Y dari <code>earthOrbit</code> dan <code>moonOrbit</code>, pergerakan Bulan mengelilingi Bumi dan Bumi mengelilingi Matahari terjadi secara otomatis melalui perkalian matriks bawaan GPU!
+          </p>
+
+          <h4>2. Implementasi Kode</h4>
+          <pre><code>// 1. Pembuatan Grup dan Objek
+const solarSystem = new THREE.Group();
+const sun = new THREE.Mesh(sunGeo, sunMat);
+
+const earthOrbit = new THREE.Group(); // Pusat orbit Bumi
+const earth = new THREE.Mesh(earthGeo, earthMat);
+earth.position.x = 2.0; // Jarak Bumi dari Matahari
+
+const moonOrbit = new THREE.Group(); // Pusat orbit Bulan (child Bumi)
+const moon = new THREE.Mesh(moonGeo, moonMat);
+moon.position.x = 0.65; // Jarak Bulan dari Bumi
+
+// 2. Penyusunan Struktur Pohon Hierarki
+moonOrbit.add(moon);
+earth.add(moonOrbit); // Moon Orbit adalah anak dari Earth!
+earthOrbit.add(earth); // Earth adalah anak dari Earth Orbit!
+solarSystem.add(sun, earthOrbit); // Earth Orbit adalah anak dari Solar System!
+scene.add(solarSystem);
+
+// 3. Perhitungan Animasi di Render Loop (Bebas kalkulasi koordinat manual)
+function animate() {
+  ...
+  if (state.solar) {
+    earthOrbit.rotation.y += delta * state.orbitSpeed; // Revolusi Bumi mengitari Matahari
+    earth.rotation.y += delta * 1.5;                  // Rotasi poros Bumi
+    moonOrbit.rotation.y += delta * 3.5;              // Revolusi Bulan mengitari Bumi
+    moon.rotation.y += delta * 2.0;                   // Rotasi poros Bulan
+    sun.rotation.y += delta * 0.2;                    // Rotasi poros Matahari
+  }
+}</code></pre>
+
+          <h4>3. Bedah Kode Baris per Baris</h4>
+          <ul>
+            <li><code>earth.add(moonOrbit)</code>: Mengaitkan grup orbit bulan langsung ke bodi Bumi, menjamin posisi dasar bulan selalu terkunci di pusat Bumi ke mana pun Bumi bergerak.</li>
+            <li><code>earthOrbit.rotation.y += delta * speed</code>: Memutar grup orbit Bumi mengelilingi Matahari. Karena Bumi adalah child dari grup ini, Bumi otomatis berevolusi mengelilingi Matahari di radius 2.0 unit.</li>
+            <li><code>earthOrbitPath &amp; moonOrbitPath</code>: Lintasan melingkar neon transparan ditambahkan untuk memvisualisasikan bidang orbit secara elegan.</li>
+          </ul>
+
+          <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+          <p>
+            Matahari neon magenta bersinar di tengah memancarkan cahaya titik (PointLight). Bumi cyan berputar pada porosnya sambil mengitari Matahari, dan Bulan platinum mungil berputar mengelilingi Bumi secara stabil dan presisi tanpa terjadi pergeseran posisi atau perhitungan koordinat manual yang berulang. Tombol <b>Solar (S)</b> dapat digunakan untuk pause/resume simulasi.
+          </p>
+        </div>
+
+        <!-- ==========================================================================
+             CHALLENGE E
+             ========================================================================== -->
+        <div class="concept-block">
+          <h3>
+            Challenge E — PBR Material Gallery
+            <span class="concept-badge">Physically Based Rendering &bull; Roughness vs Metalness &bull; Microfacet Grid</span>
+          </h3>
+          <h4>1. Konsep Teoretis Grafika Komputer</h4>
+          <p>
+            <b>Physically Based Rendering (PBR)</b> mensimulasikan hukum fisika konservasi energi dan hamburan cahaya mikro (*Microfacet Theory*). Galeri matriks 3x3 disusun untuk memperlihatkan hubungan ortogonal antara dua parameter inti:
+          </p>
+          <ul>
+            <li><b>Sumbu Horizontal (Roughness $\rightarrow$):</b> Nilai <code>0.1</code> (Sangat Halus/Glossy), <code>0.5</code> (Semi-Gloss), dan <code>0.9</code> (Kasar/Matte). Mengontrol seberapa lebar hamburan refleksi mikro-facet.</li>
+            <li><b>Sumbu Vertikal (Metalness $\downarrow$):</b> Nilai <code>1.0</code> (Logam Murni), <code>0.5</code> (Semi-Metal), dan <code>0.0</code> (Dielektrik/Non-Logam). Mengontrol penyerapan komponen diffuse dan pewarnaan pantulan spekular Fresnel.</li>
+          </ul>
+
+          <h4>2. Implementasi Kode</h4>
+          <pre><code>const roughnessValues = [0.1, 0.5, 0.9];
+const metalnessValues = [1.0, 0.5, 0.0];
+
+roughnessValues.forEach((roughness, col) => {
+  metalnessValues.forEach((metalness, row) => {
+    const colX = (col - 1) * 0.95;
+    const posY = 0.35 + (2 - row) * 0.75;
+    const posZ = -2.3 + Math.abs(col - 1) * 0.35;
+
+    const material = new THREE.MeshStandardMaterial({
+      color: new THREE.Color().setHSL((col * 35 + row * 120) % 360 / 360, 0.85, 0.55),
+      roughness: roughness,
+      metalness: metalness,
+      envMapIntensity: 1.0,
+    });
+
+    const sphere = new THREE.Mesh(geometry, material);
+    sphere.position.set(colX, posY, posZ);
+    gallery.add(sphere);
+    interactiveObjects.push(sphere);
+  });
+});</code></pre>
+
+          <h4>3. Matriks Observasi Visual PBR</h4>
+          <table class="obs-table">
+            <thead>
+              <tr>
+                <th>Metalness \ Roughness</th>
+                <th>Roughness 0.1 (Glossy)</th>
+                <th>Roughness 0.5 (Semi-Matte)</th>
+                <th>Roughness 0.9 (Rough/Chalky)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>Metalness 1.0 (Logam)</b></td>
+                <td>Cermin krom berkilap tinggi, memantulkan panorama HDR secara jernih tanpa diffuse albedo.</td>
+                <td>Logam satin terpoles lembut, pantulan HDR mulai memburam dengan sebaran highlight sedang.</td>
+                <td>Logam tempa kasar / brushed metal, pantulan buram merata tanpa detail cermin.</td>
+              </tr>
+              <tr>
+                <td><b>Metalness 0.5 (Semi-Metal)</b></td>
+                <td>Permukaan mengkilap dengan campuran warna diffuse dan pantulan spekular berwarna.</td>
+                <td>Permukaan semi-kilap seperti cat mobil metalik kusam.</td>
+                <td>Permukaan kasar dengan sedikit kilap logam redup di sudut pandang miring (Fresnel).</td>
+              </tr>
+              <tr>
+                <td><b>Metalness 0.0 (Dielektrik)</b></td>
+                <td>Biliar / keramik kaca, warna diffuse albedo kuat dengan highlight spekular putih tajam.</td>
+                <td>Plastik halus semi-gloss dengan kilapan cahaya lampu berukuran medium.</td>
+                <td>Tanah liat / karet kusam murni, seluruh cahaya diserap/disebarkan secara merata (diffuse murni).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ==========================================================================
+             CHALLENGE F
+             ========================================================================== -->
+        <div class="concept-block">
+          <h3>
+            Challenge F — Hover Emissive
+            <span class="concept-badge">Shader Uniform Mutation &bull; Non-Destructive State &bull; Affordance Feedback</span>
+          </h3>
+          <h4>1. Konsep Teoretis Grafika Komputer</h4>
+          <p>
+            Memberikan respons visual saat kursor melintas (*Hover Feedback*) sangat penting untuk menandai objek interaktif (*affordance*). Properti <code>emissive</code> pada material PBR menambahkan nilai pendaran warna yang memancarkan cahaya sendiri tanpa dipengaruhi oleh bayangan lampu sekitar.
+          </p>
+          <p>
+            <b>Prinsip Non-Destruktif:</b> Pada aset 3D kompleks yang diimpor, satu material sering kali digunakan bersama (*shared material*) oleh beberapa sub-mesh. Jika material diubah secara ceroboh, warna asli objek akan hilang permanen. Oleh karena itu, warna asli disimpan ke dalam <code>material.userData.originalEmissive</code> dan dikloning sebelum diubah.
+          </p>
+
+          <h4>2. Implementasi Kode</h4>
+          <pre><code>function setEmissive(object, enabled) {
+  if (!object) return;
+  object.traverse((child) => {
+    if (!child.isMesh || !child.material) return;
+    const materials = Array.isArray(child.material) ? child.material : [child.material];
+
+    materials.forEach((material) => {
+      // Abaikan material tanpa emissive atau material yang dijaga emisi aslinya (Sun/Child)
+      if (!("emissive" in material) || material.userData.preserveEmission) return;
+
+      // Simpan warna asli saat pertama kali di-hover (Non-Destruktif)
+      if (!material.userData.originalEmissive) {
+        material.userData.originalEmissive = material.emissive.clone();
+        material.userData.originalEmissiveIntensity = material.emissiveIntensity ?? 0;
+      }
+
+      // Terapkan warna hover emas atau kembalikan ke warna asli
+      material.emissive.copy(
+        enabled ? new THREE.Color("#d88945") : material.userData.originalEmissive
+      );
+      material.emissiveIntensity = enabled ? 0.75 : material.userData.originalEmissiveIntensity;
+    });
+  });
+}</code></pre>
+
+          <h4>3. Bedah Kode Baris per Baris</h4>
+          <ul>
+            <li><code>child.material.clone()</code>: Diterapkan saat loading GLB sehingga setiap mesh memiliki instans material mandiri yang aman dimodifikasi.</li>
+            <li><code>material.userData.originalEmissive</code>: Cache memori lokal yang menyimpan objek <code>THREE.Color</code> asli material sebelum terkena efek hover.</li>
+            <li><code>preserveEmission</code>: Bendera pengaman agar objek yang memang dirancang berpendar permanen (seperti Matahari neon) tidak tertimpa oleh efek hover.</li>
+          </ul>
+
+          <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+          <p>
+            Saat kursor mouse melintas di atas objek apapun di kanvas, objek langsung berpendar keemasan hangat disertai pembesaran skala halus sebesar 6% ($1.06\times$). Begitu kursor mouse meninggalkan objek, warna asli dan skala awal objek langsung pulih sempurna tanpa cacat material.
+          </p>
+        </div>
+
+        <!-- ==========================================================================
+             CHALLENGE G
+             ========================================================================== -->
+        <div class="concept-block">
+          <h3>
+            Challenge G — Selection Rotation
+            <span class="concept-badge">Frame-rate Independence &bull; Delta Time &bull; Active Selection State</span>
+          </h3>
+          <h4>1. Konsep Teoretis Grafika Komputer</h4>
+          <p>
+            Rotasi kontinu pada objek terpilih memberikan konfirmasi visual berkelanjutan kepada pengguna. Rotasi harus dihitung menggunakan <b>Delta Time ($\Delta t$)</b> dari jam sistem (<code>clock.getDelta()</code>) agar kecepatan putaran tetap konstan <i>(Frame-rate Independent)</i> pada layar 60Hz, 120Hz, maupun 144Hz.
+          </p>
+
+          <h4>2. Implementasi Kode</h4>
+          <pre><code>// 1. Simpan State Objek Terpilih
+state.selected = next;
+
+// 2. Rotasi Perlahan Berbasis Delta Time di Loop Animate
+function animate() {
+  requestAnimationFrame(animate);
+  const delta = Math.min(clock.getDelta(), 0.05); // Proteksi delta time cap
+  ...
+  if (state.selected) {
+    state.selected.rotation.y += delta * 0.8; // 0.8 radian per detik
+  }
+  ...
+}
+
+// 3. Hentikan Rotasi Saat Deselect (Klik Area Kosong)
+renderer.domElement.addEventListener("click", (event) => {
+  const next = raycast(event);
+  if (!next) {
+    state.selected = null; // Deselect -> rotasi otomatis berhenti
+    log("Deselect: area kosong diklik. Rotasi seleksi dihentikan.");
+  }
+});</code></pre>
+
+          <h4>3. Bedah Kode Baris per Baris</h4>
+          <ul>
+            <li><code>Math.min(clock.getDelta(), 0.05)</code>: Mencegah *delta time jump* yang ekstrem saat tab browser sempat diminimalkan lalu dibuka kembali.</li>
+            <li><code>rotation.y += delta * 0.8</code>: Menambahkan sudut rotasi secara proporsional terhadap waktu riil (bukan frame count), memastikan rotasi sebesar 0.8 radian ($\approx 45.8^\circ$) per detik di seluruh spesifikasi monitor.</li>
+            <li><code>state.selected = null</code>: Menghapus referensi objek terpilih ketika raycaster tidak menemukan objek interseksi (klik area kosong), seketika menghentikan rotasi tambahan.</li>
+          </ul>
+
+          <h4>4. Dampak Visual &amp; Hasil Observasi</h4>
+          <p>
+            Saat objek (misal: Bebek GLB atau Bola Galeri) diklik, objek tersebut mulai berputar perlahan pada sumbu vertikalnya secara konstan dan halus. Ketika pengguna mengklik latar belakang kosong, objek seketika berhenti berputar pada sudut posisinya saat itu.
+          </p>
+        </div>
+
+        <!-- ==========================================================================
+             CHALLENGE H
+             ========================================================================== -->
+        <div class="concept-block">
+          <h3>
+            Challenge H — Environment Toggle
+            <span class="concept-badge">Image-Based Lighting (IBL) &bull; Radiance Environment Map &bull; Decoupled Rendering</span>
+          </h3>
+          <h4>1. Konsep Teoretis Grafika Komputer</h4>
+          <p>
+            <b>Image-Based Lighting (IBL)</b> adalah teknik di mana seluruh lingkungan sekitar (panorama HDR 360 derajat) diperlakukan sebagai sumber cahaya raksasa tak terhingga. Tekstur HDR dievaluasi menggunakan algoritma <b>PMREM (Prefiltered Mipmapped Radiance Environment Map)</b> untuk menghasilkan pantulan spekular lingkungan pada material PBR Cook-Torrance.
+          </p>
+          <p>
+            Challenge H memisahkan <code>scene.environment</code> dari <code>scene.background</code> dan menyediakan saklar tombol <b>E</b> untuk menghidupkan dan mematikan IBL secara instan guna membandingkan respons fisik material PBR.
+          </p>
+
+          <h4>2. Implementasi Kode</h4>
+          <pre><code>function toggleEnvironment() {
+  state.environment = !state.environment;
+  applyEnvironment();
+  log(`Refleksi environment ${state.environment ? "ON" : "OFF"} (Challenge H)`);
+}
+
+function applyEnvironment() {
+  // Hubungkan atau lepaskan radiance map dari scene
+  scene.environment = state.environment ? environmentTexture : null;
+  
+  // Background skybox tetap independen
+  scene.background = state.panorama ? panoramaTexture : new THREE.Color("#020812");
+
+  // Perbarui indikator HUD dan Tombol UI
+  $("#environmentInfo").textContent = state.environment ? "ON" : "OFF";
+  $("#environmentButton").textContent = `Refleksi: ${state.environment ? "ON" : "OFF"} (E)`;
+  $("#environmentButton").setAttribute("aria-pressed", String(state.environment));
+}
+
+// Shortcut Keyboard E
+window.addEventListener("keydown", (e) => {
+  if (e.key.toLowerCase() === "e") toggleEnvironment();
+});</code></pre>
+
+          <h4>3. Tabel Komparasi Visual: Environment ON vs OFF</h4>
+          <table class="obs-table">
+            <thead>
+              <tr>
+                <th>Aspek Rendering</th>
+                <th>Environment: ON (IBL Aktif)</th>
+                <th>Environment: OFF (Hanya Direct Lights)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>Sphere Chrome / Logam (Metalness 1.0)</b></td>
+                <td>Memantulkan detail langit malam, pepohonan, lampu studio secara fotorealistik 360 derajat.</td>
+                <td>Permukaan gelap gulita/hitam pekat, hanya terlihat titik putih kecil pantulan DirectionalLight.</td>
+              </tr>
+              <tr>
+                <td><b>Kubus Kaca Amethyst (Physical Transmission)</b></td>
+                <td>Membiaskan lingkungan di baliknya secara berkilau dengan efek dispersi optik IOR 1.55.</td>
+                <td>Kaca tampak datar dan mati karena tidak ada radiance map lingkungan yang dibiaskan.</td>
+              </tr>
+              <tr>
+                <td><b>Galeri Bola PBR (Roughness 0.1 s/d 0.9)</b></td>
+                <td>Tampak perbedaan gradasi mikro-facet yang sangat jelas dari jernih hingga buram.</td>
+                <td>Semua bola kehilangan kilau lingkungan; hanya tampak seperti diarsir oleh 2 lampu titik sederhana.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+  </body>
+</html>
