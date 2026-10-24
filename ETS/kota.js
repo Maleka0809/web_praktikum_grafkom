@@ -271,6 +271,10 @@ function createWaterFloodSystem(scene) {
   const floodBaseZ = 2.05;
   waterFloodGroup.position.set(floodBaseX, 0, floodBaseZ);
 
+  if (infoDetail) {
+    infoDetail.textContent = '🌊 WASPADA BANJIR: Pusaran knot air raksasa menggenangi aspal jalanan kota!';
+  }
+
   // 1. Material Air Kaca Transparan & Indeks Bias Optik (MeshPhysicalMaterial)
   // Warna: Biru toska laut jernih (cyan / aqua marine 0x38bdf8)
   // Transmisi (Glass/Liquid Transmission): Semi-transparan tembus pandang
@@ -715,7 +719,15 @@ function setCameraView(mode) {
       btnToggleCam.style.borderColor = '#22d3ee';
       btnToggleCam.style.color = '#22d3ee';
     }
-    infoDetail.textContent = 'Kamera tetap di selimut tabung kota | Putaran jalan mulus (Smooth)';
+    if (infoDetail) {
+      if (floodState === 'flooded') {
+        infoDetail.textContent = '🌊 WASPADA BANJIR: Pusaran knot air raksasa menggenangi aspal jalanan kota!';
+      } else if (floodState === 'cleared') {
+        infoDetail.textContent = '✨ KOTA PULIH! Pusaran air banjir tersedot habis ke saluran drainase. Jalanan kembali kering & bersih!';
+      } else {
+        infoDetail.textContent = 'Kamera tetap di selimut tabung kota | Putaran jalan mulus (Smooth)';
+      }
+    }
   } else {
     controls.enabled = true;
     camera.fov = 50;
