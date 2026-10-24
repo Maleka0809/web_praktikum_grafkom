@@ -34,6 +34,7 @@ Website praktikum interaktif menggunakan HTML, CSS, dan JavaScript tanpa React.
 - `praktikum_Lighting, Shading & Texture_05/` — Praktikum 05 (Lighting, Shading & Texture)
 - `praktikum_6/` — Praktikum 06 (Framework WebGL / Three.js)
 - `praktikum_7/` — Praktikum 07 (Animasi Kompleks & Hierarchical Scene 3D)
+- `ETS/` — Evaluasi Tengah Semester (All-in-One Studio: WebGL 2.0 Native, GLSL Shader Lab, & Three.js 3D Studio)
 
 ## Cara Menjalankan
 Buka `index.html` di browser. Untuk hasil terbaik gunakan VS Code + Live Server.

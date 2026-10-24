@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lingkungan Kota — ETS Grafika Komputer</title>
+  <link rel="stylesheet" href="./style.css" />
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div>
+        <span class="badge">LINGKUNGAN 01</span>
+        <h1>🏙️ Kota Metropolitan (City)</h1>
+        <p>Kamera terpasang di atas selimut tabung bertekstur jalan dengan pemandangan gedung perkotaan.</p>
+      </div>
+      <div>
+        <a href="./index.html" class="btn-hub-back">← Pilih Mode Lingkungan</a>
+      </div>
+    </header>
+
+    <main class="canvas-wrapper">
+      <canvas id="mainCanvas"></canvas>
+
+      <div class="hud-overlay">
+        <div class="hud-item">LINGKUNGAN: <span>Kota Metropolitan</span></div>
+        <div class="hud-item">FPS: <span id="fpsDisplay">60</span></div>
+        <div class="hud-item" id="infoDetail">Kamera tetap di selimut tabung | Putaran jalan halus (Smooth)</div>
+      </div>
+    </main>
+
+    <footer class="controls-bar">
+      <button id="btnToggleAnim" class="control-btn">⏸️ Pause / Play (Space)</button>
+      <button id="btnToggleCam" class="control-btn" style="border-color: #22d3ee; color: #22d3ee;">📷 Kamera: Di Selimut (Fixed Smooth)</button>
+      <button id="btnWireframe" class="control-btn">🕸️ Wireframe</button>
+      <button id="btnSpeed" class="control-btn">⚡ Kecepatan Jalan: 1.0x</button>
+    </footer>
+  </div>
+
+  <script type="module" src="./kota.js"></script>
+</body>
+</html>

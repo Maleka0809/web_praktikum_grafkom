@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lingkungan Hutan — ETS Grafika Komputer</title>
+  <link rel="stylesheet" href="./style.css" />
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div>
+        <span class="badge" style="color: #f59e0b; border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.15);">LINGKUNGAN 02 — SORE HARI</span>
+        <h1>🌲 Hutan Alami Sore Hari (Sunset Forest)</h1>
+        <p>Menyusuri jalan di selimut tabung dengan suasana hutan di sore hari yang syahdu, bermandikan cahaya senja keemasan dan langit sunset 360°.</p>
+      </div>
+      <div>
+        <a href="./index.html" class="btn-hub-back">← Pilih Mode Lingkungan</a>
+      </div>
+    </header>
+
+    <main class="canvas-wrapper">
+      <canvas id="mainCanvas"></canvas>
+
+      <div class="hud-overlay">
+        <div class="hud-item">LINGKUNGAN: <span style="color: #f59e0b;">Hutan Sore Hari (Sunset)</span></div>
+        <div class="hud-item">FPS: <span id="fpsDisplay">60</span></div>
+        <div class="hud-item" id="infoDetail">Kamera tetap di selimut tabung hutan | Suasana sore hari & senja keemasan</div>
+      </div>
+    </main>
+
+    <footer class="controls-bar">
+      <button id="btnToggleAnim" class="control-btn">⏸️ Pause / Play (Space)</button>
+      <button id="btnToggleCam" class="control-btn" style="border-color: #f59e0b; color: #f59e0b;">📷 Kamera: Di Selimut (Fixed Smooth)</button>
+      <button id="btnWireframe" class="control-btn">🕸️ Wireframe</button>
+      <button id="btnSpeed" class="control-btn">⚡ Kecepatan Jalan: 1.0x</button>
+    </footer>
+  </div>
+
+  <script type="module" src="./hutan.js"></script>
+</body>
+</html>
