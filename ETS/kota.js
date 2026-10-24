@@ -21,9 +21,12 @@ let scene, camera, renderer, controls;
 let mainMesh, sideMaterial, capMaterial, standardMaterials;
 let cityBuildingsGroup;
 
-// Sistem Air Banjir: Selimut Silindris Air Kaca (Cylindrical Water Sleeve)
+// Sistem Air Banjir: Selimut Silindris Air Kaca (Cylindrical Water Sleeve) & Ombak 3D
 let waterFloodGroup;
 let waterCylinderMesh;
+let waterGeo;
+let waterInitialPositions = null;
+let waterVertexCount = 0;
 let waterMeniscusRings = [];
 let waterNormalTex;
 let waterMat;
@@ -344,9 +347,14 @@ function createWaterFloodSystem(scene) {
     normalScale: new THREE.Vector2(0.35, 0.35)
   });
 
-  // 3. Potongan Silindris Air (Cylinder Sleeve) yang Diameternya Lebih Besar dari Diameter Tabung
+  // 3. Potongan Silindris Air (Cylinder Sleeve) & Mesh Ombak 3D
   // Menyelimuti penuh seluruh tabung: aspal jalan raya dan trotoar pejalan kaki di kedua sisi
-  const waterGeo = new THREE.CylinderGeometry(waterBaseRadius, waterBaseRadius, waterTotalHeight, 128, 48, true);
+  waterGeo = new THREE.CylinderGeometry(waterBaseRadius, waterBaseRadius, waterTotalHeight, 160, 64, true);
+  const posAttr = waterGeo.attributes.position;
+  waterVertexCount = posAttr.count;
+  waterInitialPositions = new Float32Array(posAttr.array.length);
+  waterInitialPositions.set(posAttr.array);
+
   waterCylinderMesh = new THREE.Mesh(waterGeo, waterMat);
   waterFloodGroup.add(waterCylinderMesh);
 
@@ -833,6 +841,47 @@ function animate(time) {
     sunVisuals.bloomSprite.scale.set(18.0 * pulse, 18.0 * pulse, 1);
   }
 
+function updateWaterWaves(time, currentFloodLevel) {
+  if (!waterGeo || !waterInitialPositions) return;
+
+  const posAttr = waterGeo.attributes.position;
+  const arr = posAttr.array;
+  const initArr = waterInitialPositions;
+  const t = time * 0.001;
+
+  // Ombak dinamis 3D yang bergulung di atas tabung jalan dan trotoar
+  // Amplitudo ombak membesar saat banjir dan mengecil saat surut
+  const waveAmp = 0.034 * currentFloodLevel;
+  const currentBaseRadius = cylinderRadius + (waterBaseRadius - cylinderRadius) * currentFloodLevel;
+
+  for (let i = 0; i < waterVertexCount; i++) {
+    const idx = i * 3;
+    const x0 = initArr[idx];
+    const y0 = initArr[idx + 1];
+    const z0 = initArr[idx + 2];
+
+    const theta = Math.atan2(z0, x0);
+
+    // Formulasi ombak multi-harmonis bergulung:
+    // 1. Gulungan ombak utama melingkari silinder jalan
+    const wave1 = Math.sin(theta * 8.0 + t * 3.5) * 0.55;
+    // 2. Ombak bersilang melintang kiri-kanan trotoar
+    const wave2 = Math.sin(theta * 14.0 - y0 * 3.8 + t * 4.8) * 0.32;
+    // 3. Riak gelombang permukaan cepat (chop)
+    const wave3 = Math.cos(theta * 22.0 + y0 * 7.5 + t * 6.5) * 0.13;
+
+    const totalWave = (wave1 + wave2 + wave3) * waveAmp;
+    const r = currentBaseRadius + totalWave;
+
+    arr[idx] = Math.cos(theta) * r;
+    arr[idx + 1] = y0;
+    arr[idx + 2] = Math.sin(theta) * r;
+  }
+
+  posAttr.needsUpdate = true;
+  waterGeo.computeVertexNormals();
+}
+
   // Animasi Selimut Silindris Air Kaca & Cutscene Pemulihan Lingkungan (Restoration)
   if (waterFloodGroup && waterCylinderMesh) {
     if (floodState === 'flooded') {
@@ -840,16 +889,16 @@ function animate(time) {
       waterFloodGroup.visible = true;
       if (waterMat) waterMat.opacity = 0.94;
 
-      // Aliran riak gelombang air dinamis
+      // Simulasi ombak 3D bergulung
+      updateWaterWaves(time, 1.0);
+
+      // Aliran riak gelombang normal map dinamis
       if (waterNormalTex) {
-        waterNormalTex.offset.x += delta * 0.08;
+        waterNormalTex.offset.x += delta * 0.09;
         waterNormalTex.offset.y += delta * 0.04;
       }
 
-      // Denyut pasang surut lembut gelombang air (+- 0.0035)
-      const wave = 1.0 + Math.sin(time * 0.003) * 0.0035;
-      waterCylinderMesh.scale.set(wave, 1, wave);
-      waterMeniscusRings.forEach(r => r.scale.set(wave, wave, 1));
+      waterMeniscusRings.forEach(r => r.scale.set(1, 1, 1));
 
       // Putaran arus air lembut menyelimuti tabung
       waterFloodGroup.rotation.y += delta * 0.03;
@@ -857,16 +906,17 @@ function animate(time) {
       // Cutscene: Air banjir surut meresap/tersedot masuk ke saluran drainase kota
       floodLevel = Math.max(0, floodLevel - delta * 0.45);
 
+      // Ombak mereda seiring surutnya air
+      updateWaterWaves(time, floodLevel);
+
       // Riak air mengalir lebih cepat saat tersedot ke saluran
       if (waterNormalTex) {
         waterNormalTex.offset.x += delta * 0.45;
         waterNormalTex.offset.y += delta * 0.25;
       }
 
-      // Radius selimut silinder air menyusut dari 2.675 turun ke 2.600 (tepat rata di permukaan aspal)
       const currentRadius = cylinderRadius + (waterBaseRadius - cylinderRadius) * floodLevel;
       const s = currentRadius / waterBaseRadius;
-      waterCylinderMesh.scale.set(s, 1, s);
       waterMeniscusRings.forEach(r => r.scale.set(s, s, 1));
 
       // Opasitas air memudar halus saat surut habis
@@ -892,9 +942,10 @@ function animate(time) {
       waterFloodGroup.visible = true;
       floodLevel = Math.min(1.0, floodLevel + delta * 0.65);
 
+      updateWaterWaves(time, floodLevel);
+
       const currentRadius = cylinderRadius + (waterBaseRadius - cylinderRadius) * floodLevel;
       const s = currentRadius / waterBaseRadius;
-      waterCylinderMesh.scale.set(s, 1, s);
       waterMeniscusRings.forEach(r => r.scale.set(s, s, 1));
       if (waterMat) {
         waterMat.opacity = floodLevel * 0.94;
@@ -904,7 +955,7 @@ function animate(time) {
         floodLevel = 1.0;
         floodState = 'flooded';
         if (infoDetail) {
-          infoDetail.textContent = '🌊 WASPADA BANJIR: Selimut air silindris meluap menutupi seluruh aspal jalanan dan trotoar kota!';
+          infoDetail.textContent = '🌊 WASPADA BANJIR: Selimut air silindris berombak meluap menutupi seluruh aspal jalanan dan trotoar kota!';
         }
         if (btnFloodRestoration) {
           btnFloodRestoration.textContent = '🌊 Pulihkan Banjir (Cutscene)';
