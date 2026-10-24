@@ -29,8 +29,8 @@ let waterNormalTex;
 let waterMat;
 let floodLevel = 1.0; // 1.0 = banjir penuh, 0.0 = surut kering
 let floodState = 'flooded'; // 'flooded' | 'restoring' | 'cleared' | 'resurging'
-const waterBaseRadius = 2.675; // Diameter 5.35 (lebih besar dari diameter tabung 5.20 / radius 2.60)
-const waterRoadHeight = 1.80;  // Menyelimuti seluruh lebar jalan aspal antara trotoar (y: -0.90 s/d +0.90)
+const waterBaseRadius = 2.685; // Diameter 5.37 (tinggi air di atas aspal dan meluap merendam trotoar)
+const waterTotalHeight = 3.78; // Menyelimuti penuh seluruh aspal dan kedua sisi trotoar kiri & kanan
 
 const cylinderRadius = 2.6; // Diameter 5.2
 const cylinderHeight = 3.8; // Diperlebar agar memuat 2 layer gedung (depan & belakang)
@@ -313,7 +313,7 @@ function createWaterFloodSystem(scene) {
   waterFloodGroup.position.set(0, 0, 0); // Berpusat sepusat dengan tabung kota di sumbu Y
 
   if (infoDetail) {
-    infoDetail.textContent = '🌊 WASPADA BANJIR: Selimut air silindris menutupi dan menggenangi seluruh aspal jalanan kota!';
+    infoDetail.textContent = '🌊 WASPADA BANJIR: Selimut air silindris meluap menutupi seluruh aspal jalanan dan trotoar kota!';
   }
 
   // 1. Tekstur Riak Gelombang Normal Air
@@ -345,16 +345,15 @@ function createWaterFloodSystem(scene) {
   });
 
   // 3. Potongan Silindris Air (Cylinder Sleeve) yang Diameternya Lebih Besar dari Diameter Tabung
-  // Tabung aspal berdiameter 5.20 (radius 2.60).
-  // Selimut silinder air ini berdiameter 5.35 (radius 2.675), menggenangi aspal dan menyelimuti tabung.
-  const waterGeo = new THREE.CylinderGeometry(waterBaseRadius, waterBaseRadius, waterRoadHeight, 128, 32, true);
+  // Menyelimuti penuh seluruh tabung: aspal jalan raya dan trotoar pejalan kaki di kedua sisi
+  const waterGeo = new THREE.CylinderGeometry(waterBaseRadius, waterBaseRadius, waterTotalHeight, 128, 48, true);
   waterCylinderMesh = new THREE.Mesh(waterGeo, waterMat);
   waterFloodGroup.add(waterCylinderMesh);
 
-  // 4. Bibir Meniskus Air di Batas Trotoar Kiri & Kanan (Y = ±waterRoadHeight / 2)
+  // 4. Bibir Meniskus Air di Batas Ujung Luar Trotoar Kiri & Kanan (Y = ±waterTotalHeight / 2)
   const ringGeo = new THREE.RingGeometry(cylinderRadius, waterBaseRadius, 96);
   waterMeniscusRings = [];
-  [-waterRoadHeight / 2, waterRoadHeight / 2].forEach((yPos) => {
+  [-waterTotalHeight / 2, waterTotalHeight / 2].forEach((yPos) => {
     const ringMesh = new THREE.Mesh(ringGeo, waterMat);
     ringMesh.rotation.x = Math.PI / 2;
     ringMesh.position.y = yPos;
@@ -905,7 +904,7 @@ function animate(time) {
         floodLevel = 1.0;
         floodState = 'flooded';
         if (infoDetail) {
-          infoDetail.textContent = '🌊 WASPADA BANJIR: Selimut air silindris menutupi dan menggenangi seluruh aspal jalanan kota!';
+          infoDetail.textContent = '🌊 WASPADA BANJIR: Selimut air silindris meluap menutupi seluruh aspal jalanan dan trotoar kota!';
         }
         if (btnFloodRestoration) {
           btnFloodRestoration.textContent = '🌊 Pulihkan Banjir (Cutscene)';
