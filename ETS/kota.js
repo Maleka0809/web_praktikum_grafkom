@@ -21,14 +21,16 @@ let scene, camera, renderer, controls;
 let mainMesh, sideMaterial, capMaterial, standardMaterials;
 let cityBuildingsGroup;
 
-// Sistem Air Banjir & Pusaran Air Raksasa (Water Knot)
+// Sistem Air Banjir: Selimut Silindris Air Kaca (Cylindrical Water Sleeve)
 let waterFloodGroup;
-let waterVortexKnot;
-let waterPuddleMesh;
-let drainGrill;
+let waterCylinderMesh;
+let waterMeniscusRings = [];
+let waterNormalTex;
+let waterMat;
+let floodLevel = 1.0; // 1.0 = banjir penuh, 0.0 = surut kering
 let floodState = 'flooded'; // 'flooded' | 'restoring' | 'cleared' | 'resurging'
-let floodScale = 1.0;
-let vortexSpinSpeed = 1.0;
+const waterBaseRadius = 2.675; // Diameter 5.35 (lebih besar dari diameter tabung 5.20 / radius 2.60)
+const waterRoadHeight = 1.80;  // Menyelimuti seluruh lebar jalan aspal antara trotoar (y: -0.90 s/d +0.90)
 
 const cylinderRadius = 2.6; // Diameter 5.2
 const cylinderHeight = 3.8; // Diperlebar agar memuat 2 layer gedung (depan & belakang)
@@ -264,103 +266,139 @@ function initCity() {
   buildCityScenery();
 }
 
+function createWaterNormalTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  const imgData = ctx.createImageData(512, 512);
+  const data = imgData.data;
+
+  // Bangkitkan peta normal gelombang permukaan air dinamis multi-frekuensi
+  for (let y = 0; y < 512; y++) {
+    for (let x = 0; x < 512; x++) {
+      const u = (x / 512) * Math.PI * 10;
+      const v = (y / 512) * Math.PI * 10;
+
+      const du = Math.cos(u) * Math.cos(v) * 0.8 +
+                 Math.cos(u * 2.1 + v * 1.6) * 0.45 -
+                 Math.cos(-u * 1.8 + v * 2.8) * 0.25;
+
+      const dv = -Math.sin(u) * Math.sin(v) * 0.8 +
+                 Math.sin(u * 2.1 + v * 1.6) * 0.45 +
+                 Math.sin(-u * 1.8 + v * 2.8) * 0.25;
+
+      const nx = Math.min(255, Math.max(0, (-du * 0.35 + 0.5) * 255));
+      const ny = Math.min(255, Math.max(0, (-dv * 0.35 + 0.5) * 255));
+      const nz = 245;
+
+      const idx = (y * 512 + x) * 4;
+      data[idx] = nx;
+      data[idx + 1] = ny;
+      data[idx + 2] = nz;
+      data[idx + 3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(16, 8);
+  return tex;
+}
+
 function createWaterFloodSystem(scene) {
   waterFloodGroup = new THREE.Group();
-  // Posisi di depan kamera melintasi jalan raya kota di atas aspal
-  const floodBaseX = 2.45;
-  const floodBaseZ = 2.05;
-  waterFloodGroup.position.set(floodBaseX, 0, floodBaseZ);
+  waterFloodGroup.position.set(0, 0, 0); // Berpusat sepusat dengan tabung kota di sumbu Y
 
   if (infoDetail) {
-    infoDetail.textContent = '🌊 WASPADA BANJIR: Pusaran knot air raksasa menggenangi aspal jalanan kota!';
+    infoDetail.textContent = '🌊 WASPADA BANJIR: Selimut air silindris menutupi dan menggenangi seluruh aspal jalanan kota!';
   }
 
-  // 1. Material Air Kaca Transparan & Indeks Bias Optik (MeshPhysicalMaterial)
+  // 1. Tekstur Riak Gelombang Normal Air
+  waterNormalTex = createWaterNormalTexture();
+
+  // 2. Material Air Kaca Transparan & Indeks Bias Optik (MeshPhysicalMaterial)
   // Warna: Biru toska laut jernih (cyan / aqua marine 0x38bdf8)
   // Transmisi (Glass/Liquid Transmission): Semi-transparan tembus pandang
   // IOR (Index of Refraction): 1.333 (indeks bias air optik asli)
-  const waterMat = new THREE.MeshPhysicalMaterial({
+  waterMat = new THREE.MeshPhysicalMaterial({
     color: 0x38bdf8,
     emissive: 0x0284c7,
-    emissiveIntensity: 0.18,
+    emissiveIntensity: 0.16,
     roughness: 0.04,
     metalness: 0.05,
     transmission: 0.88,         // Glass/Liquid Transmission: tembus pandang
     transparent: true,
-    opacity: 0.95,
+    opacity: 0.94,
     ior: 1.333,                 // Indeks bias air optik asli
     thickness: 1.6,             // Kedalaman volume bias air
     specularIntensity: 1.0,
     specularColor: 0xffffff,
-    clearcoat: 0.9,
-    clearcoatRoughness: 0.08,
+    clearcoat: 0.95,
+    clearcoatRoughness: 0.06,
     side: THREE.DoubleSide,
-    depthWrite: false
-  });
-
-  // 2. Knot Air Raksasa (Pusaran Air Bah / Water Vortex Knot)
-  // Bentuk gelungan air yang melengkung dan menggenangi sebagian jalan
-  const knotGeo = new THREE.TorusKnotGeometry(0.72, 0.22, 128, 32, 2, 3);
-  waterVortexKnot = new THREE.Mesh(knotGeo, waterMat);
-  waterVortexKnot.rotation.set(0.3, 0.2, Math.PI / 4);
-  waterFloodGroup.add(waterVortexKnot);
-
-  // 3. Permukaan Genangan Air di Atas Aspal (Flooded Road Puddle Sheet)
-  const puddleCvs = document.createElement('canvas');
-  puddleCvs.width = 256;
-  puddleCvs.height = 256;
-  const pctx = puddleCvs.getContext('2d');
-  const pgrad = pctx.createRadialGradient(128, 128, 15, 128, 128, 128);
-  pgrad.addColorStop(0.00, 'rgba(56, 189, 248, 0.85)');
-  pgrad.addColorStop(0.45, 'rgba(14, 165, 233, 0.50)');
-  pgrad.addColorStop(0.80, 'rgba(2, 132, 199, 0.20)');
-  pgrad.addColorStop(1.00, 'rgba(2, 132, 199, 0.00)');
-  pctx.fillStyle = pgrad;
-  pctx.fillRect(0, 0, 256, 256);
-
-  const puddleTex = new THREE.CanvasTexture(puddleCvs);
-  puddleTex.colorSpace = THREE.SRGBColorSpace;
-
-  const puddleGeo = new THREE.PlaneGeometry(2.2, 1.9);
-  const puddleMat = new THREE.MeshStandardMaterial({
-    map: puddleTex,
-    color: 0x38bdf8,
-    transparent: true,
-    opacity: 0.8,
-    roughness: 0.08,
-    metalness: 0.2,
     depthWrite: false,
-    side: THREE.DoubleSide
+    normalMap: waterNormalTex,
+    normalScale: new THREE.Vector2(0.35, 0.35)
   });
-  waterPuddleMesh = new THREE.Mesh(puddleGeo, puddleMat);
-  waterPuddleMesh.position.set(-0.35, 0, 0); // Lapisan air tipis di atas aspal
-  waterPuddleMesh.rotation.y = Math.PI / 2;
-  waterFloodGroup.add(waterPuddleMesh);
 
-  // 4. Saluran Drainase Kota (Grill besi melingkar tempat air tersedot saat pulih)
-  const drainGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.03, 32);
+  // 3. Potongan Silindris Air (Cylinder Sleeve) yang Diameternya Lebih Besar dari Diameter Tabung
+  // Tabung aspal berdiameter 5.20 (radius 2.60).
+  // Selimut silinder air ini berdiameter 5.35 (radius 2.675), menggenangi aspal dan menyelimuti tabung.
+  const waterGeo = new THREE.CylinderGeometry(waterBaseRadius, waterBaseRadius, waterRoadHeight, 128, 32, true);
+  waterCylinderMesh = new THREE.Mesh(waterGeo, waterMat);
+  waterFloodGroup.add(waterCylinderMesh);
+
+  // 4. Bibir Meniskus Air di Batas Trotoar Kiri & Kanan (Y = ±waterRoadHeight / 2)
+  const ringGeo = new THREE.RingGeometry(cylinderRadius, waterBaseRadius, 96);
+  waterMeniscusRings = [];
+  [-waterRoadHeight / 2, waterRoadHeight / 2].forEach((yPos) => {
+    const ringMesh = new THREE.Mesh(ringGeo, waterMat);
+    ringMesh.rotation.x = Math.PI / 2;
+    ringMesh.position.y = yPos;
+    waterFloodGroup.add(ringMesh);
+    waterMeniscusRings.push(ringMesh);
+  });
+
+  // 5. Saluran Drainase Jalan Kota (Street Storm Drains) di Tepi Aspal
+  const drainGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.02, 24);
   const drainMat = new THREE.MeshStandardMaterial({
     color: 0x1e293b,
-    metalness: 0.85,
-    roughness: 0.35
+    metalness: 0.9,
+    roughness: 0.3
   });
-  drainGrill = new THREE.Mesh(drainGeo, drainMat);
-  drainGrill.position.set(-0.36, 0, 0);
-  drainGrill.rotation.z = Math.PI / 2;
-  waterFloodGroup.add(drainGrill);
-
-  // Cincin pusaran hisap drainase berkilau toska
-  const ringGeo = new THREE.RingGeometry(0.36, 0.42, 32);
-  const ringMat = new THREE.MeshBasicMaterial({
+  const drainRingGeo = new THREE.RingGeometry(0.16, 0.22, 24);
+  const drainRingMat = new THREE.MeshBasicMaterial({
     color: 0x38bdf8,
     side: THREE.DoubleSide,
     transparent: true,
-    opacity: 0.65
+    opacity: 0.7
   });
-  const drainRing = new THREE.Mesh(ringGeo, ringMat);
-  drainRing.position.set(-0.355, 0, 0);
-  drainRing.rotation.y = Math.PI / 2;
-  waterFloodGroup.add(drainRing);
+
+  // Pasang 6 titik saluran pembuangan di kedua sisi tepi jalan
+  for (let i = 0; i < 6; i++) {
+    const theta = (i / 6) * Math.PI * 2;
+    [-0.72, 0.72].forEach((sideY) => {
+      const drainWrapper = new THREE.Group();
+      const drainMesh = new THREE.Mesh(drainGeo, drainMat);
+      const ringMesh = new THREE.Mesh(drainRingGeo, drainRingMat);
+      ringMesh.rotation.x = Math.PI / 2;
+      ringMesh.position.y = 0.012;
+
+      drainWrapper.add(drainMesh);
+      drainWrapper.add(ringMesh);
+
+      const dX = (cylinderRadius + 0.005) * Math.cos(theta);
+      const dZ = (cylinderRadius + 0.005) * Math.sin(theta);
+      drainWrapper.position.set(dX, sideY, dZ);
+
+      drainWrapper.rotation.y = -theta;
+      drainWrapper.rotation.z = Math.PI / 2;
+      waterFloodGroup.add(drainWrapper);
+    });
+  }
 
   scene.add(waterFloodGroup);
 }
@@ -796,39 +834,53 @@ function animate(time) {
     sunVisuals.bloomSprite.scale.set(18.0 * pulse, 18.0 * pulse, 1);
   }
 
-  // Animasi Pusaran Knot Air Kaca & Cutscene Pemulihan Lingkungan (Restoration)
-  if (waterFloodGroup && waterVortexKnot) {
+  // Animasi Selimut Silindris Air Kaca & Cutscene Pemulihan Lingkungan (Restoration)
+  if (waterFloodGroup && waterCylinderMesh) {
     if (floodState === 'flooded') {
-      vortexSpinSpeed = 1.0;
-      floodScale = 1.0;
-      waterVortexKnot.visible = true;
-      waterPuddleMesh.visible = true;
-      const pulse = 1.0 + Math.sin(time * 0.003) * 0.035;
-      waterVortexKnot.scale.set(pulse, pulse, pulse);
-      waterVortexKnot.rotation.y += delta * 0.85;
-      waterVortexKnot.rotation.x += delta * 0.55;
-      waterVortexKnot.rotation.z += delta * 0.35;
+      floodLevel = 1.0;
+      waterFloodGroup.visible = true;
+      if (waterMat) waterMat.opacity = 0.94;
+
+      // Aliran riak gelombang air dinamis
+      if (waterNormalTex) {
+        waterNormalTex.offset.x += delta * 0.08;
+        waterNormalTex.offset.y += delta * 0.04;
+      }
+
+      // Denyut pasang surut lembut gelombang air (+- 0.0035)
+      const wave = 1.0 + Math.sin(time * 0.003) * 0.0035;
+      waterCylinderMesh.scale.set(wave, 1, wave);
+      waterMeniscusRings.forEach(r => r.scale.set(wave, wave, 1));
+
+      // Putaran arus air lembut menyelimuti tabung
+      waterFloodGroup.rotation.y += delta * 0.03;
     } else if (floodState === 'restoring') {
-      // Cutscene: Knot pusaran air berputar kencang & menyusut tersedot masuk ke drainase
-      vortexSpinSpeed = THREE.MathUtils.lerp(vortexSpinSpeed, 12.0, delta * 2.5);
-      waterVortexKnot.rotation.y += delta * vortexSpinSpeed;
-      waterVortexKnot.rotation.x += delta * (vortexSpinSpeed * 0.65);
-      waterVortexKnot.rotation.z += delta * (vortexSpinSpeed * 0.45);
+      // Cutscene: Air banjir surut meresap/tersedot masuk ke saluran drainase kota
+      floodLevel = Math.max(0, floodLevel - delta * 0.45);
 
-      floodScale = Math.max(0, floodScale - delta * 0.42);
-      waterVortexKnot.scale.set(floodScale, floodScale, floodScale);
-      waterPuddleMesh.scale.set(floodScale, floodScale, floodScale);
+      // Riak air mengalir lebih cepat saat tersedot ke saluran
+      if (waterNormalTex) {
+        waterNormalTex.offset.x += delta * 0.45;
+        waterNormalTex.offset.y += delta * 0.25;
+      }
 
-      // Sedot perlahan ke arah lubang drainase
-      waterVortexKnot.position.x = THREE.MathUtils.lerp(waterVortexKnot.position.x, -0.35, delta * 3.0);
+      // Radius selimut silinder air menyusut dari 2.675 turun ke 2.600 (tepat rata di permukaan aspal)
+      const currentRadius = cylinderRadius + (waterBaseRadius - cylinderRadius) * floodLevel;
+      const s = currentRadius / waterBaseRadius;
+      waterCylinderMesh.scale.set(s, 1, s);
+      waterMeniscusRings.forEach(r => r.scale.set(s, s, 1));
 
-      if (floodScale <= 0.015) {
-        floodScale = 0;
-        waterVortexKnot.visible = false;
-        waterPuddleMesh.visible = false;
+      // Opasitas air memudar halus saat surut habis
+      if (waterMat) {
+        waterMat.opacity = Math.max(0, floodLevel * 0.94);
+      }
+
+      if (floodLevel <= 0.015) {
+        floodLevel = 0;
+        waterFloodGroup.visible = false;
         floodState = 'cleared';
         if (infoDetail) {
-          infoDetail.textContent = '✨ KOTA PULIH! Pusaran air banjir tersedot habis ke saluran drainase. Jalanan kembali kering & bersih!';
+          infoDetail.textContent = '✨ KOTA PULIH! Seluruh genangan banjir telah surut dan tersedot ke saluran drainase. Jalanan kembali kering & bersih!';
         }
         if (btnFloodRestoration) {
           btnFloodRestoration.textContent = '🌊 Datangkan Banjir Kembali';
@@ -837,20 +889,23 @@ function animate(time) {
         }
       }
     } else if (floodState === 'resurging') {
-      // Air banjir meluap kembali dari drainase
-      waterVortexKnot.visible = true;
-      waterPuddleMesh.visible = true;
-      waterVortexKnot.rotation.y += delta * 1.5;
-      waterVortexKnot.position.x = THREE.MathUtils.lerp(waterVortexKnot.position.x, 0, delta * 2.5);
-      floodScale = Math.min(1.0, floodScale + delta * 0.65);
-      waterVortexKnot.scale.set(floodScale, floodScale, floodScale);
-      waterPuddleMesh.scale.set(floodScale, floodScale, floodScale);
+      // Air banjir meluap kembali dari saluran air kota menutupi aspal
+      waterFloodGroup.visible = true;
+      floodLevel = Math.min(1.0, floodLevel + delta * 0.65);
 
-      if (floodScale >= 0.99) {
-        floodScale = 1.0;
+      const currentRadius = cylinderRadius + (waterBaseRadius - cylinderRadius) * floodLevel;
+      const s = currentRadius / waterBaseRadius;
+      waterCylinderMesh.scale.set(s, 1, s);
+      waterMeniscusRings.forEach(r => r.scale.set(s, s, 1));
+      if (waterMat) {
+        waterMat.opacity = floodLevel * 0.94;
+      }
+
+      if (floodLevel >= 0.99) {
+        floodLevel = 1.0;
         floodState = 'flooded';
         if (infoDetail) {
-          infoDetail.textContent = '🌊 WASPADA BANJIR: Pusaran knot air raksasa menggenangi aspal jalanan kota!';
+          infoDetail.textContent = '🌊 WASPADA BANJIR: Selimut air silindris menutupi dan menggenangi seluruh aspal jalanan kota!';
         }
         if (btnFloodRestoration) {
           btnFloodRestoration.textContent = '🌊 Pulihkan Banjir (Cutscene)';
@@ -891,7 +946,7 @@ function triggerFloodRestoration() {
   if (floodState === 'flooded') {
     floodState = 'restoring';
     if (infoDetail) {
-      infoDetail.textContent = '🌊 CUTSCENE: Pusaran air raksasa berputar kencang & menyusut tersedot masuk ke saluran drainase kota...';
+      infoDetail.textContent = '🌊 CUTSCENE: Air banjir silindris surut menyusut & tersedot masuk ke saluran drainase kota...';
     }
     if (btnFloodRestoration) {
       btnFloodRestoration.textContent = '⏳ Memulihkan Kota...';
