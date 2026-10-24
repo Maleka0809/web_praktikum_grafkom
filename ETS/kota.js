@@ -277,24 +277,24 @@ function createWaterNormalTexture() {
   const imgData = ctx.createImageData(512, 512);
   const data = imgData.data;
 
-  // Bangkitkan peta normal gelombang permukaan air yang sangat halus, tenang & berkilau lembut (Smooth Caustic Flow)
+  // Bangkitkan peta normal gelombang permukaan air ombak yang hidup, mengalir dan dinamis
   for (let y = 0; y < 512; y++) {
     for (let x = 0; x < 512; x++) {
-      const u = (x / 512) * Math.PI * 4;
-      const v = (y / 512) * Math.PI * 4;
+      const u = (x / 512) * Math.PI * 6;
+      const v = (y / 512) * Math.PI * 6;
 
-      // Gelombang sinusoidal lembut berfrekuensi rendah tanpa sudut tajam
-      const du = Math.sin(u) * Math.cos(v) * 0.22 +
-                 Math.sin(u * 1.5 + v * 0.8) * 0.10 +
-                 Math.cos(u * 0.7 - v * 1.2) * 0.08;
+      // Alunan ombak riak bergelombang dinamis
+      const du = Math.sin(u) * Math.cos(v) * 0.28 +
+                 Math.sin(u * 1.6 + v * 0.9) * 0.16 +
+                 Math.cos(u * 0.8 - v * 1.4) * 0.12;
 
-      const dv = Math.cos(u) * Math.sin(v) * 0.22 +
-                 Math.cos(u * 1.5 + v * 0.8) * 0.10 -
-                 Math.sin(u * 0.7 - v * 1.2) * 0.08;
+      const dv = Math.cos(u) * Math.sin(v) * 0.28 +
+                 Math.cos(u * 1.6 + v * 0.9) * 0.16 -
+                 Math.sin(u * 0.8 - v * 1.4) * 0.12;
 
-      const nx = Math.min(255, Math.max(0, (-du * 0.18 + 0.5) * 255));
-      const ny = Math.min(255, Math.max(0, (-dv * 0.18 + 0.5) * 255));
-      const nz = 252; // Sangat dominan ke atas agar kilau specular menyatu lembut tanpa bintik kasar
+      const nx = Math.min(255, Math.max(0, (-du * 0.25 + 0.5) * 255));
+      const ny = Math.min(255, Math.max(0, (-dv * 0.25 + 0.5) * 255));
+      const nz = 248; // Nilai z tinggi menjaga kilau air tetap bersih dan elegan
 
       const idx = (y * 512 + x) * 4;
       data[idx] = nx;
@@ -308,7 +308,7 @@ function createWaterNormalTexture() {
   const tex = new THREE.CanvasTexture(canvas);
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(4, 2);
+  tex.repeat.set(8, 4);
   return tex;
 }
 
@@ -320,31 +320,31 @@ function createWaterFloodSystem(scene) {
     infoDetail.textContent = '🌊 WASPADA BANJIR: Selimut air silindris meluap menutupi seluruh aspal jalanan dan trotoar kota!';
   }
 
-  // 1. Tekstur Riak Gelombang Normal Air (Smooth)
+  // 1. Tekstur Riak Gelombang Normal Air (Rolling Waves)
   waterNormalTex = createWaterNormalTexture();
 
-  // 2. Material Air Kaca Transparan Mulus & Indeks Bias Optik (Smooth Liquid Glass)
+  // 2. Material Air Kaca Transparan & Indeks Bias Optik (Rolling Waves Physical Liquid)
   // Warna: Biru toska laut jernih (cyan / aqua marine 0x38bdf8)
-  // Transmisi: Semi-transparan tembus pandang dengan permukaan sangat halus (smooth surface)
+  // Transmisi: Semi-transparan tembus pandang dengan ombak yang berkilau hidup
   waterMat = new THREE.MeshPhysicalMaterial({
     color: 0x38bdf8,
     emissive: 0x0284c7,
-    emissiveIntensity: 0.10,
-    roughness: 0.015,           // Permukaan super mulus / halus (liquid mirror)
-    metalness: 0.01,
-    transmission: 0.90,         // Jernih dan tembus pandang
+    emissiveIntensity: 0.15,
+    roughness: 0.025,
+    metalness: 0.02,
+    transmission: 0.88,         // Jernih dan tembus pandang
     transparent: true,
-    opacity: 0.92,
+    opacity: 0.94,
     ior: 1.333,                 // Indeks bias air optik asli
-    thickness: 1.4,             // Kedalaman volume bias air
+    thickness: 1.6,             // Kedalaman volume bias air
     specularIntensity: 1.0,
     specularColor: 0xffffff,
     clearcoat: 1.0,             // Kilau kristal penuh
-    clearcoatRoughness: 0.015,  // Kilau pantulan sangat halus dan rata
+    clearcoatRoughness: 0.025,  // Kilau pantulan ombak air yang hidup
     side: THREE.DoubleSide,
     depthWrite: false,
     normalMap: waterNormalTex,
-    normalScale: new THREE.Vector2(0.06, 0.06) // Riak sangat halus, tidak bergerigi atau berbintik tajam
+    normalScale: new THREE.Vector2(0.18, 0.18) // Riak ombak air tampak jelas dan berkilau dinamis
   });
 
   // 3. Potongan Silindris Air (Cylinder Sleeve) & Mesh Ombak 3D
@@ -1006,9 +1006,9 @@ function updateWaterWaves(time, currentFloodLevel) {
   const initArr = waterInitialPositions;
   const t = time * 0.001;
 
-  // Alunan gelombang air yang sangat halus, tenang, dan santai (Gentle Smooth Swell)
-  // Amplitudo lembut berfrekuensi rendah mencegah permukaan bergerigi atau berkerut
-  const waveAmp = 0.007 * currentFloodLevel;
+  // Ombak 3D bergulung nyata (Realistic Rolling Waves)
+  // Amplitudo ombak jelas terlihat mengalun tinggi-rendah di atas jalan dan trotoar
+  const waveAmp = 0.045 * currentFloodLevel;
   const currentBaseRadius = cylinderRadius + (waterBaseRadius - cylinderRadius) * currentFloodLevel;
 
   for (let i = 0; i < waterVertexCount; i++) {
@@ -1019,11 +1019,15 @@ function updateWaterWaves(time, currentFloodLevel) {
 
     const theta = Math.atan2(z0, x0);
 
-    // Formulasi gelombang tenang alami (smooth fluid swell)
-    const wave1 = Math.sin(theta * 3.0 + t * 1.2) * 0.70;
-    const wave2 = Math.cos(theta * 5.0 - y0 * 1.2 + t * 1.6) * 0.30;
+    // Formulasi ombak bergulung dinamis & mulus:
+    // 1. Gulungan ombak utama melingkari jalan silinder (panjang gelombang lebar dan mulus)
+    const wave1 = Math.sin(theta * 6.0 + t * 2.8) * 0.58;
+    // 2. Alunan ombak menyilang antara trotoar kiri dan kanan
+    const wave2 = Math.sin(theta * 9.0 - y0 * 2.2 + t * 3.4) * 0.32;
+    // 3. Puncak alunan ombak sekunder
+    const wave3 = Math.cos(theta * 4.0 + y0 * 1.6 + t * 1.8) * 0.20;
 
-    const totalWave = (wave1 + wave2) * waveAmp;
+    const totalWave = (wave1 + wave2 + wave3) * waveAmp;
     const r = currentBaseRadius + totalWave;
 
     arr[idx] = Math.cos(theta) * r;
@@ -1032,7 +1036,7 @@ function updateWaterWaves(time, currentFloodLevel) {
   }
 
   posAttr.needsUpdate = true;
-  // Mempertahankan normal silindris bawaan (smooth shading) sehingga permukaan air terlihat mulus sempurna laksana kaca cair
+  waterGeo.computeVertexNormals();
 }
 
   // Animasi Selimut Silindris Air Kaca & Cutscene Pemulihan Lingkungan (Restoration)
@@ -1040,21 +1044,21 @@ function updateWaterWaves(time, currentFloodLevel) {
     if (floodState === 'flooded') {
       floodLevel = 1.0;
       waterFloodGroup.visible = true;
-      if (waterMat) waterMat.opacity = 0.92;
+      if (waterMat) waterMat.opacity = 0.94;
 
-      // Simulasi alunan air halus dan tenang
+      // Simulasi ombak 3D bergelombang nyata
       updateWaterWaves(time, 1.0);
 
-      // Aliran riak gelombang air mengalir santai (smooth flow)
+      // Aliran riak gelombang ombak dinamis
       if (waterNormalTex) {
-        waterNormalTex.offset.x += delta * 0.035;
-        waterNormalTex.offset.y += delta * 0.015;
+        waterNormalTex.offset.x += delta * 0.08;
+        waterNormalTex.offset.y += delta * 0.035;
       }
 
       waterMeniscusRings.forEach(r => r.scale.set(1, 1, 1));
 
       // Putaran arus air lembut menyelimuti tabung
-      waterFloodGroup.rotation.y += delta * 0.02;
+      waterFloodGroup.rotation.y += delta * 0.025;
     } else if (floodState === 'restoring') {
       // Cutscene: Air banjir surut meresap/tersedot masuk ke saluran drainase kota
       floodLevel = Math.max(0, floodLevel - delta * 0.45);
