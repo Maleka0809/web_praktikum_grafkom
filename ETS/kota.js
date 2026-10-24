@@ -505,6 +505,76 @@ function buildSidewalks() {
   mainMesh.add(sidewalkGroup);
 }
 
+// Membuat pohon taman kota prosedural (pohon rindang daun bulat & pohon cemara hias)
+function createCityTree(variant = 0) {
+  const treeGroup = new THREE.Group();
+
+  // Batang pohon kayu
+  const trunkGeo = new THREE.CylinderGeometry(0.09, 0.14, 0.9, 8);
+  const trunkMat = new THREE.MeshStandardMaterial({
+    color: 0x4a3728,
+    roughness: 0.9,
+    metalness: 0.05
+  });
+  const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+  trunk.position.y = 0.45;
+  trunk.castShadow = true;
+  treeGroup.add(trunk);
+
+  if (variant % 2 === 0) {
+    // 1. Pohon Rindang Kanopi Daun Bulat Asri (City Oak / Shade Tree)
+    const foliageMat1 = new THREE.MeshStandardMaterial({
+      color: 0x15803d,
+      roughness: 0.7,
+      flatShading: true
+    });
+    const foliageMat2 = new THREE.MeshStandardMaterial({
+      color: 0x16a34a,
+      roughness: 0.65,
+      flatShading: true
+    });
+
+    const f1 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.55, 1), foliageMat1);
+    f1.position.set(0, 1.25, 0);
+    f1.castShadow = true;
+    treeGroup.add(f1);
+
+    const f2 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.42, 1), foliageMat2);
+    f2.position.set(0.18, 1.55, -0.12);
+    f2.castShadow = true;
+    treeGroup.add(f2);
+
+    const f3 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.38, 1), foliageMat1);
+    f3.position.set(-0.16, 1.48, 0.15);
+    f3.castShadow = true;
+    treeGroup.add(f3);
+  } else {
+    // 2. Pohon Cemara Hias Kota (Ornamental Cypress/Pine)
+    const pineMat = new THREE.MeshStandardMaterial({
+      color: 0x047857,
+      roughness: 0.6,
+      flatShading: true
+    });
+
+    const c1 = new THREE.Mesh(new THREE.ConeGeometry(0.52, 0.85, 7), pineMat);
+    c1.position.y = 1.0;
+    c1.castShadow = true;
+    treeGroup.add(c1);
+
+    const c2 = new THREE.Mesh(new THREE.ConeGeometry(0.40, 0.75, 7), pineMat);
+    c2.position.y = 1.50;
+    c2.castShadow = true;
+    treeGroup.add(c2);
+
+    const c3 = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.65, 7), pineMat);
+    c3.position.y = 1.95;
+    c3.castShadow = true;
+    treeGroup.add(c3);
+  }
+
+  return treeGroup;
+}
+
 function buildCityScenery() {
   cityBuildingsGroup = new THREE.Group();
   mainMesh.add(cityBuildingsGroup); // Terpasang langsung ke tabung agar ikut berputar!
@@ -682,6 +752,93 @@ function buildCityScenery() {
           (err) => console.warn('Could not load house model:', hCfg.file, err)
         );
       }
+    );
+  });
+
+  // 1D. Pepohonan Rimbun Kota di Trotoar & Penutup Batas Ujung Tabung
+  const treeCount = 72;
+  for (let t = 0; t < treeCount; t++) {
+    const tree = createCityTree(t);
+    const side = (t % 2 === 0) ? 1 : -1;
+
+    // Berselang-seling: sebagian di trotoar tengah, mayoritas di batas luar (Y = 1.62 - 2.05) untuk menutupi batas tabung
+    const isPerimeter = (t % 3 !== 0);
+    const yOffset = isPerimeter ? (1.64 + (t % 5) * 0.08) : (1.08 + (t % 4) * 0.05);
+
+    const theta = (t / treeCount) * Math.PI * 2 + (t % 7) * 0.04;
+    const posX = sidewalkRadius * Math.cos(theta);
+    const posZ = sidewalkRadius * Math.sin(theta);
+    const posY = side * yOffset;
+
+    const scale = isPerimeter ? (0.88 + (t % 4) * 0.16) : (0.68 + (t % 3) * 0.12);
+    tree.scale.set(scale, scale, scale);
+    tree.rotation.y = (t * 1.37) % (Math.PI * 2);
+
+    const treeWrapper = new THREE.Group();
+    treeWrapper.add(tree);
+
+    const yAxis = new THREE.Vector3(Math.cos(theta), 0, Math.sin(theta));
+    const zAxis = new THREE.Vector3(-Math.sin(theta), 0, Math.cos(theta));
+    const basisMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
+
+    treeWrapper.setRotationFromMatrix(basisMat);
+    treeWrapper.position.set(posX, posY, posZ);
+
+    cityBuildingsGroup.add(treeWrapper);
+  }
+
+  // 1E. Dinding Pencakar Langit Rapat di Batas Luar Tabung (Perimeter Skyline Wall)
+  // Menutup penuh batas ujung tabung dengan skyline megah menjulang tinggi
+  const perimeterModels = [
+    { file: 'building-skyscraper-a.glb', scale: 0.72 },
+    { file: 'building-skyscraper-b.glb', scale: 0.68 },
+    { file: 'building-skyscraper-c.glb', scale: 0.70 },
+    { file: 'building-e.glb', scale: 0.74 },
+    { file: 'building-g.glb', scale: 0.68 },
+    { file: 'building-c.glb', scale: 0.64 },
+    { file: 'building-d.glb', scale: 0.62 }
+  ];
+
+  perimeterModels.forEach((cfg, pIdx) => {
+    gltfLoader.load(
+      `./assets/models/city/${cfg.file}`,
+      (gltf) => {
+        const baseScene = gltf.scene;
+        baseScene.traverse((node) => {
+          if (node.isMesh) {
+            node.castShadow = true;
+            node.receiveShadow = true;
+          }
+        });
+
+        // 6 salinan tiap model diposisikan rapat di batas luar (Y = 1.74 - 2.15)
+        for (let copy = 0; copy < 6; copy++) {
+          const clone = baseScene.clone();
+          clone.scale.set(cfg.scale, cfg.scale, cfg.scale);
+
+          const side = (copy % 2 === 0) ? 1 : -1;
+          const theta = ((pIdx * 6 + copy) / (perimeterModels.length * 6)) * Math.PI * 2 + 0.05;
+          const posX = cylinderRadius * Math.cos(theta);
+          const posZ = cylinderRadius * Math.sin(theta);
+          const posY = side * (1.76 + (copy % 4) * 0.10); // Menutupi tepat batas ujung tabung
+
+          const bldgWrapper = new THREE.Group();
+          bldgWrapper.add(clone);
+
+          const yAxis = new THREE.Vector3(Math.cos(theta), 0, Math.sin(theta));
+          const zAxis = new THREE.Vector3(-Math.sin(theta), 0, Math.cos(theta));
+          const basisMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
+
+          bldgWrapper.setRotationFromMatrix(basisMat);
+          bldgWrapper.position.set(posX, posY, posZ);
+
+          clone.rotation.y = (side === 1) ? Math.PI / 2 : -Math.PI / 2;
+
+          cityBuildingsGroup.add(bldgWrapper);
+        }
+      },
+      undefined,
+      (err) => console.warn('Could not load perimeter city model:', cfg.file, err)
     );
   });
 
