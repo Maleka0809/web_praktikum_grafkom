@@ -356,6 +356,40 @@ function buildCyberSidewalks() {
   mainMesh.add(sidewalkGroup);
 }
 
+// Pohon siluet malam hari untuk kota cyberpunk
+function createNightTree(variant = 0) {
+  const treeGroup = new THREE.Group();
+  const trunkGeo = new THREE.CylinderGeometry(0.09, 0.14, 0.9, 8);
+  const trunkMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.9 });
+  const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+  trunk.position.y = 0.45;
+  treeGroup.add(trunk);
+
+  if (variant % 2 === 0) {
+    const fMat1 = new THREE.MeshStandardMaterial({ color: 0x064e3b, roughness: 0.8, flatShading: true });
+    const fMat2 = new THREE.MeshStandardMaterial({ color: 0x0f2d24, roughness: 0.85, flatShading: true });
+
+    const f1 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.56, 1), fMat1);
+    f1.position.set(0, 1.25, 0);
+    treeGroup.add(f1);
+
+    const f2 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.42, 1), fMat2);
+    f2.position.set(0.18, 1.55, -0.12);
+    treeGroup.add(f2);
+  } else {
+    const pineMat = new THREE.MeshStandardMaterial({ color: 0x04382c, roughness: 0.75, flatShading: true });
+    const c1 = new THREE.Mesh(new THREE.ConeGeometry(0.52, 0.9, 7), pineMat);
+    c1.position.y = 1.0;
+    treeGroup.add(c1);
+
+    const c2 = new THREE.Mesh(new THREE.ConeGeometry(0.38, 0.8, 7), pineMat);
+    c2.position.y = 1.55;
+    treeGroup.add(c2);
+  }
+
+  return treeGroup;
+}
+
 function createCyberCityScenery() {
   cyberCityGroup = new THREE.Group();
   mainMesh.add(cyberCityGroup); // Terpasang langsung ke tabung agar ikut berputar!
@@ -462,6 +496,89 @@ function createCyberCityScenery() {
       },
       undefined,
       (err) => console.warn('Could not load back cyber model:', cfg.file, err)
+    );
+  });
+
+  // 1C. Pepohonan Malam di Trotoar & Penutup Batas Luar Tabung
+  const nightTreeCount = 64;
+  for (let t = 0; t < nightTreeCount; t++) {
+    const tree = createNightTree(t);
+    const side = (t % 2 === 0) ? 1 : -1;
+
+    // Membentang dari trotoar hingga keluar batas tabung (1.65 - 2.45)
+    const yOffset = (t % 3 !== 0) ? (1.70 + (t % 5) * 0.14) : (1.08 + (t % 4) * 0.06);
+    const theta = (t / nightTreeCount) * Math.PI * 2 + (t % 7) * 0.05;
+    const posX = sidewalkRadius * Math.cos(theta);
+    const posZ = sidewalkRadius * Math.sin(theta);
+    const posY = side * yOffset;
+
+    const scale = (t % 3 !== 0) ? (0.90 + (t % 4) * 0.18) : (0.65 + (t % 3) * 0.12);
+    tree.scale.set(scale, scale, scale);
+    tree.rotation.y = Math.random() * Math.PI * 2;
+
+    const treeWrapper = new THREE.Group();
+    treeWrapper.add(tree);
+
+    const yAxis = new THREE.Vector3(Math.cos(theta), 0, Math.sin(theta));
+    const zAxis = new THREE.Vector3(-Math.sin(theta), 0, Math.cos(theta));
+    const basisMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
+
+    treeWrapper.setRotationFromMatrix(basisMat);
+    treeWrapper.position.set(posX, posY, posZ);
+
+    cyberCityGroup.add(treeWrapper);
+  }
+
+  // 1D. Dinding Pencakar Langit Rapat di Batas Luar Tabung (Keluar Tabung untuk Menutup Batas)
+  const perimeterCyberModels = [
+    { file: 'building-skyscraper-a.glb', scale: 0.72 },
+    { file: 'building-skyscraper-b.glb', scale: 0.68 },
+    { file: 'building-skyscraper-c.glb', scale: 0.70 },
+    { file: 'building-g.glb', scale: 0.68 },
+    { file: 'building-e.glb', scale: 0.74 },
+    { file: 'building-c.glb', scale: 0.65 }
+  ];
+
+  perimeterCyberModels.forEach((cfg, pIdx) => {
+    gltfLoader.load(
+      `./assets/models/city/${cfg.file}`,
+      (gltf) => {
+        const baseScene = gltf.scene;
+        baseScene.traverse((node) => {
+          if (node.isMesh) {
+            node.castShadow = true;
+            node.receiveShadow = true;
+          }
+        });
+
+        // 6 salinan tiap model diposisikan rapat keluar tabung (Y = 1.76 - 2.45)
+        for (let copy = 0; copy < 6; copy++) {
+          const clone = baseScene.clone();
+          clone.scale.set(cfg.scale, cfg.scale, cfg.scale);
+
+          const side = (copy % 2 === 0) ? 1 : -1;
+          const theta = ((pIdx * 6 + copy) / (perimeterCyberModels.length * 6)) * Math.PI * 2 + 0.05;
+          const posX = cylinderRadius * Math.cos(theta);
+          const posZ = cylinderRadius * Math.sin(theta);
+          const posY = side * (1.78 + (copy % 4) * 0.15); // Keluar melampaui batas tabung 1.90
+
+          const bldgWrapper = new THREE.Group();
+          bldgWrapper.add(clone);
+
+          const yAxis = new THREE.Vector3(Math.cos(theta), 0, Math.sin(theta));
+          const zAxis = new THREE.Vector3(-Math.sin(theta), 0, Math.cos(theta));
+          const basisMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
+
+          bldgWrapper.setRotationFromMatrix(basisMat);
+          bldgWrapper.position.set(posX, posY, posZ);
+
+          clone.rotation.y = (side === 1) ? Math.PI / 2 : -Math.PI / 2;
+
+          cyberCityGroup.add(bldgWrapper);
+        }
+      },
+      undefined,
+      (err) => console.warn('Could not load perimeter cyber model:', cfg.file, err)
     );
   });
 

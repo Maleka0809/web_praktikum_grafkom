@@ -756,21 +756,21 @@ function buildCityScenery() {
   });
 
   // 1D. Pepohonan Rimbun Kota di Trotoar & Penutup Batas Ujung Tabung
-  const treeCount = 72;
+  const treeCount = 84;
   for (let t = 0; t < treeCount; t++) {
     const tree = createCityTree(t);
     const side = (t % 2 === 0) ? 1 : -1;
 
-    // Berselang-seling: sebagian di trotoar tengah, mayoritas di batas luar (Y = 1.62 - 2.05) untuk menutupi batas tabung
+    // Berselang-seling: sebagian di trotoar tengah, mayoritas keluar melampaui batas tabung (Y = 1.70 - 2.45)
     const isPerimeter = (t % 3 !== 0);
-    const yOffset = isPerimeter ? (1.64 + (t % 5) * 0.08) : (1.08 + (t % 4) * 0.05);
+    const yOffset = isPerimeter ? (1.70 + (t % 6) * 0.13) : (1.08 + (t % 4) * 0.05);
 
     const theta = (t / treeCount) * Math.PI * 2 + (t % 7) * 0.04;
     const posX = sidewalkRadius * Math.cos(theta);
     const posZ = sidewalkRadius * Math.sin(theta);
     const posY = side * yOffset;
 
-    const scale = isPerimeter ? (0.88 + (t % 4) * 0.16) : (0.68 + (t % 3) * 0.12);
+    const scale = isPerimeter ? (0.92 + (t % 4) * 0.18) : (0.68 + (t % 3) * 0.12);
     tree.scale.set(scale, scale, scale);
     tree.rotation.y = (t * 1.37) % (Math.PI * 2);
 
@@ -788,15 +788,15 @@ function buildCityScenery() {
   }
 
   // 1E. Dinding Pencakar Langit Rapat di Batas Luar Tabung (Perimeter Skyline Wall)
-  // Menutup penuh batas ujung tabung dengan skyline megah menjulang tinggi
+  // Menutup penuh batas ujung tabung dengan skyline megah menjulang tinggi melampaui tabung
   const perimeterModels = [
-    { file: 'building-skyscraper-a.glb', scale: 0.72 },
-    { file: 'building-skyscraper-b.glb', scale: 0.68 },
-    { file: 'building-skyscraper-c.glb', scale: 0.70 },
-    { file: 'building-e.glb', scale: 0.74 },
-    { file: 'building-g.glb', scale: 0.68 },
-    { file: 'building-c.glb', scale: 0.64 },
-    { file: 'building-d.glb', scale: 0.62 }
+    { file: 'building-skyscraper-a.glb', scale: 0.74 },
+    { file: 'building-skyscraper-b.glb', scale: 0.70 },
+    { file: 'building-skyscraper-c.glb', scale: 0.72 },
+    { file: 'building-e.glb', scale: 0.76 },
+    { file: 'building-g.glb', scale: 0.70 },
+    { file: 'building-c.glb', scale: 0.66 },
+    { file: 'building-d.glb', scale: 0.64 }
   ];
 
   perimeterModels.forEach((cfg, pIdx) => {
@@ -811,7 +811,7 @@ function buildCityScenery() {
           }
         });
 
-        // 6 salinan tiap model diposisikan rapat di batas luar (Y = 1.74 - 2.15)
+        // 6 salinan tiap model diposisikan rapat keluar tabung (Y = 1.76 - 2.40)
         for (let copy = 0; copy < 6; copy++) {
           const clone = baseScene.clone();
           clone.scale.set(cfg.scale, cfg.scale, cfg.scale);
@@ -820,7 +820,7 @@ function buildCityScenery() {
           const theta = ((pIdx * 6 + copy) / (perimeterModels.length * 6)) * Math.PI * 2 + 0.05;
           const posX = cylinderRadius * Math.cos(theta);
           const posZ = cylinderRadius * Math.sin(theta);
-          const posY = side * (1.76 + (copy % 4) * 0.10); // Menutupi tepat batas ujung tabung
+          const posY = side * (1.76 + (copy % 4) * 0.16); // Keluar melampaui batas tabung 1.90
 
           const bldgWrapper = new THREE.Group();
           bldgWrapper.add(clone);

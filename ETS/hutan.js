@@ -313,10 +313,37 @@ function buildForestScenery() {
     forestGroup.add(treeWrapper);
   }
 
+// Membuat pohon daun lebar (Oak / Hutan Rindang)
+function createBroadleafTree() {
+  const treeGroup = new THREE.Group();
+  const trunkGeo = new THREE.CylinderGeometry(0.12, 0.18, 1.1, 8);
+  const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3224, roughness: 0.9 });
+  const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+  trunk.position.y = 0.55;
+  treeGroup.add(trunk);
+
+  const foliageMat1 = new THREE.MeshStandardMaterial({ color: 0x166534, roughness: 0.7, flatShading: true });
+  const foliageMat2 = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.65, flatShading: true });
+
+  const c1 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.70, 1), foliageMat1);
+  c1.position.set(0, 1.45, 0);
+  treeGroup.add(c1);
+
+  const c2 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.52, 1), foliageMat2);
+  c2.position.set(0.22, 1.82, -0.15);
+  treeGroup.add(c2);
+
+  const c3 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.48, 1), foliageMat1);
+  c3.position.set(-0.20, 1.72, 0.18);
+  treeGroup.add(c3);
+
+  return treeGroup;
+}
+
   // 1B. Pepohonan Baris Belakang (Hutan Rimba Rimbun & Lebih Tinggi di Balik Pohon Depan)
   const backTreeCount = 60;
   for (let k = 0; k < backTreeCount; k++) {
-    const tree = createTree();
+    const tree = (k % 3 === 0) ? createBroadleafTree() : createTree();
     const side = (k % 2 === 0) ? 1 : -1;
 
     const theta = (k / backTreeCount) * Math.PI * 2 + 0.05 + (Math.random() - 0.5) * 0.08;
@@ -326,6 +353,36 @@ function buildForestScenery() {
 
     // Pohon baris belakang lebih tinggi dan rimbun
     const scale = 1.05 + Math.random() * 0.50;
+    tree.scale.set(scale, scale, scale);
+    tree.rotation.y = Math.random() * Math.PI * 2;
+
+    const treeWrapper = new THREE.Group();
+    treeWrapper.add(tree);
+
+    const yAxis = new THREE.Vector3(Math.cos(theta), 0, Math.sin(theta));
+    const zAxis = new THREE.Vector3(-Math.sin(theta), 0, Math.cos(theta));
+    const basisMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
+
+    treeWrapper.setRotationFromMatrix(basisMat);
+    treeWrapper.position.set(posX, posY, posZ);
+
+    forestGroup.add(treeWrapper);
+  }
+
+  // 1C. Pepohonan Hutan Rimba Luar (Keluar dari Batas Tabung untuk Menutupi Batas)
+  // Membentang dari Y = 1.75 hingga 2.55 sehingga batas tabung (1.90) tertutup total
+  const outerTreeCount = 100;
+  for (let m = 0; m < outerTreeCount; m++) {
+    const tree = (m % 2 === 0) ? createBroadleafTree() : createTree();
+    const side = (m % 2 === 0) ? 1 : -1;
+
+    const theta = (m / outerTreeCount) * Math.PI * 2 + (m % 5) * 0.06;
+    const posX = cylinderRadius * Math.cos(theta);
+    const posZ = cylinderRadius * Math.sin(theta);
+    const posY = side * (1.75 + Math.random() * 0.75); // Keluar melampaui batas tabung 1.90
+
+    // Pohon luar raksasa untuk menghalangi pemandangan batas tabung
+    const scale = 1.35 + Math.random() * 0.65;
     tree.scale.set(scale, scale, scale);
     tree.rotation.y = Math.random() * Math.PI * 2;
 
