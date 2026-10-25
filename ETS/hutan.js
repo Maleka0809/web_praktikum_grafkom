@@ -399,23 +399,77 @@ function createBroadleafTree() {
     forestGroup.add(treeWrapper);
   }
 
-  // 2. Tambahkan bebatuan dan semak di pinggir aspal tabung
-  const rockGeo = new THREE.DodecahedronGeometry(0.12, 1);
-  const rockMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.9 });
-  const bushGeo = new THREE.SphereGeometry(0.18, 6, 6);
-  const bushMat = new THREE.MeshStandardMaterial({ color: 0x065f46, roughness: 0.7, flatShading: true });
+  // 2. Tambahkan bebatuan dan semak/lingkaran hijau dengan sebaran acak alami
+  const rockMaterials = [
+    new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.9, flatShading: true }),
+    new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.85, flatShading: true }),
+    new THREE.MeshStandardMaterial({ color: 0x526058, roughness: 0.92, flatShading: true }) // Batu berlumut
+  ];
+  const rockGeos = [
+    new THREE.DodecahedronGeometry(0.13, 1),
+    new THREE.DodecahedronGeometry(0.09, 0),
+    new THREE.IcosahedronGeometry(0.11, 0)
+  ];
 
-  for (let j = 0; j < 40; j++) {
-    const theta = (j / 40) * Math.PI * 2 + 0.1;
-    const side = (j % 2 === 0) ? 1 : -1;
+  const bushMaterials = [
+    new THREE.MeshStandardMaterial({ color: 0x065f46, roughness: 0.7, flatShading: true }),
+    new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.65, flatShading: true }),
+    new THREE.MeshStandardMaterial({ color: 0x166534, roughness: 0.75, flatShading: true })
+  ];
+  const bushGeos = [
+    new THREE.SphereGeometry(0.17, 7, 6),
+    new THREE.SphereGeometry(0.13, 6, 5),
+    new THREE.SphereGeometry(0.21, 7, 6)
+  ];
+
+  // 68 objek dekoratif disebar acak di sepanjang kedua tepi jalan hutan
+  const totalProps = 68;
+  for (let j = 0; j < totalProps; j++) {
+    // Sudut theta acak merata mengelilingi tabung
+    const theta = (j / totalProps) * Math.PI * 2 + (Math.random() - 0.5) * 0.12;
+
+    // Sisi kiri (+1) atau kanan (-1) ditentukan acak secara independen
+    const side = (Math.random() > 0.5) ? 1 : -1;
+
+    // Jarak Y dari jalan dibuat bervariasi: dari bibir aspal (0.84) hingga celah pepohonan (1.30)
+    const posY = side * (0.84 + Math.random() * 0.46);
+
     const posX = cylinderRadius * Math.cos(theta);
     const posZ = cylinderRadius * Math.sin(theta);
-    const posY = side * (0.86 + Math.random() * 0.16);
 
-    const isRock = (j % 2 === 0);
-    const propMesh = new THREE.Mesh(isRock ? rockGeo : bushGeo, isRock ? rockMat : bushMat);
-    const pScale = 0.9 + Math.random() * 0.5;
-    propMesh.scale.set(pScale, pScale, pScale);
+    // Jenis objek (batu atau semak) diacak terpisah tanpa terikat sisi
+    const isRock = (Math.random() > 0.48);
+    let propMesh;
+
+    if (isRock) {
+      const geo = rockGeos[Math.floor(Math.random() * rockGeos.length)];
+      const mat = rockMaterials[Math.floor(Math.random() * rockMaterials.length)];
+      propMesh = new THREE.Mesh(geo, mat);
+
+      const rScale = 0.70 + Math.random() * 0.75;
+      propMesh.scale.set(
+        rScale * (0.85 + Math.random() * 0.3),
+        rScale * (0.65 + Math.random() * 0.35), // Sedikit pipih menempel tanah
+        rScale * (0.85 + Math.random() * 0.3)
+      );
+      propMesh.rotation.set(
+        Math.random() * Math.PI,
+        Math.random() * Math.PI,
+        Math.random() * Math.PI
+      );
+    } else {
+      const geo = bushGeos[Math.floor(Math.random() * bushGeos.length)];
+      const mat = bushMaterials[Math.floor(Math.random() * bushMaterials.length)];
+      propMesh = new THREE.Mesh(geo, mat);
+
+      const bScale = 0.75 + Math.random() * 0.70;
+      propMesh.scale.set(
+        bScale * (0.90 + Math.random() * 0.25),
+        bScale * (0.60 + Math.random() * 0.25), // Semak rimbun melebar
+        bScale * (0.90 + Math.random() * 0.25)
+      );
+      propMesh.rotation.y = Math.random() * Math.PI * 2;
+    }
 
     const propWrapper = new THREE.Group();
     propWrapper.add(propMesh);

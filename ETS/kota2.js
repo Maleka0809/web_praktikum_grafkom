@@ -500,34 +500,45 @@ function createCyberCityScenery() {
   });
 
   // 1C. Pepohonan Malam di Trotoar & Penutup Batas Luar Tabung
-  const nightTreeCount = 64;
-  for (let t = 0; t < nightTreeCount; t++) {
-    const tree = createNightTree(t);
-    const side = (t % 2 === 0) ? 1 : -1;
+  // Selang-seling antara pohon bulat & pohon pinus di KEDUA sisi jalan (kiri dan kanan memiliki variasi yang seimbang)
+  const treesPerSide = 36;
+  [-1, 1].forEach((side, sIdx) => {
+    for (let k = 0; k < treesPerSide; k++) {
+      // Selang-seling: k genap = pohon bulat (dodecahedron), k ganjil = pohon pinus (cone)
+      // Di-offset dengan sIdx agar pola di sisi kiri dan kanan tidak kembar persis
+      const variant = (k + sIdx) % 2;
+      const tree = createNightTree(variant);
 
-    // Membentang dari trotoar hingga keluar batas tabung (1.65 - 2.45)
-    const yOffset = (t % 3 !== 0) ? (1.70 + (t % 5) * 0.14) : (1.08 + (t % 4) * 0.06);
-    const theta = (t / nightTreeCount) * Math.PI * 2 + (t % 7) * 0.05;
-    const posX = sidewalkRadius * Math.cos(theta);
-    const posZ = sidewalkRadius * Math.sin(theta);
-    const posY = side * yOffset;
+      // Membentang dari trotoar dekat aspal hingga keluar batas tabung (1.65 - 2.45)
+      const isFront = (k % 3 === 0);
+      const yOffset = isFront
+        ? (1.08 + (k % 4) * 0.05)
+        : (1.68 + (k % 5) * 0.14);
 
-    const scale = (t % 3 !== 0) ? (0.90 + (t % 4) * 0.18) : (0.65 + (t % 3) * 0.12);
-    tree.scale.set(scale, scale, scale);
-    tree.rotation.y = Math.random() * Math.PI * 2;
+      const theta = (k / treesPerSide) * Math.PI * 2 + (k % 7) * 0.04 + sIdx * 0.08;
+      const posX = sidewalkRadius * Math.cos(theta);
+      const posZ = sidewalkRadius * Math.sin(theta);
+      const posY = side * yOffset;
 
-    const treeWrapper = new THREE.Group();
-    treeWrapper.add(tree);
+      const scale = isFront
+        ? (0.65 + (k % 3) * 0.10)
+        : (0.95 + (k % 4) * 0.16);
+      tree.scale.set(scale, scale, scale);
+      tree.rotation.y = (k * 1.37) % (Math.PI * 2);
 
-    const yAxis = new THREE.Vector3(Math.cos(theta), 0, Math.sin(theta));
-    const zAxis = new THREE.Vector3(-Math.sin(theta), 0, Math.cos(theta));
-    const basisMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
+      const treeWrapper = new THREE.Group();
+      treeWrapper.add(tree);
 
-    treeWrapper.setRotationFromMatrix(basisMat);
-    treeWrapper.position.set(posX, posY, posZ);
+      const yAxis = new THREE.Vector3(Math.cos(theta), 0, Math.sin(theta));
+      const zAxis = new THREE.Vector3(-Math.sin(theta), 0, Math.cos(theta));
+      const basisMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
 
-    cyberCityGroup.add(treeWrapper);
-  }
+      treeWrapper.setRotationFromMatrix(basisMat);
+      treeWrapper.position.set(posX, posY, posZ);
+
+      cyberCityGroup.add(treeWrapper);
+    }
+  });
 
   // 1D. Dinding Pencakar Langit Rapat di Batas Luar Tabung (Keluar Tabung untuk Menutup Batas)
   const perimeterCyberModels = [
