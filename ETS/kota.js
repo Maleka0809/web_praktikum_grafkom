@@ -23,7 +23,7 @@ const btnLaneRight = document.getElementById('btnLaneRight');
 let avatarGroup, avatarModel, avatarMixer, avatarRunAction;
 let avatarLaneY = 0.0;
 let avatarTargetLaneY = 0.0;
-const avatarBaseTargetZ = 0.22; // Posisi avatar dekat dasar bawah kanvas agar pandangan jalan ke depan lapang // Posisi avatar dekat dasar bawah kanvas agar pandangan jalan ke depan lapang
+const avatarBaseTargetZ = 0.15; // Posisi avatar tepat dekat dasar bawah kanvas dengan kedua kaki tetap terlihat saat berlari // Posisi avatar lebih ke bawah dekat dasar kanvas // Posisi avatar dekat dasar bawah kanvas agar pandangan jalan ke depan lapang // Posisi avatar dekat dasar bawah kanvas agar pandangan jalan ke depan lapang
 let splashParticles = null;
 let splashVelocities = null;
 
