@@ -47,8 +47,8 @@ const waterTotalHeight = 3.78; // Menyelimuti penuh seluruh aspal dan kedua sisi
 
 const cylinderRadius = 2.6; // Diameter 5.2
 const cylinderHeight = 3.8; // Diperlebar agar memuat 2 layer gedung (depan & belakang)
-const eyeHeight = 0.82; // Posisi kamera dinaikkan ke atas (revolusi ke atas) agar lintasan jalan dan rintangan/gate terlihat jelas
-const basePitchDown = 24.5 * (Math.PI / 180); // Sudut kamera menunduk ke arah jalan raya
+const eyeHeight = 0.85; // Posisi kamera di atas avatar agar lintasan jalan dan rintangan/gate terlihat jelas
+const basePitchDown = 31.5 * (Math.PI / 180); // Sudut kamera menunduk (pitch down) lebih jelas ke permukaan jalan
 const camZOffset = -0.16; // Sedikit di belakang agar lintasan terlihat panjang
 
 let cameraView = 'surface'; // 'surface' | 'orbit'
