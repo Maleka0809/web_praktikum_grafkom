@@ -159,17 +159,23 @@ function createRunnerAvatar(scene) {
         child.castShadow = true;
         child.receiveShadow = true;
         if (child.material) {
-          child.material.roughness = 0.50;
-          child.material.metalness = 0.10;
+          child.material.roughness = 0.60;
+          child.material.metalness = 0.05;
+          // Ambient lembut berbasis warna asli material karakter agar rambut kuning,
+          // jaket hijau, warna kulit, dan celana terlihat jelas & hidup di malam hari tanpa silau
+          if (child.material.color) {
+            child.material.emissive = child.material.color.clone();
+            child.material.emissiveIntensity = 0.28;
+          }
         }
       }
     });
 
     avatarGroup.add(avatarModel);
 
-    // Aura cahaya listrik kuning lembut & terfokus (lembut, elegan, tidak menyilaukan jalan)
-    const electroLight = new THREE.PointLight(0xfacc15, 1.15, 1.25, 2.0);
-    electroLight.position.set(0.06, 0.20, 0.12);
+    // Cahaya aura listrik kuning lembut di sekeliling karakter (subtle, tidak menyilaukan aspal jalan)
+    const electroLight = new THREE.PointLight(0xfacc15, 0.45, 0.85, 2.0);
+    electroLight.position.set(0.04, 0.16, 0.08);
     avatarGroup.add(electroLight);
 
     // Jalankan animasi lari bawaan electrorun.glb
