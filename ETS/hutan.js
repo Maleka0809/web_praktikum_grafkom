@@ -22,15 +22,24 @@ const btnToggleAnim = document.getElementById('btnToggleAnim');
 const btnToggleCam = document.getElementById('btnToggleCam');
 const btnWireframe = document.getElementById('btnWireframe');
 const btnSpeed = document.getElementById('btnSpeed');
+const btnLaneLeft = document.getElementById('btnLaneLeft');
+const btnLaneRight = document.getElementById('btnLaneRight');
 
 let scene, camera, renderer, controls;
 let mainMesh, sideMaterial, capMaterial, standardMaterials;
 let forestGroup, emberParticles, smokeParticles;
+let avatarGroup, avatarModel, avatarMixer, avatarRunAction;
+let avatarLaneY = 0.0;
+let avatarTargetLaneY = 0.0;
+let splashParticles = null;
+let splashVelocities = null;
 
 const cylinderRadius = 2.6;
 const cylinderHeight = 3.8;
-const eyeHeight = 0.54;
-const basePitchDown = 17 * (Math.PI / 180);
+const eyeHeight = 0.85; // Posisi kamera sama persis seperti di kota (lapang melihat lintasan jalan)
+const basePitchDown = 31.5 * (Math.PI / 180); // Sudut kamera menunduk (pitch down) sama persis seperti di kota
+const camZOffset = -0.16; // Posisi offset Z kamera sama seperti di kota
+const avatarBaseTargetZ = 0.15; // Posisi avatar tepat dekat dasar bawah kanvas (sama seperti di kota)
 
 let cameraView = 'surface'; // 'surface' | 'orbit'
 let isAnimating = true;
@@ -210,6 +219,120 @@ function createSmokeTexture() {
   return tex;
 }
 
+
+// -------------------------------------------------------------
+// AVATAR KARAKTER: WATERUN (GLB) + ANIMASI LARI & EFEK AIR
+// -------------------------------------------------------------
+function createRunnerAvatar(scene) {
+  avatarGroup = new THREE.Group();
+  scene.add(avatarGroup);
+
+  const targetZ = avatarBaseTargetZ;
+  const surfaceX = Math.sqrt(cylinderRadius * cylinderRadius - targetZ * targetZ);
+  const normal = new THREE.Vector3(surfaceX, 0, targetZ).normalize();
+  const tangent = new THREE.Vector3(-normal.z, 0, normal.x).normalize();
+  const binormal = new THREE.Vector3(0, 1, 0);
+
+  // Basis transform untuk model avatar:
+  // Model UP (+Y) -> normal (+X)
+  // Model FORWARD (+Z) -> tangent (+Z)
+  // Model RIGHT (-X) -> -binormal (+Y)
+  const rotMatrix = new THREE.Matrix4();
+  rotMatrix.makeBasis(binormal.clone().negate(), normal, tangent);
+  avatarGroup.setRotationFromMatrix(rotMatrix);
+  avatarGroup.position.set(surfaceX, 0, targetZ);
+
+  const gltfLoader = new GLTFLoader();
+  const avatarPath = './assets/waterun.glb';
+  gltfLoader.load(
+    avatarPath,
+    (gltf) => {
+      avatarModel = gltf.scene;
+      // Skala proporsional sama seperti di kota (s = 0.038)
+      const s = 0.038;
+      avatarModel.scale.set(s, s, s);
+      avatarModel.position.y = 0.009; // Menapak pas di atas aspal jalan raya
+
+      avatarModel.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          if (child.material) {
+            child.material.roughness = 0.40;
+            child.material.metalness = 0.15;
+          }
+        }
+      });
+
+      avatarGroup.add(avatarModel);
+
+      // Key/Rim light aura air sejuk biru lembut pada avatar di malam galaksi
+      const charSpot = new THREE.PointLight(0x38bdf8, 1.6, 2.5);
+      charSpot.position.set(0.08, 0.22, 0.15);
+      avatarGroup.add(charSpot);
+
+      // Jalankan animasi lari bawaan waterun.glb
+      if (gltf.animations && gltf.animations.length > 0) {
+        avatarMixer = new THREE.AnimationMixer(avatarModel);
+        avatarRunAction = avatarMixer.clipAction(gltf.animations[0]);
+        avatarRunAction.play();
+      }
+    },
+    undefined,
+    (err) => {
+      console.warn('Gagal memuat ./assets/waterun.glb, mencoba ./assets/waterrun.glb', err);
+      gltfLoader.load('./assets/waterrun.glb', (gltf2) => {
+        avatarModel = gltf2.scene;
+        const s = 0.038;
+        avatarModel.scale.set(s, s, s);
+        avatarModel.position.y = 0.009;
+        avatarGroup.add(avatarModel);
+        if (gltf2.animations && gltf2.animations.length > 0) {
+          avatarMixer = new THREE.AnimationMixer(avatarModel);
+          avatarRunAction = avatarMixer.clipAction(gltf2.animations[0]);
+          avatarRunAction.play();
+        }
+      });
+    }
+  );
+
+  // Efek percikan butiran air di kaki avatar saat berlari melintasi hutan
+  createWaterFootstepEffect(avatarGroup);
+}
+
+function createWaterFootstepEffect(parentGroup) {
+  const particleCount = 28;
+  const positions = new Float32Array(particleCount * 3);
+  splashVelocities = [];
+
+  for (let i = 0; i < particleCount; i++) {
+    positions[i * 3 + 0] = (Math.random() - 0.5) * 0.10;
+    positions[i * 3 + 1] = 0.01;
+    positions[i * 3 + 2] = -0.05 + (Math.random() - 0.5) * 0.08;
+
+    splashVelocities.push({
+      x: (Math.random() - 0.5) * 0.22,
+      y: 0.12 + Math.random() * 0.20,
+      z: -0.25 - Math.random() * 0.25,
+      life: Math.random()
+    });
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+  const mat = new THREE.PointsMaterial({
+    color: 0x38bdf8,
+    size: 0.022,
+    transparent: true,
+    opacity: 0.85,
+    blending: THREE.AdditiveBlending
+  });
+
+  splashParticles = new THREE.Points(geo, mat);
+  parentGroup.add(splashParticles);
+}
+
 function initForest() {
   // 1. Scene & Background Langit Malam Galaksi (Sama seperti di kota2)
   scene = new THREE.Scene();
@@ -358,6 +481,9 @@ function initForest() {
 
   // 10. Load Model 3D Api (Skala Proporsional Ramping/Kecil)
   loadFireAssetsAndPopulate();
+
+  // 11. Avatar Waterun (Runner) berlari di atas jalan raya hutan
+  createRunnerAvatar(scene);
 }
 
 // -------------------------------------------------------------
@@ -1021,14 +1147,14 @@ function setCameraView(mode) {
     camera.updateProjectionMatrix();
     camera.up.set(1, 0, 0);
     const camX = cylinderRadius + eyeHeight;
-    camera.position.set(camX, 0, 0);
-    const targetDist = 4.6;
-    camera.lookAt(camX - Math.sin(basePitchDown) * targetDist, 0, Math.cos(basePitchDown) * targetDist);
+    camera.position.set(camX, 0, camZOffset);
+    const targetDist = 4.8;
+    camera.lookAt(camX - Math.sin(basePitchDown) * targetDist, 0, camZOffset + Math.cos(basePitchDown) * targetDist);
 
     if (btnToggleCam) {
-      btnToggleCam.textContent = '📷 Kamera: Di Selimut (Fixed Smooth)';
-      btnToggleCam.style.borderColor = '#f97316';
-      btnToggleCam.style.color = '#f97316';
+      btnToggleCam.textContent = '📷 Kamera: Di Selimut (Third-Person)';
+      btnToggleCam.style.borderColor = '#38bdf8';
+      btnToggleCam.style.color = '#38bdf8';
     }
     infoDetail.textContent = 'Kamera tetap di selimut tabung | Hutan lebat, bahu tanah & langit galaksi malam';
   } else {
@@ -1138,12 +1264,54 @@ function animate(time) {
     }
   }
 
+
+  // Update Avatar Karakter Waterun (Perpindahan Jalur & Animasi Lari)
+  if (avatarGroup) {
+    avatarLaneY = THREE.MathUtils.lerp(avatarLaneY, avatarTargetLaneY, delta * 9.0);
+    avatarGroup.position.y = avatarLaneY;
+
+    if (avatarMixer) {
+      const animRate = isAnimating ? (rollSpeed / 0.75) : 0.0;
+      avatarMixer.update(delta * animRate);
+    }
+
+    // Cipratan tetesan air di kaki avatar
+    if (splashParticles && splashVelocities) {
+      if (isAnimating) {
+        splashParticles.visible = true;
+        const pos = splashParticles.geometry.attributes.position.array;
+        for (let i = 0; i < splashVelocities.length; i++) {
+          const v = splashVelocities[i];
+          v.life += delta * 2.5;
+          if (v.life > 1.0) {
+            v.life = 0;
+            pos[i * 3 + 0] = (Math.random() - 0.5) * 0.10;
+            pos[i * 3 + 1] = 0.01;
+            pos[i * 3 + 2] = -0.05 + (Math.random() - 0.5) * 0.08;
+          } else {
+            pos[i * 3 + 0] += v.x * delta;
+            pos[i * 3 + 1] += v.y * delta;
+            pos[i * 3 + 2] += v.z * delta;
+          }
+        }
+        splashParticles.geometry.attributes.position.needsUpdate = true;
+      } else {
+        splashParticles.visible = false;
+      }
+    }
+  }
+
   if (cameraView === 'surface') {
     const camX = cylinderRadius + eyeHeight;
-    camera.position.set(camX, 0, 0);
+    const camFollowY = avatarLaneY * 0.35;
+    camera.position.set(camX, camFollowY, camZOffset);
     camera.up.set(1, 0, 0);
-    const targetDist = 4.6;
-    camera.lookAt(camX - Math.sin(basePitchDown) * targetDist, 0, Math.cos(basePitchDown) * targetDist);
+    const targetDist = 4.8;
+    camera.lookAt(
+      camX - Math.sin(basePitchDown) * targetDist,
+      avatarLaneY * 0.45,
+      camZOffset + Math.cos(basePitchDown) * targetDist
+    );
   } else {
     controls.update();
   }
@@ -1184,14 +1352,31 @@ btnSpeed.addEventListener('click', () => {
   btnSpeed.textContent = `⚡ Kecepatan Jalan: ${rollSpeed.toFixed(2)}x`;
 });
 
+
 window.addEventListener('keydown', (e) => {
   if (e.key === ' ') {
     e.preventDefault();
     btnToggleAnim.click();
   } else if (e.key.toLowerCase() === 'c') {
     btnToggleCam.click();
+  } else if (e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft') {
+    avatarTargetLaneY = Math.max(-0.40, avatarTargetLaneY - 0.20);
+  } else if (e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') {
+    avatarTargetLaneY = Math.min(0.40, avatarTargetLaneY + 0.20);
   }
 });
+
+if (btnLaneLeft) {
+  btnLaneLeft.addEventListener('click', () => {
+    avatarTargetLaneY = Math.max(-0.40, avatarTargetLaneY - 0.20);
+  });
+}
+if (btnLaneRight) {
+  btnLaneRight.addEventListener('click', () => {
+    avatarTargetLaneY = Math.min(0.40, avatarTargetLaneY + 0.20);
+  });
+}
+
 
 initForest();
 requestAnimationFrame(animate);
