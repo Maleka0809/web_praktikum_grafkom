@@ -23,7 +23,7 @@ const btnLaneRight = document.getElementById('btnLaneRight');
 let avatarGroup, avatarModel, avatarMixer, avatarRunAction;
 let avatarLaneY = 0.0;
 let avatarTargetLaneY = 0.0;
-const avatarBaseTargetZ = 0.95;
+const avatarBaseTargetZ = 0.60;
 let splashParticles = null;
 let splashVelocities = null;
 
@@ -170,7 +170,7 @@ function createAvatarSplashEffect(parentGroup) {
   geom.setAttribute('position', new THREE.BufferAttribute(splashPositions, 3));
   const mat = new THREE.PointsMaterial({
     color: 0xbae6fd,
-    size: 0.024,
+    size: 0.016,
     transparent: true,
     opacity: 0.85,
     blending: THREE.AdditiveBlending,
@@ -204,10 +204,10 @@ function createRunnerAvatar(scene) {
   const gltfLoader = new GLTFLoader();
   gltfLoader.load('./assets/firerun.glb', (gltf) => {
     avatarModel = gltf.scene;
-    // Skala proporsional ~36cm di silinder jalan raya 5.2m
-    const s = 0.088;
+    // Skala lebih kecil & proporsional (~22cm di silinder 5.2m, dekat kamera)
+    const s = 0.050;
     avatarModel.scale.set(s, s, s);
-    avatarModel.position.y = 0.02; // Menapak di atas aspal jalan raya
+    avatarModel.position.y = 0.012; // Menapak pas di atas aspal jalan raya
 
     avatarModel.traverse((child) => {
       if (child.isMesh) {
@@ -223,8 +223,8 @@ function createRunnerAvatar(scene) {
     avatarGroup.add(avatarModel);
 
     // Rim/Key light lokal agar avatar terlihat tajam & berdefinisi
-    const charSpot = new THREE.PointLight(0xffedd5, 1.4, 3.5);
-    charSpot.position.set(0.2, 0.45, 0.3);
+    const charSpot = new THREE.PointLight(0xffedd5, 1.2, 2.5);
+    charSpot.position.set(0.12, 0.28, 0.20);
     avatarGroup.add(charSpot);
 
     // Jalankan animasi lari bawaan firerun.glb
