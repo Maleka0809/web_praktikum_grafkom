@@ -15,17 +15,26 @@ const btnToggleAnim = document.getElementById('btnToggleAnim');
 const btnToggleCam = document.getElementById('btnToggleCam');
 const btnWireframe = document.getElementById('btnWireframe');
 const btnSpeed = document.getElementById('btnSpeed');
+const btnLaneLeft = document.getElementById('btnLaneLeft');
+const btnLaneRight = document.getElementById('btnLaneRight');
 
 let scene, camera, renderer, controls;
 let mainMesh, sideMaterial, capMaterial, standardMaterials;
 let cyberCityGroup;
 let neonLights = [];
 let starsParticles;
+let avatarGroup, avatarModel, avatarMixer, avatarRunAction;
+let avatarLaneY = 0.0;
+let avatarTargetLaneY = 0.0;
+let sparkParticles = null;
+let sparkVelocities = null;
 
 const cylinderRadius = 2.6; // Diameter diperbesar menjadi 5.2
 const cylinderHeight = 3.8; // Diperlebar agar memuat 2 layer gedung (depan & belakang)
-const eyeHeight = 0.54; // Posisi kamera agak dinaikkan sedikit untuk zoom-out yang proporsional
-const basePitchDown = 17 * (Math.PI / 180);
+const eyeHeight = 0.85; // Posisi kamera di atas avatar agar lintasan jalan dan rintangan terlihat lapang
+const basePitchDown = 31.5 * (Math.PI / 180); // Sudut kamera menunduk (pitch down) sama persis dengan kota & hutan
+const camZOffset = -0.16; // Posisi offset Z kamera sama persis dengan kota & hutan
+const avatarBaseTargetZ = 0.15; // Posisi avatar tepat dekat dasar bawah kanvas (sama seperti kota & hutan)
 
 let cameraView = 'surface'; // 'surface' | 'orbit'
 let isAnimating = true;
@@ -112,6 +121,100 @@ function createMoon(scene) {
   scene.add(moonPoint);
 
   return { moonGroup, coreSprite, bloomSprite, moonLight };
+}
+
+
+// -------------------------------------------------------------
+// AVATAR KARAKTER: ELECTRORUN (GLB) + ANIMASI LARI & EFEK SPARK
+// -------------------------------------------------------------
+function createRunnerAvatar(scene) {
+  avatarGroup = new THREE.Group();
+  scene.add(avatarGroup);
+
+  const targetZ = avatarBaseTargetZ;
+  const surfaceX = Math.sqrt(cylinderRadius * cylinderRadius - targetZ * targetZ);
+  const normal = new THREE.Vector3(surfaceX, 0, targetZ).normalize();
+  const tangent = new THREE.Vector3(-normal.z, 0, normal.x).normalize();
+  const binormal = new THREE.Vector3(0, 1, 0);
+
+  // Basis transform untuk firerun / electrorun / waterun:
+  // Model UP (+Y) -> normal (+X)
+  // Model FORWARD (+Z) -> tangent (+Z)
+  // Model RIGHT (-X) -> -binormal (+Y)
+  const rotMatrix = new THREE.Matrix4();
+  rotMatrix.makeBasis(binormal.clone().negate(), normal, tangent);
+  avatarGroup.setRotationFromMatrix(rotMatrix);
+  avatarGroup.position.set(surfaceX, 0, targetZ);
+
+  const gltfLoader = new GLTFLoader();
+  gltfLoader.load('./assets/electrorun.glb', (gltf) => {
+    avatarModel = gltf.scene;
+    // Skala sama persis dengan kota & hutan (s = 0.038)
+    const s = 0.038;
+    avatarModel.scale.set(s, s, s);
+    avatarModel.position.y = 0.009; // Menapak pas di atas aspal jalan raya
+
+    avatarModel.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+        if (child.material) {
+          child.material.roughness = 0.45;
+          child.material.metalness = 0.20;
+        }
+      }
+    });
+
+    avatarGroup.add(avatarModel);
+
+    // Aura cahaya listrik neon ungu/magenta pada karakter di malam kota futuristik
+    const electroSpot = new THREE.PointLight(0xc084fc, 1.8, 2.5);
+    electroSpot.position.set(0.08, 0.22, 0.15);
+    avatarGroup.add(electroSpot);
+
+    // Jalankan animasi lari bawaan electrorun.glb
+    if (gltf.animations && gltf.animations.length > 0) {
+      avatarMixer = new THREE.AnimationMixer(avatarModel);
+      avatarRunAction = avatarMixer.clipAction(gltf.animations[0]);
+      avatarRunAction.play();
+    }
+  });
+
+  // Efek percikan listrik / sparks neon di kaki avatar saat berlari
+  createElectroSparkEffect(avatarGroup);
+}
+
+function createElectroSparkEffect(parentGroup) {
+  const particleCount = 28;
+  const positions = new Float32Array(particleCount * 3);
+  sparkVelocities = [];
+
+  for (let i = 0; i < particleCount; i++) {
+    positions[i * 3 + 0] = (Math.random() - 0.5) * 0.10;
+    positions[i * 3 + 1] = 0.01;
+    positions[i * 3 + 2] = -0.05 + (Math.random() - 0.5) * 0.08;
+
+    sparkVelocities.push({
+      x: (Math.random() - 0.5) * 0.25,
+      y: 0.15 + Math.random() * 0.20,
+      z: -0.28 - Math.random() * 0.25,
+      life: Math.random()
+    });
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+  const mat = new THREE.PointsMaterial({
+    color: 0xc084fc,
+    size: 0.022,
+    transparent: true,
+    opacity: 0.90,
+    blending: THREE.AdditiveBlending
+  });
+
+  sparkParticles = new THREE.Points(geo, mat);
+  parentGroup.add(sparkParticles);
 }
 
 function initCyberCity() {
@@ -269,6 +372,9 @@ function initCyberCity() {
 
   // 11. Bintang Digital / Partikel Langit Malam
   createCyberStars();
+
+  // 12. Avatar Electrorun (Runner) berlari di atas jalan raya kota futuristik
+  createRunnerAvatar(scene);
 
   // 12. Event Listeners
   window.addEventListener('resize', onWindowResize);
@@ -655,26 +761,21 @@ function setCameraView(mode) {
     camera.fov = 82; // Zoom out sudut pandang lebar
     camera.updateProjectionMatrix();
 
-    // Upright: Kamera berdiri di selimut tabung (radius + eyeHeight)
     const camX = cylinderRadius + eyeHeight;
-    const camY = 0;
-    const camZ = 0;
-    camera.position.set(camX, camY, camZ);
-
+    camera.position.set(camX, 0, camZOffset);
     camera.up.set(1, 0, 0);
 
-    // Memandang ke arah jalan berputar, menunduk sedikit ke arah jalan
-    const targetDist = 4.6;
-    const targetX = camX - Math.sin(basePitchDown) * targetDist;
-    const targetY = 0;
-    const targetZ = Math.cos(basePitchDown) * targetDist;
-
-    camera.lookAt(targetX, targetY, targetZ);
+    const targetDist = 4.8;
+    camera.lookAt(
+      camX - Math.sin(basePitchDown) * targetDist,
+      0,
+      camZOffset + Math.cos(basePitchDown) * targetDist
+    );
 
     if (btnToggleCam) {
-      btnToggleCam.innerText = '📷 Kamera: Di Selimut (Fixed Smooth)';
-      btnToggleCam.style.borderColor = '#ec4899';
-      btnToggleCam.style.color = '#f472b6';
+      btnToggleCam.innerText = '📷 Kamera: Di Selimut (Third-Person)';
+      btnToggleCam.style.borderColor = '#c084fc';
+      btnToggleCam.style.color = '#c084fc';
     }
     if (infoDetail) {
       infoDetail.innerText = 'Kamera tetap di selimut tabung | Lampu neon kota & putaran halus';
@@ -718,7 +819,19 @@ function setupControls() {
       }
     } else if (e.code === 'KeyC') {
       setCameraView(cameraView === 'surface' ? 'orbit' : 'surface');
+    } else if (e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft') {
+      avatarTargetLaneY = Math.max(-0.40, avatarTargetLaneY - 0.20);
+    } else if (e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') {
+      avatarTargetLaneY = Math.min(0.40, avatarTargetLaneY + 0.20);
     }
+  });
+
+  btnLaneLeft?.addEventListener('click', () => {
+    avatarTargetLaneY = Math.max(-0.40, avatarTargetLaneY - 0.20);
+  });
+
+  btnLaneRight?.addEventListener('click', () => {
+    avatarTargetLaneY = Math.min(0.40, avatarTargetLaneY + 0.20);
   });
 
   btnWireframe?.addEventListener('click', () => {
@@ -777,12 +890,53 @@ function animate(currentTime) {
     starsParticles.rotation.y += 0.0003;
   }
 
+  // Update Avatar Karakter Electrorun (Perpindahan Jalur & Animasi Lari)
+  if (avatarGroup) {
+    avatarLaneY = THREE.MathUtils.lerp(avatarLaneY, avatarTargetLaneY, delta * 9.0);
+    avatarGroup.position.y = avatarLaneY;
+
+    if (avatarMixer) {
+      const animRate = isAnimating ? (rollSpeed / 0.75) : 0.0;
+      avatarMixer.update(delta * animRate);
+    }
+
+    // Percikan listrik neon di kaki avatar
+    if (sparkParticles && sparkVelocities) {
+      if (isAnimating) {
+        sparkParticles.visible = true;
+        const pos = sparkParticles.geometry.attributes.position.array;
+        for (let i = 0; i < sparkVelocities.length; i++) {
+          const v = sparkVelocities[i];
+          v.life += delta * 2.5;
+          if (v.life > 1.0) {
+            v.life = 0;
+            pos[i * 3 + 0] = (Math.random() - 0.5) * 0.10;
+            pos[i * 3 + 1] = 0.01;
+            pos[i * 3 + 2] = -0.05 + (Math.random() - 0.5) * 0.08;
+          } else {
+            pos[i * 3 + 0] += v.x * delta;
+            pos[i * 3 + 1] += v.y * delta;
+            pos[i * 3 + 2] += v.z * delta;
+          }
+        }
+        sparkParticles.geometry.attributes.position.needsUpdate = true;
+      } else {
+        sparkParticles.visible = false;
+      }
+    }
+  }
+
   if (cameraView === 'surface') {
     const camX = cylinderRadius + eyeHeight;
-    camera.position.set(camX, 0, 0);
+    const camFollowY = avatarLaneY * 0.35;
+    camera.position.set(camX, camFollowY, camZOffset);
     camera.up.set(1, 0, 0);
-    const targetDist = 4.6;
-    camera.lookAt(camX - Math.sin(basePitchDown) * targetDist, 0, Math.cos(basePitchDown) * targetDist);
+    const targetDist = 4.8;
+    camera.lookAt(
+      camX - Math.sin(basePitchDown) * targetDist,
+      avatarLaneY * 0.45,
+      camZOffset + Math.cos(basePitchDown) * targetDist
+    );
   } else if (cameraView === 'orbit') {
     controls.update();
   }
