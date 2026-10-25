@@ -23,7 +23,7 @@ const btnLaneRight = document.getElementById('btnLaneRight');
 let avatarGroup, avatarModel, avatarMixer, avatarRunAction;
 let avatarLaneY = 0.0;
 let avatarTargetLaneY = 0.0;
-const avatarBaseTargetZ = 0.46;
+const avatarBaseTargetZ = 0.22; // Posisi avatar dekat dasar bawah kanvas agar pandangan jalan ke depan lapang // Posisi avatar dekat dasar bawah kanvas agar pandangan jalan ke depan lapang
 let splashParticles = null;
 let splashVelocities = null;
 
