@@ -117,13 +117,13 @@ function createMoon(scene) {
 
   scene.add(moonGroup);
 
-  const moonLight = new THREE.DirectionalLight(0xdbeafe, 1.45);
+  const moonLight = new THREE.DirectionalLight(0xdbeafe, 2.10); // Cahaya bulan diterangkan
   moonLight.position.copy(moonPos);
   moonLight.target.position.set(2.6, 0, 5.0);
   scene.add(moonLight);
   scene.add(moonLight.target);
 
-  const moonPoint = new THREE.PointLight(0xc7d2fe, 1.7, 75, 1.2);
+  const moonPoint = new THREE.PointLight(0xc7d2fe, 2.30, 85, 1.1); // Pendaran bulan diterangkan
   moonPoint.position.copy(moonPos);
   scene.add(moonPoint);
 
@@ -138,7 +138,7 @@ function createDirtTexture() {
   const ctx = c.getContext('2d');
 
   // Warna dasar tanah cokelat tua subur
-  ctx.fillStyle = '#342114';
+  ctx.fillStyle = '#4d3220'; // Warna dasar tanah lebih hangat & terang
   ctx.fillRect(0, 0, 512, 512);
 
   // Butiran tanah, kerikil, dan arang
@@ -148,13 +148,13 @@ function createDirtTexture() {
     const size = Math.random() * 2.4 + 0.8;
     const r = Math.random();
     if (r < 0.35) {
-      ctx.fillStyle = '#1c1109'; // Tanah hitam / humus pekat
+      ctx.fillStyle = '#2a1a10'; // Tanah humus
     } else if (r < 0.65) {
-      ctx.fillStyle = '#422c1b'; // Tanah cokelat hangat
+      ctx.fillStyle = '#5a3d28'; // Tanah cokelat hangat
     } else if (r < 0.88) {
-      ctx.fillStyle = '#523722'; // Lempung cokelat terang
+      ctx.fillStyle = '#724e34'; // Lempung cokelat terang
     } else {
-      ctx.fillStyle = '#22150c'; // Jelaga arang
+      ctx.fillStyle = '#342013'; // Jelaga arang
     }
     ctx.fillRect(x, y, size, size);
   }
@@ -347,7 +347,7 @@ function initForest() {
   renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.25; // Exposure lebih terang agar pohon, jalan & tanah berdefinisi jelas
 
   // Load Background 360° Galaksi Bima Sakti (Deep Space Galaxy 360° - Sama persis dengan kota2)
   const setupSkyTexture = (texture) => {
@@ -392,13 +392,13 @@ function initForest() {
   // 5. Pencahayaan Bulan & Suasana Malam Galaksi
   moonVisuals = createMoon(scene);
 
-  const ambientLight = new THREE.AmbientLight(0x2a3b50, 0.85);
+  const ambientLight = new THREE.AmbientLight(0x52657a, 1.45); // Ambient light diterangkan
   scene.add(ambientLight);
 
   const hemiLight = new THREE.HemisphereLight(
-    0x38bdf8, // Kubah langit malam berbinar kebiruan lembut
-    0x1c1917, // Pantulan tanah humus hutan & jalan
-    0.65
+    0x7dd3fc, // Kubah langit malam berbinar kebiruan lebih terang
+    0x44372e, // Pantulan tanah humus hutan hangat
+    1.15      // Diterangkan dari 0.65 ke 1.15
   );
   scene.add(hemiLight);
 
@@ -427,8 +427,8 @@ function initForest() {
     map: roadColor,
     normalMap: roadNormal,
     roughnessMap: roadRoughness,
-    roughness: 0.80,
-    metalness: 0.1,
+    roughness: 0.68,
+    metalness: 0.12,
     wireframe: isWireframe
   });
 
@@ -450,25 +450,7 @@ function initForest() {
   mainMesh = new THREE.Mesh(geom, standardMaterials);
   scene.add(mainMesh);
 
-  // Bibir Logam Tabung
-  const rimGeo = new THREE.TorusGeometry(cylinderRadius + 0.02, 0.04, 16, 64);
-  const rimMat = new THREE.MeshStandardMaterial({
-    color: 0xf97316,
-    emissive: 0x9a3412,
-    emissiveIntensity: 0.5,
-    metalness: 0.7,
-    roughness: 0.3
-  });
-
-  const topRim = new THREE.Mesh(rimGeo, rimMat);
-  topRim.rotation.x = Math.PI / 2;
-  topRim.position.y = cylinderHeight / 2;
-  mainMesh.add(topRim);
-
-  const bottomRim = new THREE.Mesh(rimGeo, rimMat);
-  bottomRim.rotation.x = Math.PI / 2;
-  bottomRim.position.y = -cylinderHeight / 2;
-  mainMesh.add(bottomRim);
+  // Bibir kaleng (topRim & bottomRim) telah dihapus agar permukaan tabung menyatu alami tanpa pembatas
 
   // 7B. Bahu Jalan Tanah di Samping Kanan & Kiri Aspal (Dirt / Soil Shoulders)
   buildDirtShoulders();
@@ -539,10 +521,10 @@ function createPineTree(state = 'burning') {
 
   const trunkGeo = new THREE.CylinderGeometry(0.06, 0.10, 1.25, 8);
   const trunkMat = new THREE.MeshStandardMaterial({
-    color: state === 'unburnt' ? 0x452a1a : 0x1a1a1a,
-    roughness: 0.95,
-    emissive: state === 'burning' ? 0x3d0a0a : 0x000000,
-    emissiveIntensity: 0.35
+    color: state === 'unburnt' ? 0x5c3822 : 0x252525,
+    roughness: 0.90,
+    emissive: state === 'burning' ? 0x551111 : 0x000000,
+    emissiveIntensity: 0.42
   });
   const trunk = new THREE.Mesh(trunkGeo, trunkMat);
   trunk.position.y = 0.62;
@@ -607,10 +589,10 @@ function createBroadleafTree(state = 'burning') {
 
   const trunkGeo = new THREE.CylinderGeometry(0.08, 0.13, 1.35, 8);
   const trunkMat = new THREE.MeshStandardMaterial({
-    color: state === 'unburnt' ? 0x3d2618 : 0x171412,
-    roughness: 0.95,
-    emissive: state === 'burning' ? 0x350901 : 0x000000,
-    emissiveIntensity: 0.3
+    color: state === 'unburnt' ? 0x52331f : 0x221f1c,
+    roughness: 0.90,
+    emissive: state === 'burning' ? 0x4d1203 : 0x000000,
+    emissiveIntensity: 0.40
   });
   const trunk = new THREE.Mesh(trunkGeo, trunkMat);
   trunk.position.y = 0.67;
@@ -786,14 +768,14 @@ function buildForestScenery() {
 
   // 2. Gundukan & Ceceran Tanah 3D di Tepi Jalan (3D Dirt Mounds & Patches)
   const dirtMoundMat = new THREE.MeshStandardMaterial({
-    color: 0x3d2616,
-    roughness: 0.95,
+    color: 0x543621,
+    roughness: 0.88,
     metalness: 0.05,
     flatShading: true
   });
   const darkDirtMoundMat = new THREE.MeshStandardMaterial({
-    color: 0x27170c,
-    roughness: 0.96,
+    color: 0x3d2719,
+    roughness: 0.90,
     metalness: 0.05,
     flatShading: true
   });
