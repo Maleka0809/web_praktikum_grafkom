@@ -159,18 +159,26 @@ function createRunnerAvatar(scene) {
         child.castShadow = true;
         child.receiveShadow = true;
         if (child.material) {
-          child.material.roughness = 0.45;
-          child.material.metalness = 0.20;
+          child.material.roughness = 0.35;
+          child.material.metalness = 0.08;
         }
       }
     });
 
     avatarGroup.add(avatarModel);
 
-    // Aura cahaya listrik neon ungu/magenta pada karakter di malam kota futuristik
-    const electroSpot = new THREE.PointLight(0xc084fc, 1.8, 2.5);
-    electroSpot.position.set(0.08, 0.22, 0.15);
-    avatarGroup.add(electroSpot);
+    // Cahaya listrik kuning cerah (golden yellow) & ambient terang pada karakter
+    const electroKeyLight = new THREE.PointLight(0xfef08a, 2.8, 3.2); // Cahaya utama kuning terang
+    electroKeyLight.position.set(0.10, 0.28, 0.18);
+    avatarGroup.add(electroKeyLight);
+
+    const electroFillLight = new THREE.PointLight(0xfacc15, 2.0, 2.4); // Cahaya isi hangat kuning agar karakter jelas dari depan/samping
+    electroFillLight.position.set(0.04, 0.12, -0.08);
+    avatarGroup.add(electroFillLight);
+
+    // Ambient light lokal khusus karakter agar seluruh tubuh avatar terang benderang
+    const charAmbient = new THREE.HemisphereLight(0xfef9c3, 0xfde047, 1.6);
+    avatarGroup.add(charAmbient);
 
     // Jalankan animasi lari bawaan electrorun.glb
     if (gltf.animations && gltf.animations.length > 0) {
@@ -206,7 +214,7 @@ function createElectroSparkEffect(parentGroup) {
   geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
   const mat = new THREE.PointsMaterial({
-    color: 0xc084fc,
+    color: 0xfacc15,
     size: 0.022,
     transparent: true,
     opacity: 0.90,
@@ -774,8 +782,8 @@ function setCameraView(mode) {
 
     if (btnToggleCam) {
       btnToggleCam.innerText = '📷 Kamera: Di Selimut (Third-Person)';
-      btnToggleCam.style.borderColor = '#c084fc';
-      btnToggleCam.style.color = '#c084fc';
+      btnToggleCam.style.borderColor = '#facc15';
+      btnToggleCam.style.color = '#facc15';
     }
     if (infoDetail) {
       infoDetail.innerText = 'Kamera tetap di selimut tabung | Lampu neon kota & putaran halus';
