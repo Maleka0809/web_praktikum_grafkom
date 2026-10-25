@@ -656,12 +656,11 @@ function buildCityScenery() {
   }
 
   // =========================================================================
-  // 3. PROPS PERKOTAAN: LAMPU JALAN & RAMBU LALU LINTAS TERTATA RAPI
+  // 3. PROPS PERKOTAAN: CONE, BARRIER, LAMPU JALAN & RAMBU LALU LINTAS
+  // Tertata rapi di sepanjang tepi trotoar dengan skala manusiawi yang presisi
   // =========================================================================
 
   // 3A. Tiang Lampu Jalan Modern (Light Square)
-  // Ditempatkan di tepi trotoar (Y = 0.88), sejajar dengan lorong antar gedung (+0.5)
-  // sehingga lampu menerangi lorong dan tidak menutupi pintu gedung atau rumah
   gltfLoader.load(
     './assets/models/props/light-square.glb',
     (gltf) => {
@@ -672,21 +671,20 @@ function buildCityScenery() {
         if (node.isMesh && node.material) {
           node.material = node.material.clone();
           node.material.emissive = new THREE.Color(0xfef08a);
-          node.material.emissiveIntensity = 0.6;
+          node.material.emissiveIntensity = 0.5;
         }
       });
 
-      const lampCount = 10;
+      const lampCount = 8;
       for (let side = -1; side <= 1; side += 2) {
         for (let k = 0; k < lampCount; k++) {
           const clone = lampModel.clone();
-          clone.scale.set(0.42, 0.42, 0.42);
+          clone.scale.set(0.95, 0.95, 0.95);
 
-          const theta = ((k + 0.5) / lampCount) * Math.PI * 2;
-          const posY = side * 0.88; // Tepat di bibir curb trotoar
+          const theta = ((k + 0.40) / lampCount) * Math.PI * 2;
+          const posY = side * 0.94; // Berdiri di atas trotoar
 
-          const wrapper = placeOnCylinder(clone, theta, posY, sidewalkRadius, side, false);
-          // Lengkungan kepala lampu menghadap ke tengah aspal jalan
+          placeOnCylinder(clone, theta, posY, sidewalkRadius, side, false);
           clone.rotation.y = (side === 1) ? -Math.PI / 2 : Math.PI / 2;
         }
       }
@@ -695,21 +693,21 @@ function buildCityScenery() {
     (err) => console.warn('Could not load light-square.glb:', err)
   );
 
-  // 3B. Rambu Lampu Lalu Lintas (Traffic Lights) di Persimpangan Utama
+  // 3B. Rambu Lampu Lalu Lintas (Traffic Lights) di Persimpangan
   gltfLoader.load(
     './assets/models/props/traffic-light.glb',
     (gltf) => {
       const trafficModel = gltf.scene;
       prepareModel(trafficModel);
 
-      const trafficCount = 4; // 4 persimpangan utama
+      const trafficCount = 4;
       for (let side = -1; side <= 1; side += 2) {
         for (let k = 0; k < trafficCount; k++) {
           const clone = trafficModel.clone();
-          clone.scale.set(0.38, 0.38, 0.38);
+          clone.scale.set(0.95, 0.95, 0.95);
 
-          const theta = (k / trafficCount) * Math.PI * 2 + 0.15;
-          const posY = side * 0.84;
+          const theta = (k / trafficCount) * Math.PI * 2 + 0.55;
+          const posY = side * 0.90;
 
           placeOnCylinder(clone, theta, posY, sidewalkRadius, side, true);
         }
@@ -719,35 +717,57 @@ function buildCityScenery() {
     (err) => console.warn('Could not load traffic-light.glb:', err)
   );
 
-  // 3C. Zona Keamanan Jalan / Kerucut & Barrier Rapi di Tepian Aspal
+  // 3C. Kerucut Lalu Lintas Oranye (Traffic Cones - construction-cone.glb)
+  // Berjejer rapi di bibir trotoar memandu arus jalan
+  gltfLoader.load(
+    './assets/models/props/construction-cone.glb',
+    (cGltf) => {
+      const coneModel = cGltf.scene;
+      prepareModel(coneModel);
+
+      // Zona penempatan kerucut lalu lintas di kedua sisi jalan dengan jarak pandang ideal
+      const coneZones = [0.42, 1.35, 2.30, 3.35, 4.35, 5.35];
+      for (let side = -1; side <= 1; side += 2) {
+        coneZones.forEach((baseTh) => {
+          // Berderet 3 cone per zona di sepanjang batas tepi trotoar
+          for (let c = 0; c < 3; c++) {
+            const clone = coneModel.clone();
+            clone.scale.set(2.2, 2.2, 2.2);
+
+            const theta = baseTh + (c * 0.040);
+            const posY = side * 0.82;
+
+            placeOnCylinder(clone, theta, posY, sidewalkRadius, side, true);
+          }
+        });
+      }
+    },
+    undefined,
+    (err) => console.warn('Could not load construction-cone.glb:', err)
+  );
+
+  // 3D. Pembatas Jalan Konstruksi (Construction Barriers Garis Merah-Putih)
+  // Memanjang sejajar trotoar di ujung zona kerucut pengaman
   gltfLoader.load(
     './assets/models/props/construction-barrier.glb',
     (bGltf) => {
-      const barrierScene = bGltf.scene;
-      prepareModel(barrierScene);
+      const barrierModel = bGltf.scene;
+      prepareModel(barrierModel);
 
-      gltfLoader.load(
-        './assets/models/props/construction-cone.glb',
-        (cGltf) => {
-          const coneScene = cGltf.scene;
-          prepareModel(coneScene);
+      const barrierPositions = [0.56, 1.49, 2.44, 3.49, 4.49, 5.49];
+      for (let side = -1; side <= 1; side += 2) {
+        barrierPositions.forEach((th) => {
+          const clone = barrierModel.clone();
+          clone.scale.set(1.4, 1.4, 1.4);
 
-          // 1 Zona rapi di tepi jalan
-          const baseTheta = 2.4;
-          const side = 1;
-
-          const bClone = barrierScene.clone();
-          bClone.scale.set(0.35, 0.35, 0.35);
-          placeOnCylinder(bClone, baseTheta, side * 0.78, sidewalkRadius, side, true);
-
-          [-0.04, 0.04].forEach((dTh) => {
-            const cClone = coneScene.clone();
-            cClone.scale.set(0.30, 0.30, 0.30);
-            placeOnCylinder(cClone, baseTheta + dTh, side * 0.74, sidewalkRadius, side, true);
-          });
-        }
-      );
-    }
+          const posY = side * 0.82;
+          // facingRoad = false agar pembatas memanjang sejajar garis jalan/trotoar
+          placeOnCylinder(clone, th, posY, sidewalkRadius, side, false);
+        });
+      }
+    },
+    undefined,
+    (err) => console.warn('Could not load construction-barrier.glb:', err)
   );
 }
 
