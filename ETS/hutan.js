@@ -916,20 +916,20 @@ function spawnFireInstances(fireModel, fireClip, bombermanModel, bombermanClip) 
     const theta = (r / roadsideCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.10;
     const posX = cylinderRadius * Math.cos(theta);
     const posZ = cylinderRadius * Math.sin(theta);
-    // Berada pas di bahu tanah (0.76 - 0.96)
-    const posY = side * (0.78 + Math.random() * 0.16);
+    // Berada aman di atas bahu tanah (0.95 - 1.15) agar tidak menghalangi kamera
+    const posY = side * (0.95 + Math.random() * 0.18);
 
-    // SKALA DIBUAT LEBIH KECIL & PROPORSIONAL
+    // SKALA API KECIL & PROPORSIONAL (Campfire / Ground Fire)
     if (isBomberman) {
-      // bomberman_fire: skala kecil proporsional (~35cm - 50cm tinggi api)
-      const s = 0.0035 + Math.random() * 0.0018;
+      // bomberman_fire: skala kecil rapi (~25cm - 35cm)
+      const s = 0.0024 + Math.random() * 0.0010;
       fireClone.scale.set(s, s, s);
       fireClone.position.y = 0.02;
     } else {
-      // fire.glb: skala kecil proporsional (~30cm - 45cm tinggi api)
-      const s = 0.16 + Math.random() * 0.08;
+      // fire.glb: skala kecil rapi (~20cm - 32cm)
+      const s = 0.10 + Math.random() * 0.05;
       fireClone.scale.set(s, s, s);
-      fireClone.position.y = 0.10; // Base api menempel pas di tanah
+      fireClone.position.y = 0.08;
     }
 
     fireClone.rotation.y = Math.random() * Math.PI * 2;
@@ -971,18 +971,18 @@ function spawnFireInstances(fireModel, fireClip, bombermanModel, bombermanClip) 
     const theta = (t / treeFireCount) * Math.PI * 2 + 0.12 + (Math.random() - 0.5) * 0.12;
     const posX = cylinderRadius * Math.cos(theta);
     const posZ = cylinderRadius * Math.sin(theta);
-    const posY = side * (1.18 + Math.random() * 0.35); // Di celah batang pohon
+    const posY = side * (1.25 + Math.random() * 0.35); // Di celah batang pohon
 
     if (isBomberman) {
-      // Skala sedang di pangkal pohon (~55cm - 75cm)
-      const s = 0.0055 + Math.random() * 0.0022;
+      // Skala sedang di pangkal pohon (~40cm - 55cm)
+      const s = 0.0038 + Math.random() * 0.0016;
       fireClone.scale.set(s, s, s);
-      fireClone.position.y = 0.15;
+      fireClone.position.y = 0.12;
     } else {
-      // Skala sedang di pangkal pohon (~45cm - 60cm)
-      const s = 0.24 + Math.random() * 0.09;
+      // Skala sedang di pangkal pohon (~32cm - 45cm)
+      const s = 0.16 + Math.random() * 0.07;
       fireClone.scale.set(s, s, s);
-      fireClone.position.y = 0.16;
+      fireClone.position.y = 0.14;
     }
 
     fireClone.rotation.y = Math.random() * Math.PI * 2;
