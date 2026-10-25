@@ -568,7 +568,7 @@ function buildCityScenery() {
     { type: 'house', file: 'rumah2.glb', scale: 0.15 },
     { type: 'city', file: 'building-d.glb', scale: 0.36 },
     { type: 'city', file: 'building-f.glb', scale: 0.36 },
-    { type: 'house', file: 'rumah3.glb', scale: 0.15 },
+    { type: 'house', file: 'rumah1.glb', scale: 0.28 },
     { type: 'city', file: 'building-g.glb', scale: 0.40 },
     { type: 'house', file: 'rumah1.glb', scale: 0.28 },
     { type: 'city', file: 'building-h.glb', scale: 0.38 },
@@ -576,7 +576,7 @@ function buildCityScenery() {
     { type: 'house', file: 'rumah2.glb', scale: 0.15 },
     { type: 'city', file: 'building-a.glb', scale: 0.38 },
     { type: 'city', file: 'building-b.glb', scale: 0.36 },
-    { type: 'house', file: 'rumah3.glb', scale: 0.15 },
+    { type: 'house', file: 'rumah2.glb', scale: 0.15 },
     { type: 'city', file: 'building-c.glb', scale: 0.38 },
     { type: 'city', file: 'building-d.glb', scale: 0.36 },
     { type: 'house', file: 'rumah1.glb', scale: 0.28 },
@@ -718,7 +718,7 @@ function buildCityScenery() {
   );
 
   // 3C. Kerucut Lalu Lintas Oranye (Traffic Cones - construction-cone.glb)
-  // Berjejer rapi di bibir trotoar memandu arus jalan
+  // Berjejer rapi di bibir trotoar dengan skala realistis dan proporsional
   gltfLoader.load(
     './assets/models/props/construction-cone.glb',
     (cGltf) => {
@@ -726,16 +726,16 @@ function buildCityScenery() {
       prepareModel(coneModel);
 
       // Zona penempatan kerucut lalu lintas di kedua sisi jalan dengan jarak pandang ideal
-      const coneZones = [0.42, 1.35, 2.30, 3.35, 4.35, 5.35];
+      const coneZones = [0.46, 1.40, 2.35, 3.40, 4.40, 5.40];
       for (let side = -1; side <= 1; side += 2) {
         coneZones.forEach((baseTh) => {
-          // Berderet 3 cone per zona di sepanjang batas tepi trotoar
+          // Berderet 3 cone per zona di tepi trotoar dengan ukuran proporsional
           for (let c = 0; c < 3; c++) {
             const clone = coneModel.clone();
-            clone.scale.set(2.2, 2.2, 2.2);
+            clone.scale.set(0.95, 0.95, 0.95);
 
-            const theta = baseTh + (c * 0.040);
-            const posY = side * 0.82;
+            const theta = baseTh + (c * 0.032);
+            const posY = side * 0.81;
 
             placeOnCylinder(clone, theta, posY, sidewalkRadius, side, true);
           }
@@ -744,30 +744,6 @@ function buildCityScenery() {
     },
     undefined,
     (err) => console.warn('Could not load construction-cone.glb:', err)
-  );
-
-  // 3D. Pembatas Jalan Konstruksi (Construction Barriers Garis Merah-Putih)
-  // Memanjang sejajar trotoar di ujung zona kerucut pengaman
-  gltfLoader.load(
-    './assets/models/props/construction-barrier.glb',
-    (bGltf) => {
-      const barrierModel = bGltf.scene;
-      prepareModel(barrierModel);
-
-      const barrierPositions = [0.56, 1.49, 2.44, 3.49, 4.49, 5.49];
-      for (let side = -1; side <= 1; side += 2) {
-        barrierPositions.forEach((th) => {
-          const clone = barrierModel.clone();
-          clone.scale.set(1.4, 1.4, 1.4);
-
-          const posY = side * 0.82;
-          // facingRoad = false agar pembatas memanjang sejajar garis jalan/trotoar
-          placeOnCylinder(clone, th, posY, sidewalkRadius, side, false);
-        });
-      }
-    },
-    undefined,
-    (err) => console.warn('Could not load construction-barrier.glb:', err)
   );
 }
 

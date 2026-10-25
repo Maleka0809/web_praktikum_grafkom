@@ -585,9 +585,7 @@ function createCyberCityScenery() {
   // 2. Props dari assets/models/props/
   const cyberProps = [
     { file: 'light-square.glb', scale: 0.62, count: 24, yOffset: 0.88 },
-    { file: 'traffic-light.glb', scale: 0.60, count: 14, yOffset: 0.88 },
-    { file: 'pillar.glb', scale: 0.10, count: 16, yOffset: 1.15 },
-    { file: 'barrier.glb', scale: 0.15, count: 16, yOffset: 1.12 }
+    { file: 'traffic-light.glb', scale: 0.60, count: 14, yOffset: 0.88 }
   ];
 
   cyberProps.forEach((pCfg) => {
