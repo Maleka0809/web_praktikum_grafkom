@@ -159,26 +159,18 @@ function createRunnerAvatar(scene) {
         child.castShadow = true;
         child.receiveShadow = true;
         if (child.material) {
-          child.material.roughness = 0.35;
-          child.material.metalness = 0.08;
+          child.material.roughness = 0.50;
+          child.material.metalness = 0.10;
         }
       }
     });
 
     avatarGroup.add(avatarModel);
 
-    // Cahaya listrik kuning cerah (golden yellow) & ambient terang pada karakter
-    const electroKeyLight = new THREE.PointLight(0xfef08a, 2.8, 3.2); // Cahaya utama kuning terang
-    electroKeyLight.position.set(0.10, 0.28, 0.18);
-    avatarGroup.add(electroKeyLight);
-
-    const electroFillLight = new THREE.PointLight(0xfacc15, 2.0, 2.4); // Cahaya isi hangat kuning agar karakter jelas dari depan/samping
-    electroFillLight.position.set(0.04, 0.12, -0.08);
-    avatarGroup.add(electroFillLight);
-
-    // Ambient light lokal khusus karakter agar seluruh tubuh avatar terang benderang
-    const charAmbient = new THREE.HemisphereLight(0xfef9c3, 0xfde047, 1.6);
-    avatarGroup.add(charAmbient);
+    // Aura cahaya listrik kuning lembut & terfokus (lembut, elegan, tidak menyilaukan jalan)
+    const electroLight = new THREE.PointLight(0xfacc15, 1.15, 1.25, 2.0);
+    electroLight.position.set(0.06, 0.20, 0.12);
+    avatarGroup.add(electroLight);
 
     // Jalankan animasi lari bawaan electrorun.glb
     if (gltf.animations && gltf.animations.length > 0) {
