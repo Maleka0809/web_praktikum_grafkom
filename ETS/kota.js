@@ -23,7 +23,7 @@ const btnLaneRight = document.getElementById('btnLaneRight');
 let avatarGroup, avatarModel, avatarMixer, avatarRunAction;
 let avatarLaneY = 0.0;
 let avatarTargetLaneY = 0.0;
-const avatarBaseTargetZ = 0.60;
+const avatarBaseTargetZ = 0.46;
 let splashParticles = null;
 let splashVelocities = null;
 
@@ -156,9 +156,9 @@ function createAvatarSplashEffect(parentGroup) {
   splashVelocities = [];
 
   for (let i = 0; i < count; i++) {
-    splashPositions[i * 3 + 0] = (Math.random() - 0.5) * 0.15;
+    splashPositions[i * 3 + 0] = (Math.random() - 0.5) * 0.10;
     splashPositions[i * 3 + 1] = Math.random() * 0.08;
-    splashPositions[i * 3 + 2] = (Math.random() - 0.5) * 0.15;
+    splashPositions[i * 3 + 2] = (Math.random() - 0.5) * 0.10;
     splashVelocities.push({
       x: (Math.random() - 0.5) * 0.25,
       y: 0.12 + Math.random() * 0.28,
@@ -170,7 +170,7 @@ function createAvatarSplashEffect(parentGroup) {
   geom.setAttribute('position', new THREE.BufferAttribute(splashPositions, 3));
   const mat = new THREE.PointsMaterial({
     color: 0xbae6fd,
-    size: 0.016,
+    size: 0.012,
     transparent: true,
     opacity: 0.85,
     blending: THREE.AdditiveBlending,
@@ -204,10 +204,10 @@ function createRunnerAvatar(scene) {
   const gltfLoader = new GLTFLoader();
   gltfLoader.load('./assets/firerun.glb', (gltf) => {
     avatarModel = gltf.scene;
-    // Skala lebih kecil & proporsional (~22cm di silinder 5.2m, dekat kamera)
-    const s = 0.050;
+    // Skala lebih kecil & pas (~15.5cm di silinder 5.2m, dekat kamera)
+    const s = 0.038;
     avatarModel.scale.set(s, s, s);
-    avatarModel.position.y = 0.012; // Menapak pas di atas aspal jalan raya
+    avatarModel.position.y = 0.009; // Menapak pas di atas aspal jalan raya
 
     avatarModel.traverse((child) => {
       if (child.isMesh) {
@@ -223,8 +223,8 @@ function createRunnerAvatar(scene) {
     avatarGroup.add(avatarModel);
 
     // Rim/Key light lokal agar avatar terlihat tajam & berdefinisi
-    const charSpot = new THREE.PointLight(0xffedd5, 1.2, 2.5);
-    charSpot.position.set(0.12, 0.28, 0.20);
+    const charSpot = new THREE.PointLight(0xffedd5, 1.0, 2.0);
+    charSpot.position.set(0.08, 0.20, 0.15);
     avatarGroup.add(charSpot);
 
     // Jalankan animasi lari bawaan firerun.glb
