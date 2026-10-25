@@ -505,76 +505,6 @@ function buildSidewalks() {
   mainMesh.add(sidewalkGroup);
 }
 
-// Membuat pohon taman kota prosedural (pohon rindang daun bulat & pohon cemara hias)
-function createCityTree(variant = 0) {
-  const treeGroup = new THREE.Group();
-
-  // Batang pohon kayu
-  const trunkGeo = new THREE.CylinderGeometry(0.09, 0.14, 0.9, 8);
-  const trunkMat = new THREE.MeshStandardMaterial({
-    color: 0x4a3728,
-    roughness: 0.9,
-    metalness: 0.05
-  });
-  const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-  trunk.position.y = 0.45;
-  trunk.castShadow = true;
-  treeGroup.add(trunk);
-
-  if (variant % 2 === 0) {
-    // 1. Pohon Rindang Kanopi Daun Bulat Asri (City Oak / Shade Tree)
-    const foliageMat1 = new THREE.MeshStandardMaterial({
-      color: 0x15803d,
-      roughness: 0.7,
-      flatShading: true
-    });
-    const foliageMat2 = new THREE.MeshStandardMaterial({
-      color: 0x16a34a,
-      roughness: 0.65,
-      flatShading: true
-    });
-
-    const f1 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.55, 1), foliageMat1);
-    f1.position.set(0, 1.25, 0);
-    f1.castShadow = true;
-    treeGroup.add(f1);
-
-    const f2 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.42, 1), foliageMat2);
-    f2.position.set(0.18, 1.55, -0.12);
-    f2.castShadow = true;
-    treeGroup.add(f2);
-
-    const f3 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.38, 1), foliageMat1);
-    f3.position.set(-0.16, 1.48, 0.15);
-    f3.castShadow = true;
-    treeGroup.add(f3);
-  } else {
-    // 2. Pohon Cemara Hias Kota (Ornamental Cypress/Pine)
-    const pineMat = new THREE.MeshStandardMaterial({
-      color: 0x047857,
-      roughness: 0.6,
-      flatShading: true
-    });
-
-    const c1 = new THREE.Mesh(new THREE.ConeGeometry(0.52, 0.85, 7), pineMat);
-    c1.position.y = 1.0;
-    c1.castShadow = true;
-    treeGroup.add(c1);
-
-    const c2 = new THREE.Mesh(new THREE.ConeGeometry(0.40, 0.75, 7), pineMat);
-    c2.position.y = 1.50;
-    c2.castShadow = true;
-    treeGroup.add(c2);
-
-    const c3 = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.65, 7), pineMat);
-    c3.position.y = 1.95;
-    c3.castShadow = true;
-    treeGroup.add(c3);
-  }
-
-  return treeGroup;
-}
-
 function buildCityScenery() {
   cityBuildingsGroup = new THREE.Group();
   mainMesh.add(cityBuildingsGroup); // Terpasang langsung ke tabung agar ikut berputar!
@@ -583,17 +513,21 @@ function buildCityScenery() {
   const xAxis = new THREE.Vector3(0, -1, 0);
   const sidewalkRadius = cylinderRadius + 0.018; // Berdiri di atas trotoar
 
-  // 1A. Gedung Baris Depan (Di Atas Trotoar Samping Jalan)
+  // =========================================================================
+  // 1. GEDUNG BARIS DEPAN (Front Row City Avenue - Toko & Apartemen Kota)
+  // Tertata rapi di sepanjang trotoar dengan jarak antar gedung yang seragam & tidak bertumpuk
+  // =========================================================================
   const frontCityModels = [
-    { file: 'building-a.glb', scale: 0.46 },
-    { file: 'building-b.glb', scale: 0.44 },
-    { file: 'building-c.glb', scale: 0.48 },
-    { file: 'building-d.glb', scale: 0.45 },
-    { file: 'building-f.glb', scale: 0.42 },
-    { file: 'building-h.glb', scale: 0.44 }
+    { file: 'building-a.glb', scale: 0.40 },
+    { file: 'building-b.glb', scale: 0.38 },
+    { file: 'building-c.glb', scale: 0.40 },
+    { file: 'building-d.glb', scale: 0.38 },
+    { file: 'building-f.glb', scale: 0.38 },
+    { file: 'building-h.glb', scale: 0.40 }
   ];
 
-  frontCityModels.forEach((cfg, idx) => {
+  const frontSlotsPerSide = 12; // 12 slot per sisi, jarak sudut teratur (2pi / 12)
+  frontCityModels.forEach((cfg, modelIdx) => {
     gltfLoader.load(
       `./assets/models/city/${cfg.file}`,
       (gltf) => {
@@ -605,15 +539,19 @@ function buildCityScenery() {
           }
         });
 
-        for (let copy = 0; copy < 3; copy++) {
+        // Tiap model ditempatkan di 2 slot per sisi (total 4 gedung per model = 24 gedung depan)
+        for (let copy = 0; copy < 4; copy++) {
           const clone = baseScene.clone();
           clone.scale.set(cfg.scale, cfg.scale, cfg.scale);
 
           const side = (copy % 2 === 0) ? 1 : -1;
-          const theta = ((idx * 3 + copy) / (frontCityModels.length * 3)) * Math.PI * 2;
+          const slot = (modelIdx * 2 + Math.floor(copy / 2)) % frontSlotsPerSide;
+
+          // Jarak sudut teratur menghasilkan celah jalan antar gedung yang rapi (~0.5m)
+          const theta = (slot / frontSlotsPerSide) * Math.PI * 2;
           const posX = sidewalkRadius * Math.cos(theta);
           const posZ = sidewalkRadius * Math.sin(theta);
-          const posY = side * (1.12 + (idx % 2) * 0.04); // Baris depan di atas trotoar
+          const posY = side * 1.28; // Garis sempadan rapi di belakang trotoar
 
           const bldgWrapper = new THREE.Group();
           bldgWrapper.add(clone);
@@ -625,6 +563,7 @@ function buildCityScenery() {
           bldgWrapper.setRotationFromMatrix(basisMat);
           bldgWrapper.position.set(posX, posY, posZ);
 
+          // Hadapkan fasad depan gedung tepat ke arah jalan raya
           clone.rotation.y = (side === 1) ? Math.PI / 2 : -Math.PI / 2;
 
           cityBuildingsGroup.add(bldgWrapper);
@@ -635,16 +574,21 @@ function buildCityScenery() {
     );
   });
 
-  // 1B. Gedung Baris Belakang (Skyline Pencakar Langit Megah di Belakang Gedung Depan)
-  const backCityModels = [
-    { file: 'building-skyscraper-a.glb', scale: 0.54 },
-    { file: 'building-skyscraper-b.glb', scale: 0.50 },
-    { file: 'building-skyscraper-c.glb', scale: 0.50 },
-    { file: 'building-e.glb', scale: 0.56 },
-    { file: 'building-g.glb', scale: 0.52 }
+  // =========================================================================
+  // 2. DINDING PENCAKAR LANGIT PERIMETER (Skyline Wall Melampaui Batas Tabung)
+  // Gedung-gedung pencakar langit megah di baris belakang yang menutup batas tabung (Y > 1.90)
+  // Ditempatkan berselang-seling (staggered) agar tampak megah di celah antara gedung depan
+  // =========================================================================
+  const perimeterSkyscrapers = [
+    { file: 'building-skyscraper-a.glb', scale: 0.65 },
+    { file: 'building-skyscraper-b.glb', scale: 0.62 },
+    { file: 'building-skyscraper-c.glb', scale: 0.64 },
+    { file: 'building-e.glb', scale: 0.68 },
+    { file: 'building-g.glb', scale: 0.62 }
   ];
 
-  backCityModels.forEach((cfg, idx) => {
+  const skylineSlotsPerSide = 14; // 14 gedung pencakar langit per sisi
+  perimeterSkyscrapers.forEach((cfg, pIdx) => {
     gltfLoader.load(
       `./assets/models/city/${cfg.file}`,
       (gltf) => {
@@ -656,171 +600,19 @@ function buildCityScenery() {
           }
         });
 
-        // 4 salinan mengelilingi tabung di baris kedua
-        for (let copy = 0; copy < 4; copy++) {
-          const clone = baseScene.clone();
-          clone.scale.set(cfg.scale, cfg.scale, cfg.scale);
-
-          const side = (copy % 2 === 0) ? 1 : -1;
-          const theta = ((idx * 4 + copy) / (backCityModels.length * 4)) * Math.PI * 2 + 0.06;
-          const posX = cylinderRadius * Math.cos(theta);
-          const posZ = cylinderRadius * Math.sin(theta);
-          const posY = side * (1.56 + (idx % 3) * 0.06); // Posisi baris belakang di balik gedung trotoar
-
-          const bldgWrapper = new THREE.Group();
-          bldgWrapper.add(clone);
-
-          const yAxis = new THREE.Vector3(Math.cos(theta), 0, Math.sin(theta));
-          const zAxis = new THREE.Vector3(-Math.sin(theta), 0, Math.cos(theta));
-          const basisMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
-
-          bldgWrapper.setRotationFromMatrix(basisMat);
-          bldgWrapper.position.set(posX, posY, posZ);
-
-          clone.rotation.y = (side === 1) ? Math.PI / 2 : -Math.PI / 2;
-
-          cityBuildingsGroup.add(bldgWrapper);
-        }
-      },
-      undefined,
-      (err) => console.warn('Could not load back city model:', cfg.file, err)
-    );
-  });
-
-  // 1C. Rumah-Rumah Warga Asli dari Folder Asset (rumah1.glb, rumah2.glb, rumah3.glb)
-  const houseConfigs = [
-    { file: 'rumah1.glb', scale: 0.42, yOffset: 1.18, rotY: 0 },
-    { file: 'rumah2.glb', scale: 0.17, yOffset: 1.16, rotY: 0 },
-    { file: 'rumah3.glb', scale: 0.18, yOffset: 1.15, rotY: 0 }
-  ];
-
-  houseConfigs.forEach((hCfg, hIdx) => {
-    const onHouseLoaded = (gltf) => {
-      const baseScene = gltf.scene;
-      // Hitung bounding box agar dasar rumah menempel rata tepat di atas permukaan trotoar
-      const box = new THREE.Box3().setFromObject(baseScene);
-      baseScene.position.y -= box.min.y;
-
-      baseScene.traverse((node) => {
-        if (node.isMesh) {
-          node.castShadow = true;
-          node.receiveShadow = true;
-          if (node.material) {
-            node.material.roughness = Math.min(node.material.roughness, 0.75);
-          }
-        }
-      });
-
-      // Buat 4 salinan tiap model rumah mengelilingi tabung di sisi trotoar
-      for (let copy = 0; copy < 4; copy++) {
-        const clone = baseScene.clone(true);
-        clone.scale.set(hCfg.scale, hCfg.scale, hCfg.scale);
-
-        const side = (copy % 2 === 0) ? 1 : -1;
-        // Penempatan berselang-seling indah di antara gedung-gedung kota
-        const theta = ((hIdx * 4 + copy) / (houseConfigs.length * 4)) * Math.PI * 2 + 0.18;
-        const posX = sidewalkRadius * Math.cos(theta);
-        const posZ = sidewalkRadius * Math.sin(theta);
-        const posY = side * (hCfg.yOffset + (hIdx % 2) * 0.04);
-
-        const houseWrapper = new THREE.Group();
-        houseWrapper.add(clone);
-
-        const yAxis = new THREE.Vector3(Math.cos(theta), 0, Math.sin(theta));
-        const zAxis = new THREE.Vector3(-Math.sin(theta), 0, Math.cos(theta));
-        const basisMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
-
-        houseWrapper.setRotationFromMatrix(basisMat);
-        houseWrapper.position.set(posX, posY, posZ);
-
-        // Hadapkan fasad rumah ke arah tengah aspal jalan
-        clone.rotation.y = (side === 1) ? (Math.PI / 2 + hCfg.rotY) : (-Math.PI / 2 + hCfg.rotY);
-
-        cityBuildingsGroup.add(houseWrapper);
-      }
-    };
-
-    gltfLoader.load(
-      `./assets/models/houses/${hCfg.file}`,
-      onHouseLoaded,
-      undefined,
-      () => {
-        gltfLoader.load(
-          `./assets/${hCfg.file}`,
-          onHouseLoaded,
-          undefined,
-          (err) => console.warn('Could not load house model:', hCfg.file, err)
-        );
-      }
-    );
-  });
-
-  // 1D. Pepohonan Rimbun Kota di Trotoar & Penutup Batas Ujung Tabung
-  const treeCount = 84;
-  for (let t = 0; t < treeCount; t++) {
-    const tree = createCityTree(t);
-    const side = (t % 2 === 0) ? 1 : -1;
-
-    // Berselang-seling: sebagian di trotoar tengah, mayoritas keluar melampaui batas tabung (Y = 1.70 - 2.45)
-    const isPerimeter = (t % 3 !== 0);
-    const yOffset = isPerimeter ? (1.70 + (t % 6) * 0.13) : (1.08 + (t % 4) * 0.05);
-
-    const theta = (t / treeCount) * Math.PI * 2 + (t % 7) * 0.04;
-    const posX = sidewalkRadius * Math.cos(theta);
-    const posZ = sidewalkRadius * Math.sin(theta);
-    const posY = side * yOffset;
-
-    const scale = isPerimeter ? (0.92 + (t % 4) * 0.18) : (0.68 + (t % 3) * 0.12);
-    tree.scale.set(scale, scale, scale);
-    tree.rotation.y = (t * 1.37) % (Math.PI * 2);
-
-    const treeWrapper = new THREE.Group();
-    treeWrapper.add(tree);
-
-    const yAxis = new THREE.Vector3(Math.cos(theta), 0, Math.sin(theta));
-    const zAxis = new THREE.Vector3(-Math.sin(theta), 0, Math.cos(theta));
-    const basisMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
-
-    treeWrapper.setRotationFromMatrix(basisMat);
-    treeWrapper.position.set(posX, posY, posZ);
-
-    cityBuildingsGroup.add(treeWrapper);
-  }
-
-  // 1E. Dinding Pencakar Langit Rapat di Batas Luar Tabung (Perimeter Skyline Wall)
-  // Menutup penuh batas ujung tabung dengan skyline megah menjulang tinggi melampaui tabung
-  const perimeterModels = [
-    { file: 'building-skyscraper-a.glb', scale: 0.74 },
-    { file: 'building-skyscraper-b.glb', scale: 0.70 },
-    { file: 'building-skyscraper-c.glb', scale: 0.72 },
-    { file: 'building-e.glb', scale: 0.76 },
-    { file: 'building-g.glb', scale: 0.70 },
-    { file: 'building-c.glb', scale: 0.66 },
-    { file: 'building-d.glb', scale: 0.64 }
-  ];
-
-  perimeterModels.forEach((cfg, pIdx) => {
-    gltfLoader.load(
-      `./assets/models/city/${cfg.file}`,
-      (gltf) => {
-        const baseScene = gltf.scene;
-        baseScene.traverse((node) => {
-          if (node.isMesh) {
-            node.castShadow = true;
-            node.receiveShadow = true;
-          }
-        });
-
-        // 6 salinan tiap model diposisikan rapat keluar tabung (Y = 1.76 - 2.40)
+        // 6 salinan tiap model diposisikan rapi di baris belakang (keluar tabung Y = 1.78 - 2.15)
         for (let copy = 0; copy < 6; copy++) {
           const clone = baseScene.clone();
           clone.scale.set(cfg.scale, cfg.scale, cfg.scale);
 
           const side = (copy % 2 === 0) ? 1 : -1;
-          const theta = ((pIdx * 6 + copy) / (perimeterModels.length * 6)) * Math.PI * 2 + 0.05;
+          const slot = (pIdx * 3 + Math.floor(copy / 2)) % skylineSlotsPerSide;
+
+          // Staggered (+ 0.5) agar terlihat di sela-sela gedung depan
+          const theta = ((slot + 0.5) / skylineSlotsPerSide) * Math.PI * 2;
           const posX = cylinderRadius * Math.cos(theta);
           const posZ = cylinderRadius * Math.sin(theta);
-          const posY = side * (1.76 + (copy % 4) * 0.16); // Keluar melampaui batas tabung 1.90
+          const posY = side * (1.78 + (slot % 3) * 0.16); // Keluar melampaui batas tabung 1.90
 
           const bldgWrapper = new THREE.Group();
           bldgWrapper.add(clone);
@@ -838,70 +630,160 @@ function buildCityScenery() {
         }
       },
       undefined,
-      (err) => console.warn('Could not load perimeter city model:', cfg.file, err)
+      (err) => console.warn('Could not load perimeter skyscraper model:', cfg.file, err)
     );
   });
 
-  // 2. Daftar Model Props Asli dari assets/models/props/
-  const propConfigs = [
-    { file: 'traffic-light.glb', scale: 0.62, count: 14, yOffset: 0.87 },
-    { file: 'light-square.glb', scale: 0.60, count: 20, yOffset: 0.88 },
-    { file: 'construction-cone.glb', scale: 1.35, count: 12, yOffset: 0.84 },
-    { file: 'construction-barrier.glb', scale: 1.15, count: 8, yOffset: 0.86 },
-    { file: 'barrier.glb', scale: 0.13, count: 8, yOffset: 1.05 }
-  ];
+  // =========================================================================
+  // 3. PROPS PERKOTAAN: LAMPU JALAN & RAMBU LALU LINTAS TERTATA RAPI
+  // Ditempatkan di tepi trotoar dengan skala manusiawi yang presisi
+  // =========================================================================
 
-  propConfigs.forEach((pCfg) => {
-    gltfLoader.load(
-      `./assets/models/props/${pCfg.file}`,
-      (gltf) => {
-        const propModel = gltf.scene;
-        propModel.traverse((node) => {
-          if (node.isMesh) {
-            node.castShadow = true;
-            node.receiveShadow = true;
-            if (pCfg.file === 'light-square.glb' && node.material) {
-              node.material = node.material.clone();
-              node.material.emissive = new THREE.Color(0xfef08a);
-              node.material.emissiveIntensity = 0.5;
-            }
+  // 3A. Tiang Lampu Jalan Modern (Light Square) - Berjarak teratur di tepi trotoar
+  gltfLoader.load(
+    './assets/models/props/light-square.glb',
+    (gltf) => {
+      const lampModel = gltf.scene;
+      lampModel.traverse((node) => {
+        if (node.isMesh) {
+          node.castShadow = true;
+          node.receiveShadow = true;
+          if (node.material) {
+            node.material = node.material.clone();
+            node.material.emissive = new THREE.Color(0xfef08a);
+            node.material.emissiveIntensity = 0.6;
           }
-        });
+        }
+      });
 
-        for (let k = 0; k < pCfg.count; k++) {
-          const clone = propModel.clone();
-          clone.scale.set(pCfg.scale, pCfg.scale, pCfg.scale);
+      const lampCountPerSide = 12;
+      for (let side = -1; side <= 1; side += 2) {
+        for (let k = 0; k < lampCountPerSide; k++) {
+          const clone = lampModel.clone();
+          clone.scale.set(0.45, 0.45, 0.45); // Skala proporsional manusiawi
 
-          const side = (k % 2 === 0) ? 1 : -1;
-          const theta = (k / pCfg.count) * Math.PI * 2 + (side * 0.04);
+          // Posisi berselang-seling tepat di tepi trotoar menghadap jalan
+          const theta = (k / lampCountPerSide) * Math.PI * 2 + 0.26;
           const posX = sidewalkRadius * Math.cos(theta);
           const posZ = sidewalkRadius * Math.sin(theta);
-          const posY = side * pCfg.yOffset; // Di tepi pembatas trotoar
+          const posY = side * 0.84; // Tepat di batas curb trotoar
 
-          const propWrapper = new THREE.Group();
-          propWrapper.add(clone);
+          const lampWrapper = new THREE.Group();
+          lampWrapper.add(clone);
 
           const yAxis = new THREE.Vector3(Math.cos(theta), 0, Math.sin(theta));
           const zAxis = new THREE.Vector3(-Math.sin(theta), 0, Math.cos(theta));
           const basisMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
 
-          propWrapper.setRotationFromMatrix(basisMat);
-          propWrapper.position.set(posX, posY, posZ);
+          lampWrapper.setRotationFromMatrix(basisMat);
+          lampWrapper.position.set(posX, posY, posZ);
 
-          // Hadapkan tiang lampu jalan ke arah tengah aspal jalan
-          if (pCfg.file === 'light-square.glb') {
-            clone.rotation.y = (side === 1) ? -Math.PI / 2 : Math.PI / 2;
-          } else {
-            clone.rotation.y = (side === 1) ? Math.PI / 2 : -Math.PI / 2;
-          }
+          // Lengkungan lampu menghadap ke tengah aspal
+          clone.rotation.y = (side === 1) ? -Math.PI / 2 : Math.PI / 2;
 
-          cityBuildingsGroup.add(propWrapper);
+          cityBuildingsGroup.add(lampWrapper);
         }
-      },
-      undefined,
-      (err) => console.warn('Could not load prop:', pCfg.file, err)
-    );
-  });
+      }
+    },
+    undefined,
+    (err) => console.warn('Could not load light-square.glb:', err)
+  );
+
+  // 3B. Rambu Lampu Lalu Lintas (Traffic Lights) - Di titik-titik persimpangan utama
+  gltfLoader.load(
+    './assets/models/props/traffic-light.glb',
+    (gltf) => {
+      const trafficModel = gltf.scene;
+      trafficModel.traverse((node) => {
+        if (node.isMesh) {
+          node.castShadow = true;
+          node.receiveShadow = true;
+        }
+      });
+
+      const trafficCount = 4; // 4 titik persimpangan utama
+      for (let side = -1; side <= 1; side += 2) {
+        for (let k = 0; k < trafficCount; k++) {
+          const clone = trafficModel.clone();
+          clone.scale.set(0.42, 0.42, 0.42);
+
+          const theta = (k / trafficCount) * Math.PI * 2 + 0.12;
+          const posX = sidewalkRadius * Math.cos(theta);
+          const posZ = sidewalkRadius * Math.sin(theta);
+          const posY = side * 0.82;
+
+          const trafficWrapper = new THREE.Group();
+          trafficWrapper.add(clone);
+
+          const yAxis = new THREE.Vector3(Math.cos(theta), 0, Math.sin(theta));
+          const zAxis = new THREE.Vector3(-Math.sin(theta), 0, Math.cos(theta));
+          const basisMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
+
+          trafficWrapper.setRotationFromMatrix(basisMat);
+          trafficWrapper.position.set(posX, posY, posZ);
+
+          clone.rotation.y = (side === 1) ? Math.PI / 2 : -Math.PI / 2;
+
+          cityBuildingsGroup.add(trafficWrapper);
+        }
+      }
+    },
+    undefined,
+    (err) => console.warn('Could not load traffic-light.glb:', err)
+  );
+
+  // 3C. Zona Keamanan Jalan / Kerucut & Barrier Prosedural (Skala Realistis Rapi)
+  gltfLoader.load(
+    './assets/models/props/construction-barrier.glb',
+    (bGltf) => {
+      const barrierScene = bGltf.scene;
+      gltfLoader.load(
+        './assets/models/props/construction-cone.glb',
+        (cGltf) => {
+          const coneScene = cGltf.scene;
+
+          // Tempatkan 2 zona perbaikan jalan yang rapi di tepian aspal
+          [0.85, 3.95].forEach((baseTheta, zIdx) => {
+            const side = (zIdx % 2 === 0) ? 1 : -1;
+
+            // Barrier pengaman (skala realistis 0.38, bukan raksasa)
+            const bClone = barrierScene.clone();
+            bClone.scale.set(0.38, 0.38, 0.38);
+            const bPosX = sidewalkRadius * Math.cos(baseTheta);
+            const bPosZ = sidewalkRadius * Math.sin(baseTheta);
+            const bWrapper = new THREE.Group();
+            bWrapper.add(bClone);
+
+            const yAxis = new THREE.Vector3(Math.cos(baseTheta), 0, Math.sin(baseTheta));
+            const zAxis = new THREE.Vector3(-Math.sin(baseTheta), 0, Math.cos(baseTheta));
+            const basisMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
+            bWrapper.setRotationFromMatrix(basisMat);
+            bWrapper.position.set(bPosX, side * 0.78, bPosZ);
+            bClone.rotation.y = (side === 1) ? Math.PI / 2 : -Math.PI / 2;
+            cityBuildingsGroup.add(bWrapper);
+
+            // 2 Kerucut lalu lintas di samping barrier
+            [-0.04, 0.04].forEach((dTh) => {
+              const cClone = coneScene.clone();
+              cClone.scale.set(0.32, 0.32, 0.32);
+              const th = baseTheta + dTh;
+              const cPosX = sidewalkRadius * Math.cos(th);
+              const cPosZ = sidewalkRadius * Math.sin(th);
+              const cWrapper = new THREE.Group();
+              cWrapper.add(cClone);
+
+              const cyAxis = new THREE.Vector3(Math.cos(th), 0, Math.sin(th));
+              const czAxis = new THREE.Vector3(-Math.sin(th), 0, Math.cos(th));
+              const cBasisMat = new THREE.Matrix4().makeBasis(xAxis, cyAxis, czAxis);
+              cWrapper.setRotationFromMatrix(cBasisMat);
+              cWrapper.position.set(cPosX, side * 0.74, cPosZ);
+              cityBuildingsGroup.add(cWrapper);
+            });
+          });
+        }
+      );
+    }
+  );
 }
 
 function setCameraView(mode) {
