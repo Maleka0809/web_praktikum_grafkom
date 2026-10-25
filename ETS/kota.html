@@ -20,8 +20,8 @@
     <header class="app-header">
       <div>
         <span class="badge">LINGKUNGAN 01</span>
-        <h1>🏙️ Kota Metropolitan (City)</h1>
-        <p>Kamera terpasang di atas selimut tabung bertekstur jalan dengan pemandangan gedung perkotaan.</p>
+        <h1>🏙️ Kota Metropolitan (City) & Avatar Runner</h1>
+        <p>Kamera third-person mengikuti Avatar Firechar berlari cepat di atas jalan raya silinder kota metropolitan.</p>
       </div>
       <div>
         <a href="./index.html" class="btn-hub-back">← Pilih Mode Lingkungan</a>
@@ -33,20 +33,23 @@
 
       <div class="hud-overlay">
         <div class="hud-item">LINGKUNGAN: <span>Kota Metropolitan</span></div>
+        <div class="hud-item">AVATAR: <span style="color:#f97316;">🔥 Firechar (Fast Run)</span></div>
         <div class="hud-item">FPS: <span id="fpsDisplay">60</span></div>
-        <div class="hud-item" id="infoDetail">Kamera tetap di selimut tabung | Putaran jalan halus (Smooth)</div>
+        <div class="hud-item" id="infoDetail">Kamera third-person mengikuti Avatar Firechar | [A] / [D] Geser Jalur</div>
       </div>
     </main>
 
     <footer class="controls-bar">
       <button id="btnToggleAnim" class="control-btn">⏸️ Pause / Play (Space)</button>
-      <button id="btnToggleCam" class="control-btn" style="border-color: #22d3ee; color: #22d3ee;">📷 Kamera: Di Selimut (Fixed Smooth)</button>
+      <button id="btnToggleCam" class="control-btn" style="border-color: #22d3ee; color: #22d3ee;">📷 Kamera: Di Selimut (Third-Person)</button>
+      <button id="btnLaneLeft" class="control-btn">⬅️ Jalur Kiri (A)</button>
+      <button id="btnLaneRight" class="control-btn">➡️ Jalur Kanan (D)</button>
       <button id="btnWireframe" class="control-btn">🕸️ Wireframe</button>
-      <button id="btnSpeed" class="control-btn">⚡ Kecepatan Jalan: 1.0x</button>
+      <button id="btnSpeed" class="control-btn">⚡ Kecepatan: 1.0x</button>
       <button id="btnFloodRestoration" class="control-btn" style="border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.12);">🌊 Pulihkan Banjir (Cutscene)</button>
     </footer>
   </div>
 
-  <script type="module" src="./kota.js?v=clean_city_small_cones_v4"></script>
+  <script type="module" src="./kota.js?v=avatar_firechar_v2"></script>
 </body>
 </html>
