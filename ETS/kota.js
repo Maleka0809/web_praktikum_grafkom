@@ -47,8 +47,9 @@ const waterTotalHeight = 3.78; // Menyelimuti penuh seluruh aspal dan kedua sisi
 
 const cylinderRadius = 2.6; // Diameter 5.2
 const cylinderHeight = 3.8; // Diperlebar agar memuat 2 layer gedung (depan & belakang)
-const eyeHeight = 0.54; // Posisi kamera agak dinaikkan sedikit untuk zoom-out yang proporsional
-const basePitchDown = 17 * (Math.PI / 180);
+const eyeHeight = 0.82; // Posisi kamera dinaikkan ke atas (revolusi ke atas) agar lintasan jalan dan rintangan/gate terlihat jelas
+const basePitchDown = 24.5 * (Math.PI / 180); // Sudut kamera menunduk ke arah jalan raya
+const camZOffset = -0.16; // Sedikit di belakang agar lintasan terlihat panjang
 
 let cameraView = 'surface'; // 'surface' | 'orbit'
 let isAnimating = true;
@@ -859,9 +860,9 @@ function setCameraView(mode) {
     camera.updateProjectionMatrix();
     camera.up.set(1, 0, 0);
     const camX = cylinderRadius + eyeHeight;
-    camera.position.set(camX, 0, 0);
-    const targetDist = 4.6;
-    camera.lookAt(camX - Math.sin(basePitchDown) * targetDist, 0, Math.cos(basePitchDown) * targetDist);
+    camera.position.set(camX, 0, camZOffset);
+    const targetDist = 4.8;
+    camera.lookAt(camX - Math.sin(basePitchDown) * targetDist, 0, camZOffset + Math.cos(basePitchDown) * targetDist);
 
     if (btnToggleCam) {
       btnToggleCam.textContent = '📷 Kamera: Di Selimut (Third-Person)';
@@ -962,12 +963,16 @@ function animate(time) {
 
   if (cameraView === 'surface') {
     const camX = cylinderRadius + eyeHeight;
-    // Kamera third-person halus mengikuti pergeseran jalur avatar
+    // Kamera third-person elevated: posisi lebih tinggi dan menunduk ke arah jalan
     const camFollowY = avatarLaneY * 0.35;
-    camera.position.set(camX, camFollowY, 0);
+    camera.position.set(camX, camFollowY, camZOffset);
     camera.up.set(1, 0, 0);
-    const targetDist = 4.6;
-    camera.lookAt(camX - Math.sin(basePitchDown) * targetDist, avatarLaneY * 0.45, Math.cos(basePitchDown) * targetDist);
+    const targetDist = 4.8;
+    camera.lookAt(
+      camX - Math.sin(basePitchDown) * targetDist,
+      avatarLaneY * 0.45,
+      camZOffset + Math.cos(basePitchDown) * targetDist
+    );
   } else {
     controls.update();
   }
