@@ -6,7 +6,6 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
-import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 
 const canvas = document.getElementById('mainCanvas');
 const fpsDisplay = document.getElementById('fpsDisplay');
@@ -17,16 +16,6 @@ const btnToggleCam = document.getElementById('btnToggleCam');
 const btnWireframe = document.getElementById('btnWireframe');
 const btnSpeed = document.getElementById('btnSpeed');
 const btnFloodRestoration = document.getElementById('btnFloodRestoration');
-const btnLaneLeft = document.getElementById('btnLaneLeft');
-const btnLaneRight = document.getElementById('btnLaneRight');
-
-// Avatar Karakter FBX: Firechar + Animasi Fast Run
-let avatarGroup, avatarModel, avatarMixer, avatarRunAction;
-let avatarLaneY = 0.0;
-let avatarTargetLaneY = 0.0;
-const avatarBaseTargetZ = 0.95;
-let splashParticles = null;
-let splashVelocities = null;
 
 let scene, camera, renderer, controls;
 let mainMesh, sideMaterial, capMaterial, standardMaterials;
@@ -125,14 +114,14 @@ function createMorningSun(scene, isForest = false) {
   scene.add(sunGroup);
 
   // 3. Sumber Cahaya Matahari
-  const sunLight = new THREE.DirectionalLight(0xfef08a, 1.15);
+  const sunLight = new THREE.DirectionalLight(0xfef08a, 1.6);
   sunLight.position.copy(sunPos);
   sunLight.target.position.set(2.6, 0, 5.0);
   scene.add(sunLight);
   scene.add(sunLight.target);
 
   // Point Light pendar lokal matahari
-  const sunPoint = new THREE.PointLight(0xfacc15, 1.0, 80, 1.2);
+  const sunPoint = new THREE.PointLight(0xfacc15, 2.0, 80, 1.1);
   sunPoint.position.copy(sunPos);
   scene.add(sunPoint);
 
@@ -148,95 +137,6 @@ function createMorningSun(scene, isForest = false) {
 }
 
 
-
-
-function createAvatarSplashEffect(parentGroup) {
-  const count = 45;
-  const geom = new THREE.BufferGeometry();
-  const splashPositions = new Float32Array(count * 3);
-  splashVelocities = [];
-
-  for (let i = 0; i < count; i++) {
-    splashPositions[i * 3 + 0] = (Math.random() - 0.5) * 0.15;
-    splashPositions[i * 3 + 1] = Math.random() * 0.08;
-    splashPositions[i * 3 + 2] = (Math.random() - 0.5) * 0.15;
-    splashVelocities.push({
-      x: (Math.random() - 0.5) * 0.25,
-      y: 0.12 + Math.random() * 0.28,
-      z: -0.15 - Math.random() * 0.35,
-      life: Math.random()
-    });
-  }
-
-  geom.setAttribute('position', new THREE.BufferAttribute(splashPositions, 3));
-  const mat = new THREE.PointsMaterial({
-    color: 0xbae6fd,
-    size: 0.024,
-    transparent: true,
-    opacity: 0.85,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  });
-
-  splashParticles = new THREE.Points(geom, mat);
-  splashParticles.visible = false;
-  parentGroup.add(splashParticles);
-}
-
-function createRunnerAvatar(scene) {
-  avatarGroup = new THREE.Group();
-  scene.add(avatarGroup);
-
-  const targetZ = avatarBaseTargetZ;
-  const surfaceX = Math.sqrt(cylinderRadius * cylinderRadius - targetZ * targetZ);
-  const normal = new THREE.Vector3(surfaceX, 0, targetZ).normalize();
-  const tangent = new THREE.Vector3(-normal.z, 0, normal.x).normalize();
-  const binormal = new THREE.Vector3(0, 1, 0);
-
-  // Basis transform agar avatar berdiri tegak dan menghadap ke depan (+Z)
-  const rotMatrix = new THREE.Matrix4();
-  rotMatrix.makeBasis(binormal, normal, tangent.clone().negate());
-  avatarGroup.setRotationFromMatrix(rotMatrix);
-  avatarGroup.position.set(surfaceX, 0, targetZ);
-
-  const fbxLoader = new FBXLoader();
-  fbxLoader.load('./assets/firechar.fbx', (fbx) => {
-    avatarModel = fbx;
-    // Skala proporsional ~38cm di silinder jalan raya 5.2m
-    const s = 0.00046;
-    fbx.scale.set(s, s, s);
-
-    fbx.traverse((child) => {
-      if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-        if (child.material) {
-          child.material.roughness = 0.45;
-          child.material.metalness = 0.15;
-        }
-      }
-    });
-
-    avatarGroup.add(fbx);
-
-    // Rim/Key light khusus karakter agar avatar terlihat tegas & kontras
-    const charSpot = new THREE.PointLight(0xffedd5, 1.4, 3.5);
-    charSpot.position.set(0.2, 0.45, 0.3);
-    avatarGroup.add(charSpot);
-
-    // Load running animation dari Fast Run.fbx
-    fbxLoader.load('./assets/Fast Run.fbx', (runFbx) => {
-      if (runFbx.animations && runFbx.animations.length > 0) {
-        avatarMixer = new THREE.AnimationMixer(fbx);
-        avatarRunAction = avatarMixer.clipAction(runFbx.animations[0]);
-        avatarRunAction.play();
-      }
-    });
-  });
-
-  // Efek percikan air banjir di kaki avatar
-  createAvatarSplashEffect(avatarGroup);
-}
 
 function initCity() {
   // 1. Scene & Sky (Qwantani Sunrise Pure Sky EXR)
@@ -294,7 +194,7 @@ function initCity() {
   // 5. Pencahayaan & Objek Matahari Pagi Buatan Sendiri
   sunVisuals = createMorningSun(scene, false);
 
-  const cityLight = new THREE.PointLight(0xf59e0b, 1.0, 24);
+  const cityLight = new THREE.PointLight(0xf59e0b, 2.0, 24);
   cityLight.position.set(0, 6, 3);
   scene.add(cityLight);
 
@@ -326,8 +226,8 @@ function initCity() {
     map: roadColor,
     normalMap: roadNormal,
     roughnessMap: roadRoughness,
-    roughness: 0.82,
-    metalness: 0.08,
+    roughness: 0.65,
+    metalness: 0.15,
     wireframe: isWireframe
   });
 
@@ -367,9 +267,6 @@ function initCity() {
 
   // 10. Bangunan Kota & Props dari Folder Assets (city & props)
   buildCityScenery();
-
-  // 11. Avatar Karakter Pelari (Firechar + Fast Run)
-  createRunnerAvatar(scene);
 }
 
 function createWaterNormalTexture() {
