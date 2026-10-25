@@ -16,6 +16,16 @@ const btnToggleCam = document.getElementById('btnToggleCam');
 const btnWireframe = document.getElementById('btnWireframe');
 const btnSpeed = document.getElementById('btnSpeed');
 const btnFloodRestoration = document.getElementById('btnFloodRestoration');
+const btnLaneLeft = document.getElementById('btnLaneLeft');
+const btnLaneRight = document.getElementById('btnLaneRight');
+
+// Avatar Karakter GLB: Firerun + Animasi Lari (Runner)
+let avatarGroup, avatarModel, avatarMixer, avatarRunAction;
+let avatarLaneY = 0.0;
+let avatarTargetLaneY = 0.0;
+const avatarBaseTargetZ = 0.95;
+let splashParticles = null;
+let splashVelocities = null;
 
 let scene, camera, renderer, controls;
 let mainMesh, sideMaterial, capMaterial, standardMaterials;
@@ -137,6 +147,97 @@ function createMorningSun(scene, isForest = false) {
 }
 
 
+
+
+function createAvatarSplashEffect(parentGroup) {
+  const count = 45;
+  const geom = new THREE.BufferGeometry();
+  const splashPositions = new Float32Array(count * 3);
+  splashVelocities = [];
+
+  for (let i = 0; i < count; i++) {
+    splashPositions[i * 3 + 0] = (Math.random() - 0.5) * 0.15;
+    splashPositions[i * 3 + 1] = Math.random() * 0.08;
+    splashPositions[i * 3 + 2] = (Math.random() - 0.5) * 0.15;
+    splashVelocities.push({
+      x: (Math.random() - 0.5) * 0.25,
+      y: 0.12 + Math.random() * 0.28,
+      z: -0.15 - Math.random() * 0.35,
+      life: Math.random()
+    });
+  }
+
+  geom.setAttribute('position', new THREE.BufferAttribute(splashPositions, 3));
+  const mat = new THREE.PointsMaterial({
+    color: 0xbae6fd,
+    size: 0.024,
+    transparent: true,
+    opacity: 0.85,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+
+  splashParticles = new THREE.Points(geom, mat);
+  splashParticles.visible = false;
+  parentGroup.add(splashParticles);
+}
+
+function createRunnerAvatar(scene) {
+  avatarGroup = new THREE.Group();
+  scene.add(avatarGroup);
+
+  const targetZ = avatarBaseTargetZ;
+  const surfaceX = Math.sqrt(cylinderRadius * cylinderRadius - targetZ * targetZ);
+  const normal = new THREE.Vector3(surfaceX, 0, targetZ).normalize();
+  const tangent = new THREE.Vector3(-normal.z, 0, normal.x).normalize();
+  const binormal = new THREE.Vector3(0, 1, 0);
+
+  // Basis transform untuk firerun.glb:
+  // Model UP (+Y) -> normal (+X)
+  // Model FORWARD (+Z) -> tangent (+Z)
+  // Model RIGHT (-X) -> -binormal (+Y)
+  const rotMatrix = new THREE.Matrix4();
+  rotMatrix.makeBasis(binormal.clone().negate(), normal, tangent);
+  avatarGroup.setRotationFromMatrix(rotMatrix);
+  avatarGroup.position.set(surfaceX, 0, targetZ);
+
+  const gltfLoader = new GLTFLoader();
+  gltfLoader.load('./assets/firerun.glb', (gltf) => {
+    avatarModel = gltf.scene;
+    // Skala proporsional ~36cm di silinder jalan raya 5.2m
+    const s = 0.088;
+    avatarModel.scale.set(s, s, s);
+    avatarModel.position.y = 0.02; // Menapak di atas aspal jalan raya
+
+    avatarModel.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+        if (child.material) {
+          child.material.roughness = 0.50;
+          child.material.metalness = 0.10;
+        }
+      }
+    });
+
+    avatarGroup.add(avatarModel);
+
+    // Rim/Key light lokal agar avatar terlihat tajam & berdefinisi
+    const charSpot = new THREE.PointLight(0xffedd5, 1.4, 3.5);
+    charSpot.position.set(0.2, 0.45, 0.3);
+    avatarGroup.add(charSpot);
+
+    // Jalankan animasi lari bawaan firerun.glb
+    if (gltf.animations && gltf.animations.length > 0) {
+      avatarMixer = new THREE.AnimationMixer(avatarModel);
+      avatarRunAction = avatarMixer.clipAction(gltf.animations[0]);
+      avatarRunAction.play();
+    }
+  });
+
+  // Efek cipratan air saat ada banjir
+  createAvatarSplashEffect(avatarGroup);
+}
 
 function initCity() {
   // 1. Scene & Sky (Qwantani Sunrise Pure Sky EXR)
@@ -267,6 +368,9 @@ function initCity() {
 
   // 10. Bangunan Kota & Props dari Folder Assets (city & props)
   buildCityScenery();
+
+  // 11. Avatar Karakter Pelari (Firerun GLB)
+  createRunnerAvatar(scene);
 }
 
 function createWaterNormalTexture() {
@@ -760,7 +864,7 @@ function setCameraView(mode) {
     camera.lookAt(camX - Math.sin(basePitchDown) * targetDist, 0, Math.cos(basePitchDown) * targetDist);
 
     if (btnToggleCam) {
-      btnToggleCam.textContent = '📷 Kamera: Di Selimut (Fixed Smooth)';
+      btnToggleCam.textContent = '📷 Kamera: Di Selimut (Third-Person)';
       btnToggleCam.style.borderColor = '#22d3ee';
       btnToggleCam.style.color = '#22d3ee';
     }
@@ -820,12 +924,50 @@ function animate(time) {
     mainMesh.rotation.y += delta * rollSpeed;
   }
 
+  // Update Avatar Karakter Firerun (Perpindahan Jalur & Animasi Lari)
+  if (avatarGroup) {
+    avatarLaneY = THREE.MathUtils.lerp(avatarLaneY, avatarTargetLaneY, delta * 9.0);
+    avatarGroup.position.y = avatarLaneY;
+
+    if (avatarMixer) {
+      const animRate = isAnimating ? (rollSpeed / 0.75) : 0.0;
+      avatarMixer.update(delta * animRate);
+    }
+
+    // Cipratan air kaki avatar saat banjir meluap
+    if (splashParticles && splashVelocities) {
+      if (isAnimating && floodLevel > 0.12) {
+        splashParticles.visible = true;
+        const pos = splashParticles.geometry.attributes.position.array;
+        for (let i = 0; i < splashVelocities.length; i++) {
+          const v = splashVelocities[i];
+          v.life += delta * 2.5;
+          if (v.life > 1.0) {
+            v.life = 0;
+            pos[i * 3 + 0] = (Math.random() - 0.5) * 0.12;
+            pos[i * 3 + 1] = 0.01;
+            pos[i * 3 + 2] = -0.05 + (Math.random() - 0.5) * 0.08;
+          } else {
+            pos[i * 3 + 0] += v.x * delta;
+            pos[i * 3 + 1] += v.y * delta;
+            pos[i * 3 + 2] += v.z * delta;
+          }
+        }
+        splashParticles.geometry.attributes.position.needsUpdate = true;
+      } else {
+        splashParticles.visible = false;
+      }
+    }
+  }
+
   if (cameraView === 'surface') {
     const camX = cylinderRadius + eyeHeight;
-    camera.position.set(camX, 0, 0);
+    // Kamera third-person halus mengikuti pergeseran jalur avatar
+    const camFollowY = avatarLaneY * 0.35;
+    camera.position.set(camX, camFollowY, 0);
     camera.up.set(1, 0, 0);
     const targetDist = 4.6;
-    camera.lookAt(camX - Math.sin(basePitchDown) * targetDist, 0, Math.cos(basePitchDown) * targetDist);
+    camera.lookAt(camX - Math.sin(basePitchDown) * targetDist, avatarLaneY * 0.45, Math.cos(basePitchDown) * targetDist);
   } else {
     controls.update();
   }
@@ -1028,8 +1170,23 @@ window.addEventListener('keydown', (e) => {
     btnToggleCam.click();
   } else if (e.key.toLowerCase() === 'b' || e.key.toLowerCase() === 'r') {
     triggerFloodRestoration();
+  } else if (e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft') {
+    avatarTargetLaneY = Math.max(-0.40, avatarTargetLaneY - 0.20);
+  } else if (e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') {
+    avatarTargetLaneY = Math.min(0.40, avatarTargetLaneY + 0.20);
   }
 });
+
+if (btnLaneLeft) {
+  btnLaneLeft.addEventListener('click', () => {
+    avatarTargetLaneY = Math.max(-0.40, avatarTargetLaneY - 0.20);
+  });
+}
+if (btnLaneRight) {
+  btnLaneRight.addEventListener('click', () => {
+    avatarTargetLaneY = Math.min(0.40, avatarTargetLaneY + 0.20);
+  });
+}
 
 initCity();
 requestAnimationFrame(animate);
