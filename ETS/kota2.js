@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
-import { GateManager } from './gates.js';
+import { GateManager } from './gates.js?v=swarm_v2';
 import { MonsterManager } from './monster.js?v=boss_v7';
 
 const canvas = document.getElementById('mainCanvas');
@@ -46,10 +46,10 @@ let powerRestored = false;
 
 const cylinderRadius = 2.6; // Diameter diperbesar menjadi 5.2
 const cylinderHeight = 3.8; // Diperlebar agar memuat 2 layer gedung (depan & belakang)
-const eyeHeight = 0.85; // Posisi kamera di atas avatar agar lintasan jalan dan rintangan terlihat lapang
-const basePitchDown = 31.5 * (Math.PI / 180); // Sudut kamera menunduk (pitch down) sama persis dengan kota & hutan
-const camZOffset = -0.16; // Posisi offset Z kamera sama persis dengan kota & hutan
-const avatarBaseTargetZ = 0.15; // Posisi avatar tepat dekat dasar bawah kanvas (sama seperti kota & hutan)
+const eyeHeight = 0.88; // Posisi kamera di atas avatar agar lintasan jalan dan rintangan terlihat lapang
+const basePitchDown = 31.0 * (Math.PI / 180); // Sudut kamera menunduk (pitch down)
+const camZOffset = -0.23; // Posisi offset Z kamera mundur memberi ruang lega bagi seluruh pasukan
+const avatarBaseTargetZ = 0.15; // Posisi avatar tepat dekat dasar bawah kanvas
 
 let cameraView = 'surface'; // 'surface' | 'orbit'
 let isAnimating = true;
@@ -194,6 +194,7 @@ function createRunnerAvatar(scene) {
 
       // Setup Animasi Running Loop
       if (gltf.animations && gltf.animations.length > 0) {
+        avatarModel.animations = gltf.animations;
         avatarMixer = new THREE.AnimationMixer(avatarModel);
         avatarRunAction = avatarMixer.clipAction(gltf.animations[0]);
         avatarRunAction.play();

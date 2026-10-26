@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
-import { GateManager } from './gates.js';
+import { GateManager } from './gates.js?v=swarm_v1';
 import { MonsterManager } from './monster.js?v=boss_v2';
 
 const canvas = document.getElementById('mainCanvas');
@@ -52,9 +52,9 @@ const waterTotalHeight = 3.78; // Menyelimuti penuh seluruh aspal dan kedua sisi
 
 const cylinderRadius = 2.6; // Diameter 5.2
 const cylinderHeight = 3.8; // Diperlebar agar memuat 2 layer gedung (depan & belakang)
-const eyeHeight = 0.85; // Posisi kamera di atas avatar agar lintasan jalan dan rintangan/gate terlihat jelas
-const basePitchDown = 31.5 * (Math.PI / 180); // Sudut kamera menunduk (pitch down) lebih jelas ke permukaan jalan
-const camZOffset = -0.16; // Sedikit di belakang agar lintasan terlihat panjang
+const eyeHeight = 0.88; // Posisi kamera di atas avatar agar lintasan jalan dan rintangan/gate terlihat jelas
+const basePitchDown = 31.0 * (Math.PI / 180); // Sudut kamera menunduk (pitch down) lebih jelas ke permukaan jalan
+const camZOffset = -0.23; // Ruang lega ke belakang agar seluruh pasukan terlihat leluasa
 
 let cameraView = 'surface'; // 'surface' | 'orbit'
 let isAnimating = true;
@@ -235,6 +235,7 @@ function createRunnerAvatar(scene) {
 
     // Jalankan animasi lari bawaan firerun.glb
     if (gltf.animations && gltf.animations.length > 0) {
+      avatarModel.animations = gltf.animations;
       avatarMixer = new THREE.AnimationMixer(avatarModel);
       avatarRunAction = avatarMixer.clipAction(gltf.animations[0]);
       avatarRunAction.play();

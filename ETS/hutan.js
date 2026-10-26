@@ -13,7 +13,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
-import { GateManager } from './gates.js';
+import { GateManager } from './gates.js?v=swarm_v1';
 import { MonsterManager } from './monster.js?v=boss_v1';
 
 const canvas = document.getElementById('mainCanvas');
@@ -41,9 +41,9 @@ let monsterManager = null;
 
 const cylinderRadius = 2.6;
 const cylinderHeight = 3.8;
-const eyeHeight = 0.85; // Posisi kamera sama persis seperti di kota (lapang melihat lintasan jalan)
-const basePitchDown = 31.5 * (Math.PI / 180); // Sudut kamera menunduk (pitch down) sama persis seperti di kota
-const camZOffset = -0.16; // Posisi offset Z kamera sama seperti di kota
+const eyeHeight = 0.88; // Posisi kamera sama persis seperti di kota (lapang melihat lintasan jalan)
+const basePitchDown = 31.0 * (Math.PI / 180); // Sudut kamera menunduk (pitch down) sama persis seperti di kota
+const camZOffset = -0.23; // Ruang lega ke belakang agar seluruh pasukan terlihat leluasa
 const avatarBaseTargetZ = 0.15; // Posisi avatar tepat dekat dasar bawah kanvas (sama seperti di kota)
 
 let cameraView = 'surface'; // 'surface' | 'orbit'
@@ -281,6 +281,7 @@ function createRunnerAvatar(scene) {
 
       // Jalankan animasi lari bawaan waterun.glb
       if (gltf.animations && gltf.animations.length > 0) {
+        avatarModel.animations = gltf.animations;
         avatarMixer = new THREE.AnimationMixer(avatarModel);
         avatarRunAction = avatarMixer.clipAction(gltf.animations[0]);
         avatarRunAction.play();
@@ -296,6 +297,7 @@ function createRunnerAvatar(scene) {
         avatarModel.position.y = 0.009;
         avatarGroup.add(avatarModel);
         if (gltf2.animations && gltf2.animations.length > 0) {
+          avatarModel.animations = gltf2.animations;
           avatarMixer = new THREE.AnimationMixer(avatarModel);
           avatarRunAction = avatarMixer.clipAction(gltf2.animations[0]);
           avatarRunAction.play();

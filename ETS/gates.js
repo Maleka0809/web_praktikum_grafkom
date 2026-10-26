@@ -40,6 +40,7 @@ export class GateManager {
 
     // Army Clones Visuals
     this.armyClones = [];
+    this.armyMixers = [];
     this.armyHeadBadge = null;
     this.headBadgeScale = 1.0;
 
@@ -226,18 +227,47 @@ export class GateManager {
   }
 
   // -------------------------------------------------------------
-  // UPDATE VISUAL PASUKAN (ARMY CLONES FORMATION)
+  // UPDATE VISUAL PASUKAN (COUNT MASTERS CROWD CLUSTER)
   // -------------------------------------------------------------
   syncArmyClones() {
     if (!this.avatarGroup) return;
 
-    // Maksimal klon 3D ditampilkan hingga 16 model agar FPS tetap 60+
-    const targetVisualCount = Math.min(16, Math.max(1, this.armyCount)) - 1;
+    // Tampilkan hingga 15 klon 3D pasukan nyata berlari bersama dengan jarak renggang yang jelas
+    const targetVisualCount = Math.min(15, Math.max(1, this.armyCount)) - 1;
 
     // Ambil base model avatar jika tersedia
     const baseModel = (this.getAvatarModel && this.getAvatarModel()) || null;
 
-    // Jika jumlah kurang, tambahkan klon
+    // Slot formasi kerumunan berjarak renggang (Count Masters flocking)
+    // Melebar ke samping kiri-kanan & mengelilingi pemimpin tanpa menumpuk
+    const CLUSTER_OFFSETS = [
+      // Flank sayap kiri & kanan sejajar pemimpin
+      { x: -0.068, z: -0.015 },
+      { x:  0.068, z: -0.015 },
+      // Tepat di belakang pemimpin
+      { x:  0.000, z: -0.050 },
+      // Sayap luar kiri & kanan
+      { x: -0.130, z: -0.030 },
+      { x:  0.130, z: -0.030 },
+      // Baris kedua kiri & kanan
+      { x: -0.068, z: -0.072 },
+      { x:  0.068, z: -0.072 },
+      // Sayap terluar kiri & kanan
+      { x: -0.180, z: -0.045 },
+      { x:  0.180, z: -0.045 },
+      // Baris tengah belakang
+      { x:  0.000, z: -0.095 },
+      // Baris ketiga kiri & kanan
+      { x: -0.125, z: -0.088 },
+      { x:  0.125, z: -0.088 },
+      // Baris belakang luar
+      { x: -0.065, z: -0.118 },
+      { x:  0.065, z: -0.118 },
+      // Belakang tengah penutup
+      { x:  0.000, z: -0.132 }
+    ];
+
+    // Jika jumlah kurang, tambahkan klon baru
     while (this.armyClones.length < targetVisualCount && baseModel) {
       const idx = this.armyClones.length;
       let clone = null;
@@ -247,23 +277,56 @@ export class GateManager {
         clone = baseModel.clone(true);
       }
 
-      // Hitung formasi kerumunan (V-formation / crowd cluster di belakang pemimpin)
-      const row = Math.floor(idx / 3) + 1;
-      const col = (idx % 3) - 1; // -1 (kiri), 0 (tengah), 1 (kanan)
-      const offsetX = col * 0.11 + (Math.random() - 0.5) * 0.03;
-      const offsetZ = -row * 0.12 - (Math.random() * 0.04);
+      // Ambil slot formasi atau hitung sebaran spiral organik
+      let pos;
+      if (idx < CLUSTER_OFFSETS.length) {
+        pos = CLUSTER_OFFSETS[idx];
+      } else {
+        const angle = idx * 2.399; // Golden angle spiral
+        const dist = 0.08 + Math.floor(idx / 6) * 0.035;
+        pos = {
+          x: Math.cos(angle) * Math.min(0.18, dist),
+          z: -0.045 + Math.sin(angle) * 0.055
+        };
+      }
 
-      clone.position.set(offsetX, 0.009, offsetZ);
+      clone.position.set(pos.x, 0.009, pos.z);
       clone.scale.set(0.034, 0.034, 0.034);
+
+      // Pendaran cerah pada pakaian pasukan agar kontras dan memukau di atas aspal
+      clone.traverse((node) => {
+        if (node.isMesh && node.material) {
+          node.material = node.material.clone();
+          if (node.material.color) {
+            node.material.emissive = node.material.color.clone();
+            node.material.emissiveIntensity = 0.35;
+          }
+        }
+      });
+
+      // Animasi lari klon pasukan yang hidup & natural
+      const anims = baseModel.animations || (baseModel.userData && baseModel.userData.animations);
+      if (anims && anims.length > 0) {
+        const mixer = new THREE.AnimationMixer(clone);
+        const action = mixer.clipAction(anims[0]);
+        action.time = Math.random() * 0.7; // variasi langkah alami
+        action.play();
+        clone.userData.mixer = mixer;
+        this.armyMixers.push(mixer);
+      }
 
       this.avatarGroup.add(clone);
       this.armyClones.push(clone);
     }
 
-    // Jika jumlah lebih (akibat minus), hapus klon berlebih
+    // Jika jumlah berkurang (akibat gerbang minus), hapus klon berlebih
     while (this.armyClones.length > targetVisualCount) {
       const removed = this.armyClones.pop();
       if (removed) {
+        if (removed.userData && removed.userData.mixer) {
+          const mIdx = this.armyMixers.indexOf(removed.userData.mixer);
+          if (mIdx !== -1) this.armyMixers.splice(mIdx, 1);
+        }
         this.avatarGroup.remove(removed);
       }
     }
@@ -748,6 +811,13 @@ export class GateManager {
     if (this.armyHeadBadge && this.headBadgeScale > 1.0) {
       this.headBadgeScale = THREE.MathUtils.lerp(this.headBadgeScale, 1.0, delta * 8.0);
       this.armyHeadBadge.scale.set(0.18 * this.headBadgeScale, 0.08 * this.headBadgeScale, 1.0);
+    }
+
+    // Update Animasi Lari Pasukan Army (Mixers)
+    if (isAnimating) {
+      for (let i = 0; i < this.armyMixers.length; i++) {
+        this.armyMixers[i].update(delta);
+      }
     }
 
     // 1. Update Semua Stasiun Gerbang
