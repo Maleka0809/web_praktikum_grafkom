@@ -232,8 +232,8 @@ export class GateManager {
   syncArmyClones() {
     if (!this.avatarGroup) return;
 
-    // Tampilkan hingga 10 klon 3D (5 deret baris × 2 banjar berjarak rapi dan longgar)
-    const targetVisualCount = Math.min(10, Math.max(1, this.armyCount)) - 1;
+    // Tampilkan hingga 8 klon 3D (4 deret baris × 2 banjar berjarak sangat longgar & berjarak nyata)
+    const targetVisualCount = Math.min(8, Math.max(1, this.armyCount)) - 1;
 
     // Ambil base model avatar jika tersedia
     const baseModel = (this.getAvatarModel && this.getAvatarModel()) || null;
@@ -248,19 +248,19 @@ export class GateManager {
         clone = baseModel.clone(true);
       }
 
-      // Berbaris 2 banjar ke belakang:
-      // Banjar kiri (col 0: -0.075) dan banjar kanan (col 1: +0.075)
-      const row = Math.floor(idx / 2) + 1; // Deret baris ke belakang (1, 2, 3...)
+      // Berbaris 2 banjar ke belakang dengan jarak renggang luas:
+      // Banjar kiri (col 0: -0.090) dan banjar kanan (col 1: +0.090)
+      const row = Math.floor(idx / 2) + 1; // Deret baris ke belakang (1, 2, 3, 4)
       const col = idx % 2;                 // 0 = banjar kiri, 1 = banjar kanan
 
-      // Spacing berjarak renggang nyata samping & depan-belakang:
-      // Antar kolom samping berjarak 0.150 (memberi celah udara jelas antar kepala & badan, aman dari marka jalur 0.42)
-      // Antar baris depan-belakang berjarak 0.108 (ruang gerak bebas sehingga kepala & torso tidak saling menempel saat lari)
-      const offsetX = col === 0 ? -0.075 : 0.075;
-      const offsetZ = -row * 0.108;
+      // Spacing berjarak sangat longgar dan jelas di jalan:
+      // Samping berjarak 0.180 (celah udara luas antar kepala/badan, tetap aman di dalam jalur aspal lebar 0.42)
+      // Depan-belakang berjarak 0.155 per baris (celah antar kepala sangat lapang, tidak mungkin menempel/tumpuk saat lari)
+      const offsetX = col === 0 ? -0.090 : 0.090;
+      const offsetZ = -row * 0.155;
 
       clone.position.set(offsetX, 0.009, offsetZ);
-      clone.scale.set(0.031, 0.031, 0.031);
+      clone.scale.set(0.028, 0.028, 0.028);
 
       // Pendaran cerah pada pakaian pasukan agar kontras dan memukau di atas aspal
       clone.traverse((node) => {
@@ -300,15 +300,15 @@ export class GateManager {
       }
     }
 
-    // Pastikan seluruh klon yang aktif berbaris presisi sesuai formasi 2 banjar berjarak
+    // Pastikan seluruh klon yang aktif berbaris presisi sesuai formasi 2 banjar berjarak longgar
     for (let idx = 0; idx < this.armyClones.length; idx++) {
       const clone = this.armyClones[idx];
       const row = Math.floor(idx / 2) + 1;
       const col = idx % 2;
-      const offsetX = col === 0 ? -0.075 : 0.075;
-      const offsetZ = -row * 0.108;
+      const offsetX = col === 0 ? -0.090 : 0.090;
+      const offsetZ = -row * 0.155;
       clone.position.set(offsetX, 0.009, offsetZ);
-      clone.scale.set(0.031, 0.031, 0.031);
+      clone.scale.set(0.028, 0.028, 0.028);
     }
   }
 
