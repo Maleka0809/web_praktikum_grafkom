@@ -24,17 +24,17 @@
       <div class="hub-grid">
         <a href="./kota.html" class="env-card city-card">
           <div class="arena-image"><img src="./assets/menu/city.png" alt="Langit siang arena kota" /><span class="env-badge">ARENA 01</span></div>
-          <div class="card-body"><h3><i class="ui-icon fa-solid fa-city" aria-hidden="true"></i> Kota Metropolitan</h3><p>Jalan kota yang dilanda banjir. Mulai dengan pasukan Fire dan hadapi monster sampah.</p><span class="arena-detail">FIRE · MONSTER SAMPAH</span></div>
+          <div class="card-body"><h3><i class="ui-icon fa-solid fa-city" aria-hidden="true"></i> Kota Metropolitan</h3><p>Jalan kota dilanda banjir. Wajib pertahankan elemen Fire untuk kalahkan monster sampah (elemen selain Fire pasti kalah).</p><span class="arena-detail">FIRE WAJIB · MONSTER SAMPAH</span></div>
           <div class="card-footer"><span>Masuk arena</span><i class="ui-icon fa-solid fa-arrow-right" aria-hidden="true"></i></div>
         </a>
         <a href="./hutan.html" class="env-card forest-card">
           <div class="arena-image"><img src="./assets/menu/forest.png" alt="Langit malam arena hutan" /><span class="env-badge">ARENA 02</span></div>
-          <div class="card-body"><h3><i class="ui-icon fa-solid fa-tree" aria-hidden="true"></i> Hutan Terbakar</h3><p>Lari melewati hutan yang terbakar. Mulai dengan pasukan Water dan kalahkan monster lava.</p><span class="arena-detail">WATER · MONSTER LAVA</span></div>
+          <div class="card-body"><h3><i class="ui-icon fa-solid fa-tree" aria-hidden="true"></i> Hutan Terbakar</h3><p>Hutan malam terbakar kobaran api. Wajib pertahankan elemen Water untuk kalahkan monster lava (elemen selain Water pasti kalah).</p><span class="arena-detail">WATER WAJIB · MONSTER LAVA</span></div>
           <div class="card-footer"><span>Masuk arena</span><i class="ui-icon fa-solid fa-arrow-right" aria-hidden="true"></i></div>
         </a>
         <a href="./kota2.html" class="env-card night-card">
           <div class="arena-image"><img src="./assets/menu/cyber.png" alt="Langit malam arena kota futuristik" /><span class="env-badge">ARENA 03</span></div>
-          <div class="card-body"><h3><i class="ui-icon fa-solid fa-building" aria-hidden="true"></i> Kota Futuristik</h3><p>Lintasan kota malam futuristik. Mulai dengan pasukan Electric dan lawan mecha robot.</p><span class="arena-detail">ELECTRIC · MECHA ROBOT</span></div>
+          <div class="card-body"><h3><i class="ui-icon fa-solid fa-building" aria-hidden="true"></i> Kota Futuristik</h3><p>Kota malam mati lampu. Wajib pertahankan elemen Electric untuk pulihkan daya kota & kalahkan mecha robot (elemen selain Electric pasti kalah).</p><span class="arena-detail">ELECTRIC WAJIB · MECHA ROBOT</span></div>
           <div class="card-footer"><span>Masuk arena</span><i class="ui-icon fa-solid fa-arrow-right" aria-hidden="true"></i></div>
         </a>
       </div>
@@ -42,7 +42,12 @@
 
     <dialog id="howToDialog" class="how-to-dialog" aria-labelledby="howToTitle">
       <div class="dialog-heading"><h2 id="howToTitle">Cara bermain</h2><button id="closeHowTo" type="button" aria-label="Tutup panduan">×</button></div>
-      <ol><li>Pilih arena, lalu pindah jalur dengan tombol <kbd>A</kbd> dan <kbd>D</kbd> atau tombol di layar.</li><li>Lewati gate untuk menambah pasukan, memperoleh EXP, dan mengganti elemen.</li><li>Kumpulkan kekuatan selama 60 detik. Setelah waktu habis, final boss muncul.</li><li>Capai syarat EXP yang tampil di HUD untuk memenangkan pertarungan.</li></ol>
+      <ol>
+        <li>Pilih arena, lalu pindah jalur dengan tombol <kbd>A</kbd> dan <kbd>D</kbd> atau tombol di layar.</li>
+        <li>Lewati gate untuk menambah pasukan, memperoleh EXP, atau berganti elemen.</li>
+        <li><b>Kunci Kemenangan Elemen:</b> Kota Banjir wajib pasukan <b>FIRE</b>, Hutan Terbakar wajib <b>WATER</b>, dan Kota Mati Lampu wajib <b>ELECTRIC</b>. Jika kamu membawa elemen selain itu saat melawan Boss, kamu <b>pasti kalah</b>!</li>
+        <li>Kumpulkan kekuatan selama 60 detik, capai syarat EXP dan pasukan, lalu hadapi Final Boss!</li>
+      </ol>
       <button id="closeHowToBottom" class="menu-primary" type="button">Mengerti</button>
     </dialog>
 

@@ -427,13 +427,32 @@ export class MonsterManager {
 
       feedback.innerHTML = `Hebat sekali! Pasukanmu berhasil mengumpulkan <b>${currentExp} EXP</b> dan menumbangkan Final Boss!<br><span style="color:#38bdf8; font-weight:600; display:inline-block; margin-top:6px;">${cutsceneInfo}</span>`;
     } else {
-      card.style.border = '1px solid #a75d58';
-      card.style.boxShadow = '0 18px 48px rgba(0, 0, 0, 0.45)';
-      icon.innerHTML = '<i class="ui-icon fa-solid fa-robot" aria-hidden="true"></i>';
-      title.innerText = 'PASUKAN BELUM CUKUP KUAT!';
-      title.style.color = '#f87171';
-      desc.innerText = `Kamu Terhempas Oleh Serangan ${this.bossName.replace(/^[^\w]+/, '')}!`;
-      feedback.innerHTML = `Kekuatan pasukanmu belum cukup untuk menumbangkan Final Boss. Kumpulkan lebih banyak pasukan dan EXP, naikkan level, lalu pilih elemen yang tepat.`;
+      const currentElement = (this.gateManager?.elementType || '').toUpperCase();
+      const arenaRules = {
+        city: { name: 'Kota Banjir', required: 'FIRE (Api)' },
+        forest: { name: 'Hutan Kebakaran', required: 'WATER (Air)' },
+        cyber: { name: 'Kota Futuristik Mati Lampu', required: 'ELECTRO (Listrik)' },
+        robot: { name: 'Kota Futuristik Mati Lampu', required: 'ELECTRO (Listrik)' }
+      };
+      const rule = arenaRules[this.arenaType] || arenaRules.city;
+
+      if (!this.isCorrectElement) {
+        card.style.border = '1px solid #ef4444';
+        card.style.boxShadow = '0 18px 48px rgba(239, 68, 68, 0.35)';
+        icon.innerHTML = '<i class="ui-icon fa-solid fa-triangle-exclamation" aria-hidden="true" style="color: #ef4444;"></i>';
+        title.innerText = 'SALAH ELEMEN — PASUKAN KALAH!';
+        title.style.color = '#ef4444';
+        desc.innerText = `Kamu Membawa Elemen ${currentElement} di ${rule.name}!`;
+        feedback.innerHTML = `Di <b>${rule.name}</b>, Final Boss hanya bisa dikalahkan oleh pasukan elemen <b>${rule.required}</b>!<br><br>Jika kamu berpindah ke gerbang elemen lain selama berlari, seranganmu tidak akan mempan. Ulangi permainan dan pastikan pertahankan elemen <b>${rule.required}</b> saat menghadapi boss!`;
+      } else {
+        card.style.border = '1px solid #a75d58';
+        card.style.boxShadow = '0 18px 48px rgba(0, 0, 0, 0.45)';
+        icon.innerHTML = '<i class="ui-icon fa-solid fa-robot" aria-hidden="true"></i>';
+        title.innerText = 'PASUKAN BELUM CUKUP KUAT!';
+        title.style.color = '#f87171';
+        desc.innerText = `Kamu Terhempas Oleh Serangan ${this.bossName.replace(/^[^\w]+/, '')}!`;
+        feedback.innerHTML = `Elemenmu sudah tepat (<b>${rule.required}</b>), namun kekuatan pasukan belum mencukupi. Kumpulkan minimal 10 pasukan dan capai target EXP (${this.targetExp}) agar dapat menumbangkan Final Boss!`;
+      }
     }
 
     modal.style.display = 'flex';
@@ -683,16 +702,24 @@ export class MonsterManager {
       this.dyingModel.visible = false;
     }
 
-    const { targetExp, advantage } = calculateBossTarget(this.gateManager, this.arenaType, elementAdvantage);
+    const { targetExp, advantage, requiredElement, isCorrectElement } = calculateBossTarget(this.gateManager, this.arenaType, elementAdvantage);
     this.targetExp = targetExp;
     this.battleAdvantage = advantage;
-    this.damagePerHit = calculateBossDamage(this.gateManager, advantage);
-    this.canDefeatBoss = canDefeatBoss(this.gateManager, this.targetExp);
+    this.requiredElement = requiredElement;
+    this.isCorrectElement = isCorrectElement;
+    this.damagePerHit = calculateBossDamage(this.gateManager, advantage, this.arenaType);
+    this.canDefeatBoss = canDefeatBoss(this.gateManager, this.targetExp, this.arenaType);
     this.attackVolleyCount = 0;
     this.maxHp = getBossMaxHp(this.arenaType);
     this.hp = this.maxHp;
     const subtitle = document.getElementById('bossSubtitle');
-    if (subtitle) subtitle.textContent = `${advantage > 0 ? 'Elemen unggul' : advantage < 0 ? 'Elemen lemah' : 'Elemen netral'} · Damage per volley ${this.damagePerHit}`;
+    if (subtitle) {
+      if (!this.isCorrectElement) {
+        subtitle.innerHTML = `<span style="color: #ef4444; font-weight: 800;">⚠️ SALAH ELEMEN!</span> Arena butuh <b>${requiredElement.toUpperCase()}</b> · Boss kebal!`;
+      } else {
+        subtitle.innerHTML = `<span style="color: #38bdf8; font-weight: 800;">✓ ELEMEN TEPAT (${requiredElement.toUpperCase()})</span> · Damage per volley ${this.damagePerHit}`;
+      }
+    }
     const damageText = document.getElementById('bossDamageText');
     if (damageText) damageText.textContent = 'Pasukan bersiap menyerang';
 
