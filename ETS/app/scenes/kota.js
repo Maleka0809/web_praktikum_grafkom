@@ -1,3 +1,4 @@
+import '@fortawesome/fontawesome-free/css/all.min.css';
 /**
  * ETS Grafika Komputer - Lingkungan 01: Kota Metropolitan (City)
  */
@@ -6,8 +7,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
-import { GateManager } from './gates.js?v=banjar_same_size_v4';
-import { MonsterManager } from './monster.js?v=boss_v2';
+import { GateManager } from '../game/gates.js';
+import { changeArmyElement } from '../game/army-element.js';
+import { MonsterManager } from '../game/monster.js';
 
 const canvas = document.getElementById('mainCanvas');
 const fpsDisplay = document.getElementById('fpsDisplay');
@@ -47,7 +49,7 @@ let waterNormalTex;
 let waterMat;
 let floodLevel = 1.0; // 1.0 = banjir penuh, 0.0 = surut kering
 let floodState = 'flooded'; // 'flooded' | 'restoring' | 'cleared' | 'resurging'
-const waterBaseRadius = 2.685; // Diameter 5.37 (tinggi air di atas aspal dan meluap merendam trotoar)
+const waterBaseRadius = 2.66; // Genangan sekitar 6 cm di atas jalan, setinggi mata kaki karakter.
 const waterTotalHeight = 3.78; // Menyelimuti penuh seluruh aspal dan kedua sisi trotoar kiri & kanan
 
 const cylinderRadius = 2.6; // Diameter 5.2
@@ -108,11 +110,11 @@ function createMorningSun(scene, isForest = false) {
     map: sunTex,
     blending: THREE.AdditiveBlending,
     transparent: true,
-    opacity: 0.95,
+    opacity: 0.80,
     depthWrite: false
   });
   const coreSprite = new THREE.Sprite(coreMat);
-  coreSprite.scale.set(8.5, 8.5, 1);
+  coreSprite.scale.set(7.5, 7.5, 1);
   sunGroup.add(coreSprite);
 
   // 2. Pendaran Aura Luar Udara (Wide Atmospheric Light Bloom)
@@ -120,11 +122,11 @@ function createMorningSun(scene, isForest = false) {
     map: sunTex,
     blending: THREE.AdditiveBlending,
     transparent: true,
-    opacity: 0.45,
+    opacity: 0.22,
     depthWrite: false
   });
   const bloomSprite = new THREE.Sprite(bloomMat);
-  bloomSprite.scale.set(18.0, 18.0, 1);
+  bloomSprite.scale.set(12.0, 12.0, 1);
   sunGroup.add(bloomSprite);
 
   scene.add(sunGroup);
@@ -137,7 +139,7 @@ function createMorningSun(scene, isForest = false) {
   scene.add(sunLight.target);
 
   // Point Light pendar lokal matahari
-  const sunPoint = new THREE.PointLight(0xfacc15, 2.0, 80, 1.1);
+  const sunPoint = new THREE.PointLight(0xfacc15, 1.2, 80, 1.1);
   sunPoint.position.copy(sunPos);
   scene.add(sunPoint);
 
@@ -381,6 +383,18 @@ function initCity() {
 
   // 12. Sistem Gerbang Interaktif Runner (Pasukan Army, Multiplier, EXP, Minus & Elemen)
   gateManager = new GateManager(scene, mainMesh, cylinderRadius, avatarGroup, () => avatarModel);
+  gateManager.activeElement = 'FIRE';
+  gateManager.elementType = 'fire';
+  gateManager.updateHud();
+  gateManager.onElementChange = (element) => changeArmyElement(gateManager, avatarGroup, avatarModel, element, (model, mixer, action) => {
+    if (avatarMixer) {
+      avatarMixer.stopAllAction();
+      avatarMixer.uncacheRoot(avatarModel);
+    }
+    avatarModel = model;
+    avatarMixer = mixer;
+    avatarRunAction = action;
+  });
 
   // 13. Sistem Monster Sampah Raksasa (Muncul setelah 1 menit / 60 detik berlari)
   monsterManager = new MonsterManager(
@@ -405,8 +419,10 @@ function initCity() {
       avatarLaneY = -0.21;
       if (floodState === 'cleared') {
         floodState = 'flooded';
-        if (floodMesh) floodMesh.scale.set(1, 1, 1);
-        if (floodMaterial) floodMaterial.opacity = 0.82;
+        floodLevel = 1;
+        if (waterFloodGroup) waterFloodGroup.visible = true;
+        if (waterMat) waterMat.opacity = 0.88;
+        waterMeniscusRings.forEach((ring) => ring.scale.set(1, 1, 1));
       }
     },
     () => {
@@ -466,7 +482,7 @@ function createWaterFloodSystem(scene) {
   waterFloodGroup.position.set(0, 0, 0); // Berpusat sepusat dengan tabung kota di sumbu Y
 
   if (infoDetail) {
-    infoDetail.textContent = '🌊 WASPADA BANJIR: Selimut air silindris meluap menutupi seluruh aspal jalanan dan trotoar kota!';
+    infoDetail.textContent = ' WASPADA BANJIR: Selimut air silindris meluap menutupi seluruh aspal jalanan dan trotoar kota!';
   }
 
   // 1. Tekstur Riak Gelombang Normal Air (Rolling Waves)
@@ -476,29 +492,29 @@ function createWaterFloodSystem(scene) {
   // Warna: Biru toska laut jernih (cyan / aqua marine 0x38bdf8)
   // Transmisi: Semi-transparan tembus pandang dengan ombak yang berkilau hidup
   waterMat = new THREE.MeshPhysicalMaterial({
-    color: 0x38bdf8,
-    emissive: 0x0284c7,
-    emissiveIntensity: 0.15,
-    roughness: 0.025,
+    color: 0x168fbd,
+    emissive: 0x075985,
+    emissiveIntensity: 0.10,
+    roughness: 0.24,
     metalness: 0.02,
-    transmission: 0.88,         // Jernih dan tembus pandang
+    transmission: 0.14,
     transparent: true,
-    opacity: 0.94,
+    opacity: 0.88,
     ior: 1.333,                 // Indeks bias air optik asli
     thickness: 1.6,             // Kedalaman volume bias air
     specularIntensity: 1.0,
     specularColor: 0xffffff,
-    clearcoat: 1.0,             // Kilau kristal penuh
-    clearcoatRoughness: 0.025,  // Kilau pantulan ombak air yang hidup
+    clearcoat: 0.65,
+    clearcoatRoughness: 0.12,
     side: THREE.DoubleSide,
     depthWrite: false,
     normalMap: waterNormalTex,
-    normalScale: new THREE.Vector2(0.18, 0.18) // Riak ombak air tampak jelas dan berkilau dinamis
+    normalScale: new THREE.Vector2(0.18, 0.18)
   });
 
   // 3. Potongan Silindris Air (Cylinder Sleeve) & Mesh Ombak 3D
   // Menyelimuti penuh seluruh tabung: aspal jalan raya dan trotoar pejalan kaki di kedua sisi
-  waterGeo = new THREE.CylinderGeometry(waterBaseRadius, waterBaseRadius, waterTotalHeight, 160, 64, true);
+  waterGeo = new THREE.CylinderGeometry(waterBaseRadius, waterBaseRadius, waterTotalHeight, 96, 32, true);
   const posAttr = waterGeo.attributes.position;
   waterVertexCount = posAttr.count;
   waterInitialPositions = new Float32Array(posAttr.array.length);
@@ -909,15 +925,15 @@ function setCameraView(mode) {
     camera.lookAt(camX - Math.sin(basePitchDown) * targetDist, 0, camZOffset + Math.cos(basePitchDown) * targetDist);
 
     if (btnToggleCam) {
-      btnToggleCam.textContent = '📷 Kamera: Di Selimut (Third-Person)';
+      btnToggleCam.textContent = ' Kamera: Di Selimut (Third-Person)';
       btnToggleCam.style.borderColor = '#22d3ee';
       btnToggleCam.style.color = '#22d3ee';
     }
     if (infoDetail) {
       if (floodState === 'flooded') {
-        infoDetail.textContent = '🌊 WASPADA BANJIR: Pusaran knot air raksasa menggenangi aspal jalanan kota!';
+        infoDetail.textContent = ' WASPADA BANJIR: Pusaran knot air raksasa menggenangi aspal jalanan kota!';
       } else if (floodState === 'cleared') {
-        infoDetail.textContent = '✨ KOTA PULIH! Pusaran air banjir tersedot habis ke saluran drainase. Jalanan kembali kering & bersih!';
+        infoDetail.textContent = ' KOTA PULIH! Pusaran air banjir tersedot habis ke saluran drainase. Jalanan kembali kering & bersih!';
       } else {
         infoDetail.textContent = 'Kamera tetap di selimut tabung kota | Putaran jalan mulus (Smooth)';
       }
@@ -931,7 +947,7 @@ function setCameraView(mode) {
     controls.target.set(0, 0, 0);
     controls.update();
     if (btnToggleCam) {
-      btnToggleCam.textContent = '🛰️ Kamera: Luar (Orbit 3D)';
+      btnToggleCam.textContent = ' Kamera: Luar (Orbit 3D)';
       btnToggleCam.style.borderColor = 'rgba(255, 255, 255, 0.2)';
       btnToggleCam.style.color = '#cbd5e1';
     }
@@ -1035,15 +1051,14 @@ function animate(time) {
     skySphere.position.copy(camera.position);
   }
 
-  // Pendaran halus denyut cahaya matahari alami
-  if (sunVisuals) {
-    const pulse = 1.0 + Math.sin(time * 0.002) * 0.04;
-    sunVisuals.coreSprite.scale.set(8.5 * pulse, 8.5 * pulse, 1);
-    sunVisuals.bloomSprite.scale.set(18.0 * pulse, 18.0 * pulse, 1);
-  }
 
+let lastWaterWaveTime = -Infinity;
+let lastWaterWaveLevel = -Infinity;
 function updateWaterWaves(time, currentFloodLevel) {
   if (!waterGeo || !waterInitialPositions) return;
+  if (time - lastWaterWaveTime < 33 && Math.abs(currentFloodLevel - lastWaterWaveLevel) < 0.01) return;
+  lastWaterWaveTime = time;
+  lastWaterWaveLevel = currentFloodLevel;
 
   const posAttr = waterGeo.attributes.position;
   const arr = posAttr.array;
@@ -1052,7 +1067,7 @@ function updateWaterWaves(time, currentFloodLevel) {
 
   // Ombak 3D bergulung nyata (Realistic Rolling Waves)
   // Amplitudo ombak jelas terlihat mengalun tinggi-rendah di atas jalan dan trotoar
-  const waveAmp = 0.045 * currentFloodLevel;
+  const waveAmp = 0.042 * currentFloodLevel;
   const currentBaseRadius = cylinderRadius + (waterBaseRadius - cylinderRadius) * currentFloodLevel;
 
   for (let i = 0; i < waterVertexCount; i++) {
@@ -1088,7 +1103,7 @@ function updateWaterWaves(time, currentFloodLevel) {
     if (floodState === 'flooded') {
       floodLevel = 1.0;
       waterFloodGroup.visible = true;
-      if (waterMat) waterMat.opacity = 0.94;
+      if (waterMat) waterMat.opacity = 0.88;
 
       // Simulasi ombak 3D bergelombang nyata
       updateWaterWaves(time, 1.0);
@@ -1122,7 +1137,7 @@ function updateWaterWaves(time, currentFloodLevel) {
 
       // Opasitas air memudar halus saat surut habis
       if (waterMat) {
-        waterMat.opacity = Math.max(0, floodLevel * 0.94);
+        waterMat.opacity = Math.max(0, floodLevel * 0.88);
       }
 
       if (floodLevel <= 0.015) {
@@ -1130,10 +1145,10 @@ function updateWaterWaves(time, currentFloodLevel) {
         waterFloodGroup.visible = false;
         floodState = 'cleared';
         if (infoDetail) {
-          infoDetail.textContent = '✨ KOTA PULIH! Seluruh genangan banjir telah surut dan tersedot ke saluran drainase. Jalanan kembali kering & bersih!';
+          infoDetail.textContent = ' KOTA PULIH! Seluruh genangan banjir telah surut dan tersedot ke saluran drainase. Jalanan kembali kering & bersih!';
         }
         if (btnFloodRestoration) {
-          btnFloodRestoration.textContent = '🌊 Datangkan Banjir Kembali';
+          btnFloodRestoration.textContent = ' Datangkan Banjir Kembali';
           btnFloodRestoration.style.borderColor = '#38bdf8';
           btnFloodRestoration.style.color = '#38bdf8';
         }
@@ -1149,17 +1164,17 @@ function updateWaterWaves(time, currentFloodLevel) {
       const s = currentRadius / waterBaseRadius;
       waterMeniscusRings.forEach(r => r.scale.set(s, s, 1));
       if (waterMat) {
-        waterMat.opacity = floodLevel * 0.94;
+        waterMat.opacity = floodLevel * 0.88;
       }
 
       if (floodLevel >= 0.99) {
         floodLevel = 1.0;
         floodState = 'flooded';
         if (infoDetail) {
-          infoDetail.textContent = '🌊 WASPADA BANJIR: Selimut air silindris berombak meluap menutupi seluruh aspal jalanan dan trotoar kota!';
+          infoDetail.textContent = ' WASPADA BANJIR: Selimut air silindris berombak meluap menutupi seluruh aspal jalanan dan trotoar kota!';
         }
         if (btnFloodRestoration) {
-          btnFloodRestoration.textContent = '🌊 Pulihkan Banjir (Cutscene)';
+          btnFloodRestoration.textContent = ' Pulihkan Banjir (Cutscene)';
           btnFloodRestoration.style.borderColor = '#38bdf8';
           btnFloodRestoration.style.color = '#38bdf8';
         }
@@ -1177,40 +1192,40 @@ btnToggleCam.addEventListener('click', () => {
 
 btnToggleAnim.addEventListener('click', () => {
   isAnimating = !isAnimating;
-  btnToggleAnim.textContent = isAnimating ? '⏸️ Pause (Space)' : '▶️ Play (Space)';
+  btnToggleAnim.textContent = isAnimating ? ' Pause (Space)' : ' Play (Space)';
 });
 
 btnWireframe.addEventListener('click', () => {
   isWireframe = !isWireframe;
   sideMaterial.wireframe = isWireframe;
   capMaterial.wireframe = isWireframe;
-  btnWireframe.textContent = isWireframe ? '🧊 Solid' : '🕸️ Wireframe';
+  btnWireframe.textContent = isWireframe ? ' Solid' : ' Wireframe';
 });
 
 btnSpeed.addEventListener('click', () => {
   speedIndex = (speedIndex + 1) % speedLevels.length;
   rollSpeed = speedLevels[speedIndex];
-  btnSpeed.textContent = `⚡ Kecepatan Jalan: ${rollSpeed.toFixed(2)}x`;
+  btnSpeed.textContent = ` Kecepatan Jalan: ${rollSpeed.toFixed(2)}x`;
 });
 
 function triggerFloodRestoration() {
   if (floodState === 'flooded') {
     floodState = 'restoring';
     if (infoDetail) {
-      infoDetail.textContent = '🌊 CUTSCENE: Air banjir silindris surut menyusut & tersedot masuk ke saluran drainase kota...';
+      infoDetail.textContent = ' CUTSCENE: Air banjir silindris surut menyusut & tersedot masuk ke saluran drainase kota...';
     }
     if (btnFloodRestoration) {
-      btnFloodRestoration.textContent = '⏳ Memulihkan Kota...';
+      btnFloodRestoration.textContent = ' Memulihkan Kota...';
       btnFloodRestoration.style.borderColor = '#facc15';
       btnFloodRestoration.style.color = '#facc15';
     }
   } else if (floodState === 'cleared') {
     floodState = 'resurging';
     if (infoDetail) {
-      infoDetail.textContent = '🌊 Air banjir meluap kembali dari saluran air kota!';
+      infoDetail.textContent = ' Air banjir meluap kembali dari saluran air kota!';
     }
     if (btnFloodRestoration) {
-      btnFloodRestoration.textContent = '⏳ Air Banjir Meluap...';
+      btnFloodRestoration.textContent = ' Air Banjir Meluap...';
       btnFloodRestoration.style.borderColor = '#facc15';
       btnFloodRestoration.style.color = '#facc15';
     }
@@ -1248,7 +1263,7 @@ if (btnLaneRight) {
 }
 if (btnSpawnMonster) {
   btnSpawnMonster.addEventListener('click', () => {
-    if (monsterManager) monsterManager.spawnMonster();
+    if (monsterManager) monsterManager.prepareBoss();
   });
 }
 const btnTestWin = document.getElementById('btnTestWin');

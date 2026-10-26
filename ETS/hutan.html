@@ -4,27 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lingkungan Hutan Malam Terbakar — ETS Grafika Komputer</title>
-  <link rel="stylesheet" href="./style.css" />
-
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-      }
-    }
-  </script>
+  <link rel="stylesheet" href="./styles/style.css" />
 </head>
 <body>
   <div class="app-container">
     <header class="app-header">
       <div>
         <span class="badge" style="background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #f87171;">LINGKUNGAN 02 — NIGHT WILDFIRE</span>
-        <h1>🔥 Hutan Malam Terbakar &amp; Avatar Waterun</h1>
+        <h1><i class="ui-icon fa-solid fa-tree" aria-hidden="true"></i> Hutan Malam Terbakar &amp; Avatar Waterun</h1>
         <p>Kamera third-person mengikuti Avatar Waterun berlari kencang menyusuri jalan raya aspal beraspal di tengah kebakaran hutan lebat pada malam hari.</p>
       </div>
       <div>
-        <a href="./index.html" class="btn-hub-back">← Pilih Mode Lingkungan</a>
+        <a href="./index.html?select=1" class="btn-hub-back"><i class="ui-icon fa-solid fa-arrow-left" aria-hidden="true"></i> Menu Utama</a>
       </div>
     </header>
 
@@ -33,24 +24,25 @@
 
       <div class="hud-overlay">
         <div class="hud-item">LINGKUNGAN: <span style="color: #f87171;">Hutan Malam Terbakar</span></div>
-        <div class="hud-item">AVATAR: <span style="color: #38bdf8;">💧 Waterun (Runner)</span></div>
+        <div class="hud-item">AVATAR: <span style="color: #38bdf8;">Water</span></div>
         <div class="hud-item">FPS: <span id="fpsDisplay">60</span></div>
         <div class="hud-item" id="infoDetail">Kamera tetap di selimut tabung | Hutan lebat, bahu tanah &amp; langit galaksi malam</div>
       </div>
     </main>
 
     <footer class="controls-bar">
-      <button id="btnToggleAnim" class="control-btn">⏸️ Pause / Play (Space)</button>
-      <button id="btnToggleCam" class="control-btn" style="border-color: #38bdf8; color: #38bdf8;">📷 Kamera: Di Selimut (Third-Person)</button>
-      <button id="btnLaneLeft" class="control-btn" style="border-color: #38bdf8; color: #38bdf8;">⬅️ Jalur Kiri (A)</button>
-      <button id="btnLaneRight" class="control-btn" style="border-color: #38bdf8; color: #38bdf8;">➡️ Jalur Kanan (D)</button>
-      <button id="btnWireframe" class="control-btn">🕸️ Wireframe</button>
-      <button id="btnSpeed" class="control-btn">⚡ Kecepatan Jalan: 1.0x</button>
-      <button id="btnSpawnMonster" class="control-btn" style="border-color: #f97316; color: #f97316; background: rgba(249, 115, 22, 0.12);">🌋 Munculkan Boss Lava (Test)</button>
-      <button id="btnTestWin" class="control-btn" style="border-color: #10b981; color: #34d399;">🏆 Test Menang Boss (Cutscene)</button>
+      <button id="btnToggleAnim" class="control-btn"><i class="ui-icon fa-solid fa-pause" aria-hidden="true"></i> Jeda / Lanjut (Space)</button>
+      <button id="btnToggleCam" class="control-btn" style="border-color: #38bdf8; color: #38bdf8;"><i class="ui-icon fa-solid fa-camera" aria-hidden="true"></i> Kamera</button>
+      <button id="btnLaneLeft" class="control-btn" style="border-color: #38bdf8; color: #38bdf8;"><i class="ui-icon fa-solid fa-arrow-left" aria-hidden="true"></i> Kiri (A)</button>
+      <button id="btnLaneRight" class="control-btn" style="border-color: #38bdf8; color: #38bdf8;"><i class="ui-icon fa-solid fa-arrow-right" aria-hidden="true"></i> Kanan (D)</button>
+      <button id="btnWireframe" class="control-btn"><i class="ui-icon fa-solid fa-cube" aria-hidden="true"></i> Wireframe</button>
+      <button id="btnSpeed" class="control-btn"><i class="ui-icon fa-solid fa-gauge-high" aria-hidden="true"></i> Kecepatan 1.0x</button>
+      <button id="btnSpawnMonster" class="control-btn" style="border-color: #f97316; color: #f97316; background: rgba(249, 115, 22, 0.12);"><i class="ui-icon fa-solid fa-robot" aria-hidden="true"></i> Munculkan Boss (Test)</button>
+      <button id="btnTestWin" class="control-btn" style="border-color: #10b981; color: #34d399;"><i class="ui-icon fa-solid fa-trophy" aria-hidden="true"></i> Test Menang Boss</button>
     </footer>
   </div>
 
-  <script type="module" src="./hutan.js?v=banjar_same_size_v4"></script>
+  <script type="module" src="./app/scenes/hutan.js"></script>
+  <script type="module" src="./app/ui/controls.js"></script>
 </body>
 </html>

@@ -3,82 +3,51 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pilih Mode Lingkungan — ETS Grafika Komputer</title>
-  <link rel="stylesheet" href="./style.css" />
+  <title>Elemental Army Run — Menu Utama</title>
+  <link rel="stylesheet" href="./styles/style.css" />
 </head>
 <body class="hub-body">
-  <div class="hub-container">
-    <!-- Header -->
-    <header class="hub-header">
-      <div class="badge">✦ ETS GRAFIKA KOMPUTER A 2026</div>
-      <h1>Pilih Lingkungan Simulasi</h1>
-      <p>Jelajahi simulasi tabung bergulir dengan kamera terpasang di atas selimut pada 3 tema lingkungan berbeda.</p>
-      <div style="margin-top: 8px;">
-        <a href="../halaman_awal/halaman_praktikum.html" class="back-link">← Kembali ke Halaman Praktikum</a>
+  <div class="hub-container game-menu">
+    <header class="menu-header">
+      <span class="menu-eyebrow">ETS GRAFIKA KOMPUTER A 2026</span>
+      <h1>ELEMENTAL<br><span>ARMY RUN</span></h1>
+      <p>Bangun pasukan, pilih elemen, dan hadapi final boss setelah 60 detik berlari.</p>
+      <div class="menu-actions">
+        <button id="startGame" class="menu-primary" type="button"><i class="ui-icon fa-solid fa-play" aria-hidden="true"></i> Mulai Game</button>
+        <button id="showHowTo" class="menu-secondary" type="button"><i class="ui-icon fa-solid fa-circle-info" aria-hidden="true"></i> Cara Bermain</button>
       </div>
     </header>
 
-    <!-- Environment Cards Selection Grid -->
-    <main class="hub-grid">
-      <!-- Mode 1: Kota Siang -->
-      <a href="./kota.html" class="env-card city-card">
-        <div class="card-banner">
-          <span class="card-icon">🏙️</span>
-          <span class="env-badge">LINGKUNGAN 01</span>
-        </div>
-        <div class="card-body">
-          <h2>Kota Metropolitan (City)</h2>
-          <p>Kamera terpasang di selimut tabung menyusuri jalan aspal dengan latar gedung perkotaan, lampu lalu lintas, dan langit cerah.</p>
-          <div class="card-tags">
-            <span>Urban 3D</span><span>Road Wrap</span><span>Metropolitan</span>
-          </div>
-        </div>
-        <div class="card-footer">
-          <span class="btn-enter">Masuk ke Kota →</span>
-        </div>
-      </a>
+    <section id="arenaSelection" class="menu-section" aria-labelledby="arenaTitle" hidden>
+      <div class="section-heading"><span>LANGKAH 01 / 01</span><h2 id="arenaTitle">Pilih arena</h2><p>Setiap arena memakai lingkungan, avatar awal, dan boss dari proyek ini.</p></div>
+      <div class="hub-grid">
+        <a href="./kota.html" class="env-card city-card">
+          <div class="arena-image"><img src="./assets/menu/city.png" alt="Langit siang arena kota" /><span class="env-badge">ARENA 01</span></div>
+          <div class="card-body"><h3><i class="ui-icon fa-solid fa-city" aria-hidden="true"></i> Kota Metropolitan</h3><p>Jalan kota yang dilanda banjir. Mulai dengan pasukan Fire dan hadapi monster sampah.</p><span class="arena-detail">FIRE · MONSTER SAMPAH</span></div>
+          <div class="card-footer"><span>Masuk arena</span><i class="ui-icon fa-solid fa-arrow-right" aria-hidden="true"></i></div>
+        </a>
+        <a href="./hutan.html" class="env-card forest-card">
+          <div class="arena-image"><img src="./assets/menu/forest.png" alt="Langit malam arena hutan" /><span class="env-badge">ARENA 02</span></div>
+          <div class="card-body"><h3><i class="ui-icon fa-solid fa-tree" aria-hidden="true"></i> Hutan Terbakar</h3><p>Lari melewati hutan yang terbakar. Mulai dengan pasukan Water dan kalahkan monster lava.</p><span class="arena-detail">WATER · MONSTER LAVA</span></div>
+          <div class="card-footer"><span>Masuk arena</span><i class="ui-icon fa-solid fa-arrow-right" aria-hidden="true"></i></div>
+        </a>
+        <a href="./kota2.html" class="env-card night-card">
+          <div class="arena-image"><img src="./assets/menu/cyber.png" alt="Langit malam arena kota futuristik" /><span class="env-badge">ARENA 03</span></div>
+          <div class="card-body"><h3><i class="ui-icon fa-solid fa-building" aria-hidden="true"></i> Kota Futuristik</h3><p>Lintasan kota malam futuristik. Mulai dengan pasukan Electric dan lawan mecha robot.</p><span class="arena-detail">ELECTRIC · MECHA ROBOT</span></div>
+          <div class="card-footer"><span>Masuk arena</span><i class="ui-icon fa-solid fa-arrow-right" aria-hidden="true"></i></div>
+        </a>
+      </div>
+    </section>
 
-      <!-- Mode 2: Hutan Kebakaran -->
-      <a href="./hutan.html" class="env-card forest-card">
-        <div class="card-banner">
-          <span class="card-icon">🔥</span>
-          <span class="env-badge" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">LINGKUNGAN 02</span>
-        </div>
-        <div class="card-body">
-          <h2>Hutan Kebakaran (Wildfire)</h2>
-          <p>Sensasi menyusuri jalan di selimut tabung di tengah kobaran api 3D kebakaran hutan beranimasi, pepohonan hangus, kabut asap tebal, dan bara api membara.</p>
-          <div class="card-tags">
-            <span>Wildfire 3D</span><span>Animated Fire</span><span>Embers &amp; Smoke</span>
-          </div>
-        </div>
-        <div class="card-footer">
-          <span class="btn-enter" style="color: #f97316;">Masuk ke Hutan Kebakaran →</span>
-        </div>
-      </a>
+    <dialog id="howToDialog" class="how-to-dialog" aria-labelledby="howToTitle">
+      <div class="dialog-heading"><h2 id="howToTitle">Cara bermain</h2><button id="closeHowTo" type="button" aria-label="Tutup panduan">×</button></div>
+      <ol><li>Pilih arena, lalu pindah jalur dengan tombol <kbd>A</kbd> dan <kbd>D</kbd> atau tombol di layar.</li><li>Lewati gate untuk menambah pasukan, memperoleh EXP, dan mengganti elemen.</li><li>Kumpulkan kekuatan selama 60 detik. Setelah waktu habis, final boss muncul.</li><li>Capai syarat EXP yang tampil di HUD untuk memenangkan pertarungan.</li></ol>
+      <button id="closeHowToBottom" class="menu-primary" type="button">Mengerti</button>
+    </dialog>
 
-      <!-- Mode 3: Kota Malam / Cyberpunk -->
-      <a href="./kota2.html" class="env-card night-card">
-        <div class="card-banner">
-          <span class="card-icon">🌃</span>
-          <span class="env-badge">LINGKUNGAN 03</span>
-        </div>
-        <div class="card-body">
-          <h2>Kota Futuristik Malam (Cyber City)</h2>
-          <p>Suasana kota malam cyberpunk berhiaskan pendar lampu neon ungu/cyan, gedung pencakar langit malam hari, dan langit berbintang.</p>
-          <div class="card-tags">
-            <span>Cyberpunk</span><span>Neon Glow</span><span>Night City</span>
-          </div>
-        </div>
-        <div class="card-footer">
-          <span class="btn-enter">Masuk ke Cyber City →</span>
-        </div>
-      </a>
-    </main>
-
-    <!-- Hub Footer -->
-    <footer class="hub-footer">
-      <p>Evaluasi Tengah Semester • Grafika Komputer A • Maleka Ghaniya &amp; Jahhaza Assiqooyah</p>
-    </footer>
+    <footer class="hub-footer">Grafika Komputer A · Maleka Ghaniya &amp; Jahhaza Assiqooyah</footer>
   </div>
+  <script type="module" src="./app/menu.js"></script>
 </body>
 </html>
+

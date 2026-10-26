@@ -231,22 +231,36 @@ body {
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 10px 18px;
+  padding: 14px 18px;
   background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   backdrop-filter: blur(10px);
 }
 
+.app-header > div:first-child {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.app-header .badge {
+  margin-bottom: 2px;
+}
+
 .app-header h1 {
   font-size: 18px;
   font-weight: 800;
   color: #ffffff;
+  line-height: 1.3;
 }
 
 .app-header p {
   font-size: 12px;
   color: #94a3b8;
+  line-height: 1.5;
+  margin-top: 1px;
 }
 
 .btn-hub-back {
@@ -337,4 +351,79 @@ body {
   background: rgba(255, 255, 255, 0.12);
   color: #22d3ee;
   border-color: rgba(34, 211, 238, 0.3);
+}
+
+/* Game menu and restrained, custom interface symbols */
+.ui-icon {
+  display: inline-block;
+  width: 1.15em;
+  text-align: center;
+  vertical-align: baseline;
+  flex: none;
+}
+
+.game-menu { max-width: 1220px; min-height: 100vh; justify-content: center; gap: 48px; }
+.hub-body { align-items: flex-start; }
+.arena-open .game-menu { justify-content: flex-start; }
+.arena-open:not(.selection-only) .menu-header { padding-top: 50px; }
+.menu-header { max-width: 720px; }
+.menu-eyebrow { color: #8ba8b5; font: 700 11px 'JetBrains Mono', monospace; letter-spacing: .2em; }
+.menu-header h1 { margin: 18px 0; font-size: clamp(48px, 8vw, 100px); line-height: .94; letter-spacing: -.055em; font-weight: 800; color: #f8fafc; }
+.menu-header h1 span { color: #64c4d6; }
+.menu-header p { max-width: 590px; color: #c1ccd3; font-size: clamp(15px, 2vw, 19px); line-height: 1.6; }
+.menu-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.menu-primary, .menu-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 11px 20px; border-radius: 8px; font: 700 14px 'Plus Jakarta Sans', sans-serif; cursor: pointer; }
+.menu-primary { border: 1px solid #79d2dd; color: #06161c; background: #79d2dd; }
+.menu-primary:hover { background: #a4e5eb; }
+.menu-secondary { border: 1px solid #526470; background: #131e27; color: #e4edf1; }
+.menu-secondary:hover { border-color: #a2b8c3; background: #1a2933; }
+.menu-section[hidden] { display: none; }
+.menu-section { scroll-margin-top: 32px; }
+.section-heading { margin-bottom: 22px; }
+.section-heading > span { color: #84b8c6; font: 700 11px 'JetBrains Mono', monospace; letter-spacing: .15em; }
+.section-heading h2 { margin: 5px 0; font-size: 31px; }
+.section-heading p { color: #aebdc6; font-size: 14px; }
+.game-menu .hub-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.game-menu .env-card { padding: 0; gap: 0; border-color: #33434e; background: #111b24; backdrop-filter: none; border-radius: 10px; }
+.game-menu .env-card::before { display: none; }
+.game-menu .env-card:hover, .game-menu .env-card:focus-visible { transform: translateY(-3px); border-color: #89c7d2; box-shadow: 0 15px 30px rgba(0,0,0,.25); }
+.arena-image { position: relative; height: 150px; overflow: hidden; background: #17232b; }
+.arena-image img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.8) brightness(.76); }
+.arena-image .env-badge { position: absolute; top: 12px; left: 12px; color: #fff; background: rgba(5,12,18,.78); border-color: rgba(255,255,255,.2); }
+.game-menu .card-body { padding: 20px 20px 16px; flex: 1; }
+.game-menu .card-body h3 { display: flex; align-items: center; gap: 9px; font-size: 19px; margin-bottom: 9px; }
+.game-menu .card-body p { min-height: 68px; color: #aebdc6; }
+.arena-detail { color: #8ec6cf; font: 700 11px 'JetBrains Mono', monospace; letter-spacing: .03em; }
+.game-menu .card-footer { padding: 14px 20px; justify-content: space-between; color: #e5f1f3; font-size: 13px; font-weight: 700; border-color: #30414b; }
+.game-menu .hub-footer { text-align: left; }
+.selection-only { align-items: flex-start; }
+.selection-only .game-menu { justify-content: flex-start; min-height: 100vh; }
+.selection-only .menu-header { display: none; }
+.selection-only .menu-section { margin-top: clamp(35px, 8vh, 90px); }
+.how-to-dialog { width: min(540px, calc(100% - 32px)); margin: auto; padding: 26px; color: #eaf2f4; background: #111c25; border: 1px solid #58717d; border-radius: 12px; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+.how-to-dialog::backdrop { background: rgba(0,0,0,.72); }
+.dialog-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.dialog-heading h2 { font-size: 23px; }
+.dialog-heading button { color: #dce8ec; border: 0; background: transparent; font-size: 27px; cursor: pointer; }
+.how-to-dialog ol { padding-left: 22px; color: #c5d2d8; line-height: 1.7; }
+.how-to-dialog li { margin-bottom: 10px; }
+.how-to-dialog .menu-primary { margin-top: 16px; width: 100%; }
+.how-to-dialog kbd { padding: 2px 6px; background: #283944; border-radius: 4px; }
+.control-btn .ui-icon { margin-right: 5px; }
+.result-symbol { color: #e4c676; line-height: 1; }
+.result-symbol .ui-icon { width: 54px; font-size: 54px; }
+.menu-capture .app-header, .menu-capture .hud-overlay, .menu-capture .controls-bar { display: none !important; }
+.menu-capture .app-container { padding: 0; gap: 0; }
+.menu-capture .canvas-wrapper { border: 0; border-radius: 0; min-height: 100vh; }
+.controls-bar #btnFloodRestoration, .controls-bar #btnSpawnMonster, .controls-bar #btnTestWin { display: none; }
+.debug-controls .controls-bar #btnFloodRestoration, .debug-controls .controls-bar #btnSpawnMonster, .debug-controls .controls-bar #btnTestWin { display: inline-flex; }
+@media (max-width: 860px) {
+  .game-menu .hub-grid { grid-template-columns: 1fr; }
+  .game-menu { padding: 48px 20px; }
+  .arena-image { height: 180px; }
+  .game-menu .card-body p { min-height: 0; }
+  .hud-overlay { flex-wrap: wrap; right: 14px; }
+  .controls-bar { flex-wrap: wrap; }
+  .app-container { height: auto; min-height: 100vh; }
+  .canvas-wrapper { min-height: 56vh; }
 }

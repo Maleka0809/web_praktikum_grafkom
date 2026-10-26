@@ -4,27 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lingkungan Kota Metropolitan Banjir — ETS Grafika Komputer</title>
-  <link rel="stylesheet" href="./style.css" />
-
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-      }
-    }
-  </script>
+  <link rel="stylesheet" href="./styles/style.css" />
 </head>
 <body>
   <div class="app-container">
     <header class="app-header">
       <div>
         <span class="badge">LINGKUNGAN 01 — RUNNER MODE</span>
-        <h1>🏙️ Kota Metropolitan &amp; Avatar Firerun</h1>
+        <h1><i class="ui-icon fa-solid fa-city" aria-hidden="true"></i> Kota Metropolitan &amp; Avatar Firerun</h1>
         <p>Kamera third-person mengikuti Avatar Firerun berlari kencang menyusuri jalan raya aspal beraspal di antara gedung pencakar langit modern.</p>
       </div>
       <div>
-        <a href="./index.html" class="btn-hub-back">← Pilih Mode Lingkungan</a>
+        <a href="./index.html?select=1" class="btn-hub-back"><i class="ui-icon fa-solid fa-arrow-left" aria-hidden="true"></i> Menu Utama</a>
       </div>
     </header>
 
@@ -33,25 +24,26 @@
 
       <div class="hud-overlay">
         <div class="hud-item">LINGKUNGAN: <span style="color: #38bdf8;">Kota Metropolitan Banjir</span></div>
-        <div class="hud-item">AVATAR: <span style="color: #facc15;">🏃 Firerun (Runner)</span></div>
+        <div class="hud-item">AVATAR: <span style="color: #facc15;">Fire</span></div>
         <div class="hud-item">FPS: <span id="fpsDisplay">60</span></div>
         <div class="hud-item" id="infoDetail">Kamera tetap di selimut tabung | Air banjir menyelimuti aspal kota</div>
       </div>
     </main>
 
     <footer class="controls-bar">
-      <button id="btnToggleAnim" class="control-btn">⏸️ Pause / Play (Space)</button>
-      <button id="btnToggleCam" class="control-btn" style="border-color: #22d3ee; color: #22d3ee;">📷 Kamera: Di Selimut (Third-Person)</button>
-      <button id="btnLaneLeft" class="control-btn">⬅️ Jalur Kiri (A)</button>
-      <button id="btnLaneRight" class="control-btn">➡️ Jalur Kanan (D)</button>
-      <button id="btnWireframe" class="control-btn">🕸️ Wireframe</button>
-      <button id="btnSpeed" class="control-btn">⚡ Kecepatan Jalan: 1.0x</button>
-      <button id="btnFloodRestoration" class="control-btn" style="border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.12);">🌊 Pulihkan Banjir (Cutscene)</button>
-      <button id="btnSpawnMonster" class="control-btn" style="border-color: #ef4444; color: #f87171; background: rgba(239, 68, 68, 0.12);">👾 Munculkan Monster (Test)</button>
-      <button id="btnTestWin" class="control-btn" style="border-color: #10b981; color: #34d399;">🏆 Test Menang Boss (Cutscene)</button>
+      <button id="btnToggleAnim" class="control-btn"><i class="ui-icon fa-solid fa-pause" aria-hidden="true"></i> Jeda / Lanjut (Space)</button>
+      <button id="btnToggleCam" class="control-btn" style="border-color: #22d3ee; color: #22d3ee;"><i class="ui-icon fa-solid fa-camera" aria-hidden="true"></i> Kamera</button>
+      <button id="btnLaneLeft" class="control-btn"><i class="ui-icon fa-solid fa-arrow-left" aria-hidden="true"></i> Kiri (A)</button>
+      <button id="btnLaneRight" class="control-btn"><i class="ui-icon fa-solid fa-arrow-right" aria-hidden="true"></i> Kanan (D)</button>
+      <button id="btnWireframe" class="control-btn"><i class="ui-icon fa-solid fa-cube" aria-hidden="true"></i> Wireframe</button>
+      <button id="btnSpeed" class="control-btn"><i class="ui-icon fa-solid fa-gauge-high" aria-hidden="true"></i> Kecepatan 1.0x</button>
+      <button id="btnFloodRestoration" class="control-btn" style="border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.12);"><i class="ui-icon fa-solid fa-droplet" aria-hidden="true"></i> Pulihkan Banjir (Test)</button>
+      <button id="btnSpawnMonster" class="control-btn" style="border-color: #ef4444; color: #f87171; background: rgba(239, 68, 68, 0.12);"><i class="ui-icon fa-solid fa-robot" aria-hidden="true"></i> Munculkan Boss (Test)</button>
+      <button id="btnTestWin" class="control-btn" style="border-color: #10b981; color: #34d399;"><i class="ui-icon fa-solid fa-trophy" aria-hidden="true"></i> Test Menang Boss</button>
     </footer>
   </div>
 
-  <script type="module" src="./kota.js?v=banjar_same_size_v4"></script>
+  <script type="module" src="./app/scenes/kota.js"></script>
+  <script type="module" src="./app/ui/controls.js"></script>
 </body>
 </html>

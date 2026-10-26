@@ -17,6 +17,12 @@
 
 import * as THREE from 'three';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+import {
+  ARMY_VISUAL_CAP,
+  applyMinusGate,
+  isSafeRewardStation,
+  pickBalancedElement
+} from './game-rules.js';
 
 export class GateManager {
   constructor(scene, mainMesh, cylinderRadius, avatarGroup = null, getAvatarModel = null) {
@@ -36,7 +42,11 @@ export class GateManager {
     this.level = 1;
     this.nextLevelExp = 100;
     this.waterScore = 0;
-    this.activeElement = '⚡ LISTRIK';
+    this.activeElement = 'ELECTRIC';
+    this.elementType = 'electro';
+    this.elementHistory = [];
+    this.positiveGateCount = 0;
+    this.recycledStationCount = 0;
 
     // Army Clones Visuals
     this.armyClones = [];
@@ -53,6 +63,7 @@ export class GateManager {
     // Buat Badge Angka Pasukan di Atas Kepala Avatar
     if (this.avatarGroup) {
       this.initHeadBadge();
+      if (new URLSearchParams(location.search).has('menuCapture')) this.armyHeadBadge.visible = false;
     }
 
     // Bangun 3 stasiun gerbang acak pertama
@@ -129,7 +140,7 @@ export class GateManager {
       hud = document.createElement('div');
       hud.id = 'runnerScoreHud';
       hud.className = 'hud-item';
-      hud.style.cssText = 'background: rgba(15, 23, 42, 0.92); border: 1.5px solid #38bdf8; border-radius: 8px; padding: 5px 14px; font-weight: 600; display: flex; gap: 12px; align-items: center; box-shadow: 0 0 14px rgba(56, 189, 248, 0.40); flex-wrap: wrap;';
+      hud.style.cssText = 'background: rgba(15, 23, 42, 0.92); border: 1px solid #536777; border-radius: 6px; padding: 5px 12px; font-weight: 600; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;';
       hudOverlay.appendChild(hud);
     }
     this.updateHud();
@@ -139,11 +150,11 @@ export class GateManager {
     const hud = document.getElementById('runnerScoreHud');
     if (hud) {
       hud.innerHTML = `
-        <span>👥 PASUKAN: <span id="hudArmyVal" style="color: #38bdf8; font-weight: 800; font-size: 1.15em;">${this.armyCount}</span></span>
+        <span>PASUKAN: <span id="hudArmyVal" style="color: #38bdf8; font-weight: 800; font-size: 1.15em;">${this.armyCount}</span></span>
         <span style="color:#64748b;">|</span>
-        <span>⭐ LVL: <span style="color: #facc15; font-weight: 800;">${this.level}</span> (<span style="color:#e2e8f0; font-size:0.9em;">EXP: ${this.exp}/${this.nextLevelExp}</span>)</span>
+        <span>LEVEL: <span style="color: #facc15; font-weight: 800;">${this.level}</span> (<span style="color:#e2e8f0; font-size:0.9em;">EXP: ${this.exp}/${this.nextLevelExp}</span>)</span>
         <span style="color:#64748b;">|</span>
-        <span>💧 AIR: <span style="color: #06b6d4; font-weight: 800;">${this.waterScore}</span></span>
+        <span>AIR: <span style="color: #06b6d4; font-weight: 800;">${this.waterScore}</span></span>
         <span style="color:#64748b;">|</span>
         <span>ELEMEN: <span style="color: #f97316; font-weight: 800;">${this.activeElement}</span></span>
       `;
@@ -206,23 +217,21 @@ export class GateManager {
     ctx.fillStyle = '#0f172a';
     ctx.fill();
 
-    ctx.lineWidth = 10;
-    ctx.strokeStyle = isPunch ? '#facc15' : '#38bdf8';
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#7f9aa8';
     ctx.stroke();
 
     ctx.restore();
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = '900 56px "Segoe UI", Roboto, sans-serif';
+    ctx.font = '800 43px "Segoe UI", Roboto, sans-serif';
     ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = '#38bdf8';
-    ctx.shadowBlur = 14;
-    ctx.fillText(`👥 ${this.armyCount}`, w / 2, h / 2 + 2);
+    ctx.fillText(`${this.armyCount} UNIT`, w / 2, h / 2 + 2);
 
     this.badgeTexture.needsUpdate = true;
     if (isPunch) {
-      this.headBadgeScale = 1.35;
+      this.headBadgeScale = 1.08;
     }
   }
 
@@ -232,8 +241,8 @@ export class GateManager {
   syncArmyClones() {
     if (!this.avatarGroup) return;
 
-    // Tampilkan hingga 8 klon 3D (4 deret baris × 2 banjar berjarak sangat longgar & berjarak nyata)
-    const targetVisualCount = Math.min(8, Math.max(1, this.armyCount)) - 1;
+    // Nilai pasukan tidak dibatasi; visual 3D dibatasi 30 karakter demi performa.
+    const targetVisualCount = Math.min(ARMY_VISUAL_CAP, Math.max(1, this.armyCount)) - 1;
 
     // Ambil base model avatar jika tersedia
     const baseModel = (this.getAvatarModel && this.getAvatarModel()) || null;
@@ -263,17 +272,6 @@ export class GateManager {
       // Ukuran pasukan sama persis seperti ukuran avatar pemimpin (s = 0.038)
       clone.scale.set(0.038, 0.038, 0.038);
 
-      // Pendaran cerah pada pakaian pasukan agar kontras dan memukau di atas aspal
-      clone.traverse((node) => {
-        if (node.isMesh && node.material) {
-          node.material = node.material.clone();
-          if (node.material.color) {
-            node.material.emissive = node.material.color.clone();
-            node.material.emissiveIntensity = 0.35;
-          }
-        }
-      });
-
       // Animasi lari klon pasukan yang hidup & natural
       const anims = baseModel.animations || (baseModel.userData && baseModel.userData.animations);
       if (anims && anims.length > 0) {
@@ -294,6 +292,8 @@ export class GateManager {
       const removed = this.armyClones.pop();
       if (removed) {
         if (removed.userData && removed.userData.mixer) {
+          removed.userData.mixer.stopAllAction();
+          removed.userData.mixer.uncacheRoot(removed);
           const mIdx = this.armyMixers.indexOf(removed.userData.mixer);
           if (mIdx !== -1) this.armyMixers.splice(mIdx, 1);
         }
@@ -313,43 +313,84 @@ export class GateManager {
     }
   }
 
+  clearArmyClones() {
+    this.armyClones.forEach((clone) => {
+      if (clone.userData.mixer) {
+        clone.userData.mixer.stopAllAction();
+        clone.userData.mixer.uncacheRoot(clone);
+      }
+      this.avatarGroup.remove(clone);
+    });
+    this.armyClones = [];
+    this.armyMixers = [];
+  }
+
   // -------------------------------------------------------------
   // GENERATOR KONFIGURASI GERBANG ACAK (POOL LENGKAP)
   // -------------------------------------------------------------
+  getExpGateConfig() {
+    return { type: 'exp_add', value: 100, icon: 'EXP', text: '+100 EXP', pipeColor: 0x8b5cf6, veilColor: 'rgba(139, 92, 246, 0.45)', dotColor: 'rgba(237, 233, 254, 0.95)', borderColor: '#8b5cf6', isPositive: true };
+  }
+
+  getArmyGateConfig() {
+    return { type: 'army_add', value: 10, icon: 'UNIT', text: '+10', pipeColor: 0x06b6d4, veilColor: 'rgba(6, 182, 212, 0.45)', dotColor: 'rgba(207, 250, 254, 0.95)', borderColor: '#06b6d4', isPositive: true };
+  }
+
   getRandomGateConfig(forcePositive = null) {
     const POOL = [
       // 1. TAMBAH ARMY (POSITIF)
-      { type: 'army_add', value: 5, icon: '👤', text: '+5', pipeColor: 0x38bdf8, veilColor: 'rgba(56, 189, 248, 0.45)', dotColor: 'rgba(224, 242, 254, 0.95)', borderColor: '#38bdf8', isPositive: true },
-      { type: 'army_add', value: 10, icon: '👤', text: '+10', pipeColor: 0x06b6d4, veilColor: 'rgba(6, 182, 212, 0.45)', dotColor: 'rgba(207, 250, 254, 0.95)', borderColor: '#06b6d4', isPositive: true },
-      { type: 'army_add', value: 15, icon: '👤', text: '+15', pipeColor: 0x0284c7, veilColor: 'rgba(2, 132, 199, 0.45)', dotColor: 'rgba(224, 242, 254, 0.95)', borderColor: '#0284c7', isPositive: true },
+      { type: 'army_add', value: 5, icon: 'UNIT', text: '+5', pipeColor: 0x38bdf8, veilColor: 'rgba(56, 189, 248, 0.45)', dotColor: 'rgba(224, 242, 254, 0.95)', borderColor: '#38bdf8', isPositive: true },
+      { type: 'army_add', value: 10, icon: 'UNIT', text: '+10', pipeColor: 0x06b6d4, veilColor: 'rgba(6, 182, 212, 0.45)', dotColor: 'rgba(207, 250, 254, 0.95)', borderColor: '#06b6d4', isPositive: true },
+      { type: 'army_add', value: 15, icon: 'UNIT', text: '+15', pipeColor: 0x0284c7, veilColor: 'rgba(2, 132, 199, 0.45)', dotColor: 'rgba(224, 242, 254, 0.95)', borderColor: '#0284c7', isPositive: true },
 
       // 2. PENGGANDAAN ARMY (SUPER POSITIF)
-      { type: 'army_multiply', value: 2, icon: '👥', text: '×2', pipeColor: 0x10b981, veilColor: 'rgba(16, 185, 129, 0.45)', dotColor: 'rgba(209, 250, 229, 0.95)', borderColor: '#10b981', isPositive: true },
-      { type: 'army_multiply', value: 3, icon: '👥', text: '×3', pipeColor: 0xfacc15, veilColor: 'rgba(250, 204, 21, 0.45)', dotColor: 'rgba(254, 240, 138, 0.95)', borderColor: '#facc15', isPositive: true },
+      { type: 'army_multiply', value: 2, icon: 'ARMY', text: '×2', pipeColor: 0x10b981, veilColor: 'rgba(16, 185, 129, 0.45)', dotColor: 'rgba(209, 250, 229, 0.95)', borderColor: '#10b981', isPositive: true },
+      { type: 'army_multiply', value: 3, icon: 'ARMY', text: '×3', pipeColor: 0xfacc15, veilColor: 'rgba(250, 204, 21, 0.45)', dotColor: 'rgba(254, 240, 138, 0.95)', borderColor: '#facc15', isPositive: true },
 
       // 3. MINUS ARMY (NEGATIF / MERAH)
-      { type: 'army_sub', value: 3, icon: '👤', text: '-3', pipeColor: 0xef4444, veilColor: 'rgba(239, 68, 68, 0.45)', dotColor: 'rgba(254, 202, 202, 0.95)', borderColor: '#ef4444', isPositive: false },
-      { type: 'army_sub', value: 5, icon: '👤', text: '-5', pipeColor: 0xdc2626, veilColor: 'rgba(220, 38, 38, 0.45)', dotColor: 'rgba(254, 202, 202, 0.95)', borderColor: '#dc2626', isPositive: false },
-      { type: 'army_sub', value: 8, icon: '👤', text: '-8', pipeColor: 0xb91c1c, veilColor: 'rgba(185, 28, 28, 0.45)', dotColor: 'rgba(254, 202, 202, 0.95)', borderColor: '#b91c1c', isPositive: false },
+      { type: 'army_sub', value: 3, icon: 'UNIT', text: '-3', pipeColor: 0xef4444, veilColor: 'rgba(239, 68, 68, 0.45)', dotColor: 'rgba(254, 202, 202, 0.95)', borderColor: '#ef4444', isPositive: false },
+      { type: 'army_sub', value: 5, icon: 'UNIT', text: '-5', pipeColor: 0xdc2626, veilColor: 'rgba(220, 38, 38, 0.45)', dotColor: 'rgba(254, 202, 202, 0.95)', borderColor: '#dc2626', isPositive: false },
+      { type: 'army_sub', value: 8, icon: 'UNIT', text: '-8', pipeColor: 0xb91c1c, veilColor: 'rgba(185, 28, 28, 0.45)', dotColor: 'rgba(254, 202, 202, 0.95)', borderColor: '#b91c1c', isPositive: false },
 
       // 4. TAMBAH EXP (UNGU / EMAS)
-      { type: 'exp_add', value: 50, icon: '⭐', text: '+50 EXP', pipeColor: 0xa855f7, veilColor: 'rgba(168, 85, 247, 0.45)', dotColor: 'rgba(243, 232, 255, 0.95)', borderColor: '#a855f7', isPositive: true },
-      { type: 'exp_add', value: 100, icon: '⭐', text: '+100 EXP', pipeColor: 0x8b5cf6, veilColor: 'rgba(139, 92, 246, 0.45)', dotColor: 'rgba(237, 233, 254, 0.95)', borderColor: '#8b5cf6', isPositive: true },
+      { type: 'exp_add', value: 50, icon: 'EXP', text: '+50 EXP', pipeColor: 0xa855f7, veilColor: 'rgba(168, 85, 247, 0.45)', dotColor: 'rgba(243, 232, 255, 0.95)', borderColor: '#a855f7', isPositive: true },
+      { type: 'exp_add', value: 100, icon: 'EXP', text: '+100 EXP', pipeColor: 0x8b5cf6, veilColor: 'rgba(139, 92, 246, 0.45)', dotColor: 'rgba(237, 233, 254, 0.95)', borderColor: '#8b5cf6', isPositive: true },
 
       // 5. MINUS EXP (MERAH MAWAR)
-      { type: 'exp_sub', value: 30, icon: '🔻', text: '-30 EXP', pipeColor: 0xf43f5e, veilColor: 'rgba(244, 63, 94, 0.45)', dotColor: 'rgba(255, 228, 230, 0.95)', borderColor: '#f43f5e', isPositive: false },
+      { type: 'exp_sub', value: 30, icon: 'EXP', text: '-30 EXP', pipeColor: 0xf43f5e, veilColor: 'rgba(244, 63, 94, 0.45)', dotColor: 'rgba(255, 228, 230, 0.95)', borderColor: '#f43f5e', isPositive: false },
 
       // 6. ELEMEN
-      { type: 'water_add', value: 25, icon: '💧', text: '+25', pipeColor: 0x38bdf8, veilColor: 'rgba(56, 189, 248, 0.45)', dotColor: 'rgba(224, 242, 254, 0.95)', borderColor: '#38bdf8', isPositive: true },
-      { type: 'transform_electro', value: '⚡ LISTRIK', icon: '⇄ ⚡', text: 'UBAH', pipeColor: 0xfacc15, veilColor: 'rgba(250, 204, 21, 0.45)', dotColor: 'rgba(254, 240, 138, 0.95)', borderColor: '#facc15', isPositive: true },
-      { type: 'transform_fire', value: '🔥 API', icon: '⇄ 🔥', text: 'UBAH', pipeColor: 0xf97316, veilColor: 'rgba(249, 115, 22, 0.45)', dotColor: 'rgba(254, 215, 170, 0.95)', borderColor: '#f97316', isPositive: true }
+      { type: 'water_add', value: 25, icon: 'WTR', text: '+25', pipeColor: 0x38bdf8, veilColor: 'rgba(56, 189, 248, 0.45)', dotColor: 'rgba(224, 242, 254, 0.95)', borderColor: '#38bdf8', isPositive: true },
+      { type: 'transform_electro', value: 'ELECTRIC', icon: 'ELEC', text: 'TO ELECTRIC', pipeColor: 0xfacc15, veilColor: 'rgba(250, 204, 21, 0.45)', dotColor: 'rgba(254, 240, 138, 0.95)', borderColor: '#facc15', isPositive: true },
+      { type: 'transform_fire', value: 'FIRE', icon: 'FIRE', text: 'TO FIRE', pipeColor: 0xf97316, veilColor: 'rgba(249, 115, 22, 0.45)', dotColor: 'rgba(254, 215, 170, 0.95)', borderColor: '#f97316', isPositive: true }
     ];
 
-    let candidates = POOL;
+    // Every element gate draws from the same three choices. Keep the last two
+    // choices out of the next draw so Water cannot disappear for a long run.
+    const elements = {
+      fire: POOL.find((gate) => gate.type === 'transform_fire'),
+      water: { type: 'transform_water', value: 'WATER', icon: 'WTR', text: 'TO WATER', pipeColor: 0x38bdf8, veilColor: 'rgba(56, 189, 248, 0.45)', dotColor: 'rgba(224, 242, 254, 0.95)', borderColor: '#38bdf8', isPositive: true },
+      electro: POOL.find((gate) => gate.type === 'transform_electro')
+    };
+
+    if (forcePositive !== false) {
+      this.positiveGateCount++;
+      if (this.positiveGateCount % 5 === 0) {
+        const element = pickBalancedElement(this.elementHistory);
+        const picked = elements[element];
+        this.elementHistory.push(element);
+        if (this.elementHistory.length > 2) this.elementHistory.shift();
+        return { ...picked };
+      }
+      // A useful EXP gate is guaranteed at regular intervals before the boss.
+      if (this.positiveGateCount % 3 === 0) return this.getExpGateConfig();
+    }
+
+    let candidates = POOL.filter((gate) => !gate.type.startsWith('transform_'));
     if (forcePositive === true) {
-      candidates = POOL.filter((c) => c.isPositive);
+      candidates = candidates.filter((c) => c.isPositive);
     } else if (forcePositive === false) {
-      candidates = POOL.filter((c) => !c.isPositive);
+      candidates = candidates.filter((c) => !c.isPositive);
     }
 
     const picked = candidates[Math.floor(Math.random() * candidates.length)];
@@ -388,32 +429,25 @@ export class GateManager {
     ctx.fillStyle = bgColor;
     ctx.fill();
 
-    ctx.lineWidth = 14;
+    ctx.lineWidth = 7;
     ctx.strokeStyle = borderColor;
     ctx.stroke();
 
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = '#ffffff';
-    ctx.globalAlpha = 0.55;
-    ctx.stroke();
-    ctx.globalAlpha = 1.0;
     ctx.restore();
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = '900 66px "Segoe UI", Roboto, Arial, sans-serif';
     ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = borderColor;
-    ctx.shadowBlur = 26;
-
-    ctx.fillText(`${iconText} ${mainText}`, 256, 92);
+    ctx.font = `800 ${mainText.length > 9 ? 43 : 54}px "Segoe UI", Roboto, sans-serif`;
+    ctx.fillText(mainText, 256, 92);
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     return texture;
   }
 
-  createVeilTexture(themeColor, dotColor) {
+  createVeilTexture(themeColor) {
     const canvas = document.createElement('canvas');
     canvas.width = 256;
     canvas.height = 256;
@@ -421,26 +455,11 @@ export class GateManager {
 
     ctx.clearRect(0, 0, 256, 256);
 
-    const grad = ctx.createLinearGradient(0, 0, 0, 256);
-    grad.addColorStop(0.00, 'rgba(255, 255, 255, 0.70)');
-    grad.addColorStop(0.15, themeColor);
-    grad.addColorStop(0.80, themeColor);
-    grad.addColorStop(1.00, 'rgba(255, 255, 255, 0.20)');
-
-    ctx.fillStyle = grad;
+    ctx.fillStyle = themeColor;
     ctx.fillRect(0, 0, 256, 256);
-
-    for (let i = 0; i < 40; i++) {
-      const px = Math.random() * 256;
-      const py = Math.random() * 256;
-      const pr = Math.random() * 6 + 2.5;
-      ctx.beginPath();
-      ctx.arc(px, py, pr, 0, Math.PI * 2);
-      ctx.fillStyle = dotColor;
-      ctx.shadowColor = '#ffffff';
-      ctx.shadowBlur = 8;
-      ctx.fill();
-    }
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.20)';
+    ctx.fillRect(0, 0, 256, 3);
+    ctx.fillRect(0, 253, 256, 3);
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -459,7 +478,7 @@ export class GateManager {
       roughness: 0.25,
       metalness: 0.20,
       emissive: config.pipeColor,
-      emissiveIntensity: 0.50
+      emissiveIntensity: 0.08
     });
 
     // 1. Tiang Kiri & Kanan
@@ -500,11 +519,11 @@ export class GateManager {
     });
 
     // 5. Selaput Energi Transparan
-    const veilTex = this.createVeilTexture(config.veilColor, config.dotColor);
+    const veilTex = this.createVeilTexture(config.veilColor);
     const veilMat = new THREE.MeshBasicMaterial({
       map: veilTex,
       transparent: true,
-      opacity: 0.65,
+      opacity: 0.32,
       side: THREE.DoubleSide,
       blending: THREE.NormalBlending,
       depthWrite: false
@@ -534,10 +553,27 @@ export class GateManager {
     };
   }
 
+  disposeGateVisual(gate) {
+    const geometries = new Set();
+    const materials = new Set();
+    gate.group.traverse((object) => {
+      if (object.geometry) geometries.add(object.geometry);
+      if (object.material) {
+        const list = Array.isArray(object.material) ? object.material : [object.material];
+        list.forEach((material) => materials.add(material));
+      }
+    });
+    geometries.forEach((geometry) => geometry.dispose());
+    materials.forEach((material) => {
+      if (material.map) material.map.dispose();
+      material.dispose();
+    });
+  }
+
   // -------------------------------------------------------------
   // SPONSOR & TATA LETAK GERBANG ACAK (TIDAK SELALU SEBELAH-SEBELAHAN)
   // -------------------------------------------------------------
-  createStation(thetaAngle) {
+  createStation(thetaAngle, starter = false) {
     const stationWrapper = new THREE.Group();
 
     // Posisi pada keliling silinder
@@ -599,6 +635,16 @@ export class GateManager {
       gates.push(leftGate, rightGate);
     }
 
+    if (starter) {
+      gates.forEach((gate) => this.disposeGateVisual(gate));
+      while (stationWrapper.children.length) stationWrapper.remove(stationWrapper.children[0]);
+      gates.length = 0;
+      const expGate = this.createSingleGate(this.getExpGateConfig(), 0.21);
+      const armyGate = this.createSingleGate(this.getArmyGateConfig(), -0.21);
+      stationWrapper.add(expGate.group, armyGate.group);
+      gates.push(expGate, armyGate);
+    }
+
     this.mainMesh.add(stationWrapper);
 
     return {
@@ -617,7 +663,7 @@ export class GateManager {
     // Stasiun 1: Dekat di depan (~45 derajat)
     // Stasiun 2: Jarak menengah (~95 derajat)
     // Stasiun 3: Di horizon kejauhan (~145 derajat)
-    const s1 = this.createStation(playerTheta + 0.80);
+    const s1 = this.createStation(playerTheta + 0.80, true);
     const s2 = this.createStation(playerTheta + 1.70);
     const s3 = this.createStation(playerTheta + 2.60);
 
@@ -629,38 +675,41 @@ export class GateManager {
   // -------------------------------------------------------------
   createFloatingPopup(text, colorHex, position) {
     const canvas = document.createElement('canvas');
-    canvas.width = 440;
-    canvas.height = 130;
+    canvas.width = 512;
+    canvas.height = 112;
     const ctx = canvas.getContext('2d');
 
+    ctx.fillStyle = 'rgba(12, 22, 31, 0.92)';
+    ctx.fillRect(4, 4, 504, 104);
+    ctx.strokeStyle = colorHex;
+    ctx.lineWidth = 4;
+    ctx.strokeRect(4, 4, 504, 104);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = '900 54px "Segoe UI", Roboto, sans-serif';
+    ctx.font = '700 38px "Segoe UI", Roboto, sans-serif';
     ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = colorHex;
-    ctx.shadowBlur = 20;
-    ctx.fillText(text, 220, 65);
+    ctx.fillText(text, 256, 56, 475);
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
     const sprite = new THREE.Sprite(mat);
-    sprite.scale.set(0.72, 0.23, 1);
+    sprite.scale.set(0.60, 0.14, 1);
     sprite.position.copy(position);
-    sprite.position.x += 0.38;
+    sprite.position.x += 0.25;
 
     this.scene.add(sprite);
 
     this.popups.push({
       sprite: sprite,
       life: 0.0,
-      maxLife: 1.0,
+      maxLife: 0.75,
       baseX: sprite.position.x
     });
   }
 
   createPassBurst(position, colorHex) {
-    const count = 30;
+    const count = 8;
     const geo = new THREE.BufferGeometry();
     const positions = new Float32Array(count * 3);
     const velocities = [];
@@ -671,19 +720,19 @@ export class GateManager {
       positions[i * 3 + 2] = position.z + (Math.random() - 0.5) * 0.15;
 
       velocities.push({
-        x: 0.50 + Math.random() * 0.60,
-        y: (Math.random() - 0.5) * 0.70,
-        z: (Math.random() - 0.5) * 0.70
+        x: 0.18 + Math.random() * 0.25,
+        y: (Math.random() - 0.5) * 0.30,
+        z: (Math.random() - 0.5) * 0.30
       });
     }
 
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     const mat = new THREE.PointsMaterial({
       color: colorHex,
-      size: 0.042,
+      size: 0.018,
       transparent: true,
-      opacity: 0.95,
-      blending: THREE.AdditiveBlending
+      opacity: 0.50,
+      blending: THREE.NormalBlending
     });
 
     const pSystem = new THREE.Points(geo, mat);
@@ -693,7 +742,7 @@ export class GateManager {
       points: pSystem,
       velocities: velocities,
       life: 0.0,
-      maxLife: 0.65
+      maxLife: 0.35
     });
   }
 
@@ -705,31 +754,34 @@ export class GateManager {
 
     switch (config.type) {
       case 'army_add':
+        const added = config.value;
         this.armyCount += config.value;
-        this.createFloatingPopup(`+${config.value} 👤 PASUKAN!`, config.borderColor, hitPos);
+        this.createFloatingPopup(`+${added} PASUKAN`, config.borderColor, hitPos);
         this.createPassBurst(hitPos, config.pipeColor);
         soundType = 'positive';
         break;
 
       case 'army_multiply':
+        const beforeMultiply = this.armyCount;
         this.armyCount *= config.value;
-        this.createFloatingPopup(`×${config.value} 👥 PENGGANDAAN!`, config.borderColor, hitPos);
+        this.createFloatingPopup(`+${this.armyCount - beforeMultiply} PASUKAN`, config.borderColor, hitPos);
         this.createPassBurst(hitPos, config.pipeColor);
         soundType = 'positive';
         break;
 
       case 'army_sub':
-        this.armyCount = Math.max(1, this.armyCount - config.value);
-        this.createFloatingPopup(`-${config.value} 👤 PASUKAN!`, config.borderColor, hitPos);
+        const removed = Math.min(config.value, this.armyCount - 1);
+        this.armyCount = applyMinusGate(this.armyCount, config.value);
+        this.createFloatingPopup(`-${removed} PASUKAN`, config.borderColor, hitPos);
         this.createPassBurst(hitPos, config.pipeColor);
         soundType = 'negative';
         break;
 
       case 'exp_add':
         // EXP per orang: nilai gerbang dikali jumlah pasukan!
-        const gainedExp = config.value * Math.max(1, this.armyCount);
+        const gainedExp = config.value + Math.min(50, (this.armyCount - 1) * 5);
         this.exp += gainedExp;
-        this.createFloatingPopup(`+${gainedExp} ⭐ EXP! (+${config.value} × ${this.armyCount})`, config.borderColor, hitPos);
+        this.createFloatingPopup(`+${gainedExp} EXP`, config.borderColor, hitPos);
         this.createPassBurst(hitPos, config.pipeColor);
         soundType = 'positive';
 
@@ -737,7 +789,7 @@ export class GateManager {
         while (this.exp >= this.nextLevelExp) {
           this.level++;
           this.nextLevelExp = this.level * 100;
-          this.createFloatingPopup(`🎉 LEVEL UP! (Lv. ${this.level})`, '#facc15', {
+          this.createFloatingPopup(`LEVEL NAIK! (Lv. ${this.level})`, '#facc15', {
             x: hitPos.x + 0.25,
             y: hitPos.y,
             z: hitPos.z
@@ -748,31 +800,42 @@ export class GateManager {
 
       case 'exp_sub':
         this.exp = Math.max(0, this.exp - config.value);
-        this.createFloatingPopup(`-${config.value} ⭐ EXP!`, config.borderColor, hitPos);
+        this.createFloatingPopup(`-${config.value} EXP`, config.borderColor, hitPos);
         this.createPassBurst(hitPos, config.pipeColor);
         soundType = 'negative';
         break;
 
       case 'water_add':
         this.waterScore += config.value;
-        this.createFloatingPopup(`+${config.value} 💧 AIR!`, config.borderColor, hitPos);
+        this.createFloatingPopup(`+${config.value} AIR`, config.borderColor, hitPos);
         this.createPassBurst(hitPos, config.pipeColor);
         soundType = 'positive';
         break;
 
       case 'transform_electro':
-        this.activeElement = '⚡ LISTRIK';
-        this.createFloatingPopup('⚡ ELEMEN LISTRIK!', '#facc15', hitPos);
+        this.activeElement = 'ELECTRIC';
+        this.elementType = 'electro';
+        this.createFloatingPopup('ELEMEN ELECTRIC!', '#facc15', hitPos);
         this.createPassBurst(hitPos, 0xfacc15);
         if (this.onElementChange) this.onElementChange('electro');
         soundType = 'positive';
         break;
 
       case 'transform_fire':
-        this.activeElement = '🔥 API';
-        this.createFloatingPopup('🔥 ELEMEN API!', '#f97316', hitPos);
+        this.activeElement = 'FIRE';
+        this.elementType = 'fire';
+        this.createFloatingPopup('ELEMEN FIRE!', '#f97316', hitPos);
         this.createPassBurst(hitPos, 0xf97316);
         if (this.onElementChange) this.onElementChange('fire');
+        soundType = 'positive';
+        break;
+
+      case 'transform_water':
+        this.activeElement = 'WATER';
+        this.elementType = 'water';
+        this.createFloatingPopup('ELEMEN WATER!', '#38bdf8', hitPos);
+        this.createPassBurst(hitPos, 0x38bdf8);
+        if (this.onElementChange) this.onElementChange('water');
         soundType = 'positive';
         break;
     }
@@ -787,6 +850,7 @@ export class GateManager {
   // UPDATE LOOP FRAME (ANIMASI, COLLISION, EMERGE, DESPAWN)
   // -------------------------------------------------------------
   update(delta, avatarLaneY, isAnimating) {
+    if (!isAnimating) return;
     const playerTheta = Math.asin(0.15 / this.cylinderRadius); // ~0.0577 rad
 
     // Animasi bounce badge kepala
@@ -820,8 +884,7 @@ export class GateManager {
         st.gates.forEach((g) => {
           g.group.position.y = curY;
           if (g.veil) {
-            const pulse = 0.55 + Math.sin(Date.now() * 0.006) * 0.14;
-            g.veil.material.opacity = pulse;
+            g.veil.material.opacity = 0.32;
           }
         });
       }
@@ -866,6 +929,7 @@ export class GateManager {
       // C. RECYCLE / SPAWN KEMBALI DI KEJAUHAN DENGAN VARIASI BARU:
       if (st.isPassed && angleDiff > Math.PI * 0.50 && angleDiff < Math.PI * 1.80) {
         // Hapus gerbang lama dari wrapper
+        st.gates.forEach((gate) => this.disposeGateVisual(gate));
         while (st.wrapper.children.length > 0) {
           st.wrapper.remove(st.wrapper.children[0]);
         }
@@ -890,7 +954,13 @@ export class GateManager {
         const patternRand = Math.random();
         st.gates = [];
 
-        if (patternRand < 0.30) {
+        this.recycledStationCount++;
+        if (isSafeRewardStation(this.recycledStationCount)) {
+          const expGate = this.createSingleGate(this.getExpGateConfig(), 0.21);
+          const armyGate = this.createSingleGate(this.getArmyGateConfig(), -0.21);
+          st.wrapper.add(expGate.group, armyGate.group);
+          st.gates.push(expGate, armyGate);
+        } else if (patternRand < 0.30) {
           const cfg = this.getRandomGateConfig();
           const g = this.createSingleGate(cfg, 0.21);
           st.wrapper.add(g.group);
@@ -934,11 +1004,12 @@ export class GateManager {
     for (let i = this.popups.length - 1; i >= 0; i--) {
       const p = this.popups[i];
       p.life += delta;
-      p.sprite.position.x = p.baseX + p.life * 0.42;
+      p.sprite.position.x = p.baseX + p.life * 0.14;
       p.sprite.material.opacity = Math.max(0, 1.0 - (p.life / p.maxLife));
 
       if (p.life >= p.maxLife) {
         this.scene.remove(p.sprite);
+        if (p.sprite.material.map) p.sprite.material.map.dispose();
         p.sprite.material.dispose();
         this.popups.splice(i, 1);
       }

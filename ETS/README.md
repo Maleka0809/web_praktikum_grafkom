@@ -1,58 +1,56 @@
-# ETS Grafika Komputer — WebGL, GLSL & Three.js Canvas
+# Elemental Army Run
 
-Proyek **Evaluasi Tengah Semester (ETS)** Laboratorium Grafika Komputer A — Teknik Informatika ITS.
+Game runner 3D berbasis browser dengan tiga arena, sistem pasukan, gate, pergantian elemen, dan pertarungan final boss.
 
-Aplikasi canvas grafis interaktif terpadu yang memadukan **WebGL 2.0**, **Custom GLSL Shaders**, dan **Three.js** langsung dalam satu canvas dan berkas `main.js`.
+## Persyaratan
 
----
+- Node.js 20.19+ atau 22.12+
+- Browser modern dengan dukungan WebGL
 
-## 👥 Anggota Kelompok
+## Menjalankan game
 
-| No | Nama | NRP |
-|---|---|---|
-| 1 | **Maleka Ghaniya** | 5025241189 |
-| 2 | **Jahhaza Assiqooyah Nurul Hidayah** | 5025241019 |
-
----
-
-## 🗂️ Struktur Folder Sederhana
-
-```
-ETS/
-├── index.html       # Struktur halaman dengan canvas tunggal
-├── main.js          # Seluruh logika Three.js, Custom GLSL Shaders, dan Native WebGL
-├── style.css        # Tampilan canvas dan tombol navigasi
-└── README.md        # Panduan dan dokumentasi ETS
+```powershell
+npm install
+npm start
 ```
 
----
+Buka alamat lokal yang ditampilkan pada terminal, biasanya `http://127.0.0.1:5173`.
 
-## 🚀 3 Mode dalam Satu Canvas (`main.js`)
+## Build produksi
 
-1. **🚀 Three.js Scene**:
-   - Geometri 3D (Torus Knot) dengan pencahayaan dinamis (Ambient, Directional, Point Light).
-   - Material PBR Standard (Roughness & Metalness).
-   - Sistem orbit kamera (OrbitControls) dan satelit berotasi.
+```powershell
+npm run build
+npm run preview
+```
 
-2. **🧪 Custom GLSL Shader**:
-   - Menggunakan `THREE.ShaderMaterial` dengan kode shader GLSL langsung di `main.js`.
-   - **Vertex Shader**: Deformasi gelombang permukaan sinusoidal (`sin()` dan `cos()`).
-   - **Fragment Shader**: Efek pendaran tepi (*Fresnel rim lighting*) dan gelombang warna dinamis.
+Hasil build tersimpan di folder `dist`.
 
-3. **🌐 Native WebGL**:
-   - Pipeline murni WebGL 2.0 (`webgl2`) tanpa library eksternal.
-   - Mengompilasi Vertex & Fragment Shader (GLSL ES 3.0), binding VAO/VBO, dan merender cincin plasma prosedural.
+## Kontrol
 
----
+- `A`: bergerak ke kiri
+- `D`: bergerak ke kanan
+- `Space`: jeda atau lanjut
+- Tombol kamera: mengganti sudut pandang
 
-## ⌨️ Kontrol Interaktif
+## Struktur proyek
 
-| Tombol / Aksi | Fungsi |
-|---|---|
-| `Tombol Mode (1 / 2 / 3)` | Ganti antara Three.js, GLSL Shader, dan Native WebGL |
-| `Space` / `Tombol Pause` | Menjeda / melanjutkan animasi |
-| `R` / `Tombol Reset` | Mengembalikan posisi sudut kamera ke awal |
-| `Tombol Wireframe` | Mengubah tampilan antara Solid dan Kerangka Kawat (Wireframe) |
-| `Tombol Warna` | Mengganti warna material aktif secara dinamis |
-| `Mouse Drag` | Memutar sudut pandang kamera (Orbit) |
-| `Mouse Wheel` | Memperbesar / memperkecil tampilan (Zoom In / Out) |
+```text
+index.html             Menu utama dan pemilihan arena
+kota.html              Arena kota metropolitan
+hutan.html             Arena hutan malam
+kota2.html             Arena kota futuristik
+app/
+  game/                Sistem gate, pasukan, elemen, dan boss
+  scenes/              Pengaturan dan alur arena 3D
+  ui/                  Komponen antarmuka dan kontrol
+styles/                Tampilan antarmuka
+assets/                Model 3D, tekstur, gambar, dan audio
+```
+
+## Alur permainan
+
+Pemain mengembangkan pasukan selama fase lari 60 detik dengan memilih gate pasukan, EXP, atau elemen. Setelah waktu habis, permainan beralih ke pertarungan final boss. Gate pengurang pasukan selalu menyisakan minimal satu anggota.
+
+Fire, Water, dan Electric memiliki hubungan kekuatan dan kelemahan masing-masing. Model, warna, proyektil, dan efek suara pasukan mengikuti elemen yang aktif.
+
+Informasi lisensi aset pihak ketiga tersedia di `assets/KREDIT-DAN-LISENSI.md`.

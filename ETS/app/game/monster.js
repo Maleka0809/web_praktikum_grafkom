@@ -26,6 +26,14 @@
  */
 
 import * as THREE from 'three';
+import { elementAdvantage } from './element-balance.js';
+import {
+  RUN_DURATION_SECONDS,
+  calculateBossDamage,
+  calculateBossTarget,
+  canDefeatBoss,
+  getBossMaxHp
+} from './game-rules.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 export class MonsterManager {
@@ -42,16 +50,22 @@ export class MonsterManager {
 
     // Timer & Target State
     this.runTime = 0.0;
-    this.targetSpawnTime = 60.0; // 60 detik (1 menit)
+    this.targetSpawnTime = RUN_DURATION_SECONDS;
     this.targetExp = 300; // Syarat minimal EXP untuk mengalahkan Boss
     this.isSpawned = false;
     this.isDefeated = false;
     this.warningActive = false;
     this.isBattleFinished = false;
+    this.isResolvingAttack = false;
+    this.isPreparing = false;
+    this.preparationDuration = 2.5;
+    this.preparationRemaining = 0;
+    this.projectileVolleyTimer = 0;
+    this.attackVolleyCount = 0;
 
     // Konfigurasi Tema Arena
     if (this.arenaType === 'forest') {
-      this.bossName = '🌋 FINAL BOSS: MONSTER LAVA HUTAN';
+      this.bossName = 'FINAL BOSS: MONSTER LAVA HUTAN';
       this.bossSub = 'Kalahkan Monster Lava dengan Mengumpulkan Min. 300 EXP!';
       this.modelPath1 = './assets/idle_lava.glb';
       this.modelPath2 = './assets/swipping_lava.glb';
@@ -59,7 +73,7 @@ export class MonsterManager {
       this.modelScale = 0.35;
       this.lightColor = 0xff6600;
     } else if (this.arenaType === 'cyber' || this.arenaType === 'robot') {
-      this.bossName = '🤖 FINAL BOSS: CYBER MECHA ROBOT';
+      this.bossName = 'FINAL BOSS: CYBER MECHA ROBOT';
       this.bossSub = 'Kalahkan Mecha Robot dengan Mengumpulkan Min. 300 EXP!';
       this.modelPath1 = './assets/idle_robot.glb';
       this.modelPath2 = './assets/attack_robot.glb';
@@ -67,7 +81,7 @@ export class MonsterManager {
       this.modelScale = 5.8;
       this.lightColor = 0xa855f7;
     } else {
-      this.bossName = '👾 FINAL BOSS: MONSTER SAMPAH KOTA';
+      this.bossName = 'FINAL BOSS: MONSTER SAMPAH KOTA';
       this.bossSub = 'Kalahkan Monster Sampah dengan Mengumpulkan Min. 300 EXP!';
       this.modelPath1 = './assets/flexmusc_sampah.glb';
       this.modelPath2 = './assets/swipping_sampah.glb';
@@ -84,11 +98,13 @@ export class MonsterManager {
     this.targetCombatDistance = 0.40; // Jarak arena tempur di depan kamera pelari
     this.phaseTimer = 0.0;
     this.currentPhase = 'model1'; // 'model1' | 'model2' | 'finished'
+    this.bossEntranceProgress = 1;
 
     // 3D Objects & Animations
     this.bossWrapper = new THREE.Group();
     this.scene.add(this.bossWrapper);
     this.bossWrapper.visible = false;
+    this.bossWrapper.scale.setScalar(1);
 
     this.firstModel = null;
     this.firstMixer = null;
@@ -109,6 +125,7 @@ export class MonsterManager {
 
     // Audio
     this.initAudio();
+    this.initElementAttackAudio();
 
     // DOM HUD & Result Modal
     this.initHud();
@@ -128,6 +145,32 @@ export class MonsterManager {
     } catch (e) {
       this.audioCtx = null;
     }
+  }
+
+  initElementAttackAudio() {
+    this.elementAttackAudio = {
+      fire: new Audio('./assets/audio/serangan-api.ogg'),
+      water: new Audio('./assets/audio/serangan-air.wav'),
+      electro: new Audio('./assets/audio/serangan-listrik.ogg')
+    };
+    Object.values(this.elementAttackAudio).forEach((audio) => {
+      audio.preload = 'auto';
+      audio.volume = 0.32;
+    });
+    this.lastElementShotSound = 0;
+  }
+
+  playElementAttackSound() {
+    const now = performance.now();
+    if (now - this.lastElementShotSound < 220) return;
+    this.lastElementShotSound = now;
+
+    const element = this.gateManager?.elementType || 'electro';
+    const source = this.elementAttackAudio[element] || this.elementAttackAudio.electro;
+    const sound = source.cloneNode();
+    sound.volume = source.volume;
+    sound.playbackRate = 0.94 + Math.random() * 0.12;
+    sound.play().catch(() => {});
   }
 
   playSfx(type) {
@@ -199,8 +242,8 @@ export class MonsterManager {
       const timerItem = document.createElement('div');
       timerItem.id = 'bossTimerHud';
       timerItem.className = 'hud-item';
-      timerItem.style.cssText = 'background: rgba(15, 23, 42, 0.90); border: 1.5px solid #f59e0b; border-radius: 8px; padding: 5px 12px; font-weight: 600; display: flex; gap: 8px; align-items: center;';
-      timerItem.innerHTML = `⏱️ LARI: <span id="runTimerText" style="color:#facc15; font-weight:800;">00:00</span> <span style="color:#64748b;">|</span> <span id="monsterCountdownBadge" style="color:#38bdf8;">Syarat: 300 EXP</span>`;
+      timerItem.style.cssText = 'background: rgba(15, 23, 42, 0.90); border: 1px solid #856a48; border-radius: 6px; padding: 5px 12px; font-weight: 600; display: flex; gap: 8px; align-items: center;';
+      timerItem.innerHTML = `SISA WAKTU: <span id="runTimerText" style="color:#facc15; font-weight:800;">01:00</span> <span style="color:#64748b;">|</span> <span id="monsterCountdownBadge" style="color:#38bdf8;">Perkuat pasukan</span>`;
       hudOverlay.appendChild(timerItem);
     }
 
@@ -215,30 +258,40 @@ export class MonsterManager {
         width: 480px;
         max-width: 90vw;
         background: rgba(15, 23, 42, 0.94);
-        border: 2px solid #ef4444;
-        border-radius: 12px;
+        border: 1px solid #ae5d55;
+        border-radius: 8px;
         padding: 10px 18px;
-        box-shadow: 0 0 28px rgba(239, 68, 68, 0.65);
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
         z-index: 1000;
         display: none;
         flex-direction: column;
         gap: 6px;
         text-align: center;
         pointer-events: none;
-        animation: pulseWarning 1.5s infinite;
       `;
       hpBox.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 14px; letter-spacing: 0.5px;">
-          <span style="color: #f87171;">${this.bossName}</span>
+          <span id="bossTitleText" style="color: #f87171;">${this.bossName}</span>
           <span id="bossHpText" style="color: #fef08a;">5000 / 5000 HP</span>
         </div>
-        <div style="width: 100%; height: 16px; background: #334155; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2);">
-          <div id="bossHpBarFill" style="width: 100%; height: 100%; background: linear-gradient(90deg, #ef4444, #f59e0b); border-radius: 8px; transition: width 0.15s ease-out;"></div>
+        <div style="width: 100%; height: 10px; background: #334155; border-radius: 4px; overflow: hidden;">
+          <div id="bossHpBarFill" style="width: 100%; height: 100%; background: #c25b52; transition: width 0.15s ease-out;"></div>
         </div>
         <div id="bossSubtitle" style="font-size: 11px; color: #94a3b8;">${this.bossSub}</div>
+        <div id="bossDamageText" style="min-height: 22px; color: #facc15; font-size: 18px; font-weight: 900; letter-spacing: 0.6px; transition: transform 0.12s ease, opacity 0.2s ease;"></div>
+        <div id="bossDamageStream" style="position:absolute;right:14px;top:72px;display:flex;flex-direction:column;align-items:flex-end;gap:3px;pointer-events:none;"></div>
       `;
       const canvasWrapper = document.querySelector('.canvas-wrapper') || document.body;
       canvasWrapper.appendChild(hpBox);
+    }
+
+    if (!document.getElementById('bossPreparationBanner')) {
+      const banner = document.createElement('div');
+      banner.id = 'bossPreparationBanner';
+      banner.style.cssText = `position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.92);min-width:280px;padding:18px 26px;border:1px solid #f59e0b;border-radius:10px;background:rgba(15,23,42,.94);color:#f8fafc;text-align:center;font-weight:800;letter-spacing:.08em;z-index:1100;opacity:0;display:none;transition:opacity .25s ease,transform .25s ease;pointer-events:none;`;
+      banner.innerHTML = `BERSIAP!<div id="bossPreparationText" style="margin-top:8px;color:#facc15;font-size:24px;">Boss muncul dalam 3</div>`;
+      const canvasWrapper = document.querySelector('.canvas-wrapper') || document.body;
+      canvasWrapper.appendChild(banner);
     }
   }
 
@@ -275,7 +328,7 @@ export class MonsterManager {
         gap: 18px;
         box-shadow: 0 0 50px rgba(0,0,0,0.8);
       ">
-        <div id="resultIcon" style="font-size: 58px; line-height: 1;">🏆</div>
+        <div id="resultIcon" class="result-symbol"><i class="ui-icon fa-solid fa-trophy" aria-hidden="true"></i></div>
         <div>
           <h2 id="resultTitle" style="font-size: 26px; font-weight: 800; margin: 0 0 8px; color: #facc15;">KEMENANGAN TELAH DIRAIH!</h2>
           <p id="resultDesc" style="color: #94a3b8; font-size: 14px; margin: 0; line-height: 1.5;">Final Boss Berhasil Dikalahkan!</p>
@@ -283,17 +336,17 @@ export class MonsterManager {
 
         <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 14px 18px; display: flex; justify-content: space-around; text-align: center;">
           <div>
-            <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 700;">⭐ EXP Kamu</div>
-            <div id="resultExpText" style="font-size: 20px; font-weight: 800; color: #38bdf8; margin-top: 4px;">0 / 300</div>
+            <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 700;">EXP Kamu</div>
+            <div id="resultExpText" style="font-size: 20px; font-weight: 800; color: #38bdf8; margin-top: 4px;">0</div>
           </div>
           <div style="width: 1px; background: rgba(255,255,255,0.1);"></div>
           <div>
-            <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 700;">👥 Pasukan</div>
+            <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Pasukan</div>
             <div id="resultArmyText" style="font-size: 20px; font-weight: 800; color: #facc15; margin-top: 4px;">1</div>
           </div>
           <div style="width: 1px; background: rgba(255,255,255,0.1);"></div>
           <div>
-            <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 700;">⏱️ Waktu</div>
+            <div style="font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Waktu</div>
             <div style="font-size: 20px; font-weight: 800; color: #10b981; margin-top: 4px;">01:00</div>
           </div>
         </div>
@@ -314,9 +367,9 @@ export class MonsterManager {
             display: flex;
             align-items: center;
             gap: 8px;
-          ">🔄 Main Lagi (Restart)</button>
+          ">Main Lagi (Restart)</button>
 
-          <a href="./index.html" style="
+          <a href="./index.html?select=1" style="
             background: rgba(30, 41, 59, 0.9);
             color: #cbd5e1;
             border: 1px solid rgba(255,255,255,0.2);
@@ -328,7 +381,7 @@ export class MonsterManager {
             display: flex;
             align-items: center;
             gap: 8px;
-          ">🏛️ Pilih Lingkungan Lain</a>
+          ">Pilih Arena Lain</a>
         </div>
       </div>
     `;
@@ -352,13 +405,13 @@ export class MonsterManager {
 
     if (!modal) return;
 
-    expText.innerText = `${currentExp} / ${this.targetExp}`;
+    expText.innerText = `${currentExp}`;
     armyText.innerText = `${armyCount}`;
 
     if (isWin) {
-      card.style.border = '2px solid #facc15';
-      card.style.boxShadow = '0 0 45px rgba(250, 204, 21, 0.45)';
-      icon.innerText = '🏆';
+      card.style.border = '1px solid #9c8350';
+      card.style.boxShadow = '0 18px 48px rgba(0, 0, 0, 0.45)';
+      icon.innerHTML = '<i class="ui-icon fa-solid fa-trophy" aria-hidden="true"></i>';
       title.innerText = 'KEMENANGAN TELAH DIRAIH!';
       title.style.color = '#facc15';
       desc.innerText = `${this.bossName.replace(/^[^\w]+/, '')} Berhasil Dikalahkan!`;
@@ -372,15 +425,15 @@ export class MonsterManager {
         cutsceneInfo = 'Banjir bandang surut menyusut: jalanan kota kembali bersih dan kering!';
       }
 
-      feedback.innerHTML = `Hebat sekali! Pasukanmu berhasil mengumpulkan <b>${currentExp} EXP</b> (melampaui target ${this.targetExp} EXP) dan menumbangkan Final Boss!<br><span style="color:#38bdf8; font-weight:600; display:inline-block; margin-top:6px;">✨ ${cutsceneInfo}</span>`;
+      feedback.innerHTML = `Hebat sekali! Pasukanmu berhasil mengumpulkan <b>${currentExp} EXP</b> dan menumbangkan Final Boss!<br><span style="color:#38bdf8; font-weight:600; display:inline-block; margin-top:6px;">${cutsceneInfo}</span>`;
     } else {
-      card.style.border = '2px solid #ef4444';
-      card.style.boxShadow = '0 0 45px rgba(239, 68, 68, 0.50)';
-      icon.innerText = '💀';
-      title.innerText = 'EXP BELUM CUKUP!';
+      card.style.border = '1px solid #a75d58';
+      card.style.boxShadow = '0 18px 48px rgba(0, 0, 0, 0.45)';
+      icon.innerHTML = '<i class="ui-icon fa-solid fa-robot" aria-hidden="true"></i>';
+      title.innerText = 'PASUKAN BELUM CUKUP KUAT!';
       title.style.color = '#f87171';
       desc.innerText = `Kamu Terhempas Oleh Serangan ${this.bossName.replace(/^[^\w]+/, '')}!`;
-      feedback.innerHTML = `EXP kamu hanya <b>${currentExp} EXP</b> (kurang <b>${this.targetExp - currentExp} EXP</b> lagi untuk menang). Lewati gerbang +EXP dan penggandaan pasukan untuk memperkuat karaktermu!`;
+      feedback.innerHTML = `Kekuatan pasukanmu belum cukup untuk menumbangkan Final Boss. Kumpulkan lebih banyak pasukan dan EXP, naikkan level, lalu pilih elemen yang tepat.`;
     }
 
     modal.style.display = 'flex';
@@ -394,11 +447,19 @@ export class MonsterManager {
     if (hpBox) hpBox.style.display = 'none';
 
     this.runTime = 0.0;
+    this.targetExp = 300;
     this.isSpawned = false;
     this.isDefeated = false;
     this.warningActive = false;
     this.isBattleFinished = false;
+    this.isResolvingAttack = false;
+    this.isPreparing = false;
+    this.preparationRemaining = 0;
+    this.projectileVolleyTimer = 0;
+    this.attackVolleyCount = 0;
     this.bossWrapper.visible = false;
+    const preparationBanner = document.getElementById('bossPreparationBanner');
+    if (preparationBanner) preparationBanner.style.display = 'none';
     if (this.firstModel) this.firstModel.position.set(0, 0.015, 0);
     if (this.secondModel) this.secondModel.position.set(0, 0.015, 0);
     if (this.dyingModel) {
@@ -411,6 +472,7 @@ export class MonsterManager {
       this.gateManager.exp = 0;
       this.gateManager.armyCount = 1;
       this.gateManager.level = 1;
+      this.gateManager.nextLevelExp = 100;
       this.gateManager.updateHud();
       this.gateManager.drawHeadBadge(true);
       this.gateManager.syncArmyClones();
@@ -426,15 +488,21 @@ export class MonsterManager {
     const timerText = document.getElementById('runTimerText');
     const badgeText = document.getElementById('monsterCountdownBadge');
     if (timerText) {
-      const mins = Math.floor(this.runTime / 60);
-      const secs = Math.floor(this.runTime % 60);
+      const remaining = Math.max(0, Math.ceil(this.targetSpawnTime - this.runTime));
+      const mins = Math.floor(remaining / 60);
+      const secs = remaining % 60;
       timerText.innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     }
 
     if (badgeText) {
-      if (!this.isSpawned && !this.isBattleFinished) {
+      if (this.isPreparing) {
+        badgeText.innerText = `PERSIAPAN BOSS: ${Math.max(1, Math.ceil(this.preparationRemaining))}`;
+        badgeText.style.color = '#f59e0b';
+        badgeText.style.fontWeight = 'bold';
+      } else if (!this.isSpawned && !this.isBattleFinished) {
+        this.targetExp = calculateBossTarget(this.gateManager, this.arenaType, elementAdvantage).targetExp;
         const remaining = Math.max(0, Math.ceil(this.targetSpawnTime - this.runTime));
-        badgeText.innerText = `Boss: ${remaining}s (Syarat: ${this.targetExp} EXP)`;
+        badgeText.innerText = `Boss: ${remaining}s · Perkuat pasukan`;
         if (remaining <= 5) {
           badgeText.style.color = '#ef4444';
           badgeText.style.fontWeight = 'bold';
@@ -442,7 +510,7 @@ export class MonsterManager {
           badgeText.style.color = '#38bdf8';
         }
       } else if (this.isSpawned && !this.isBattleFinished) {
-        badgeText.innerText = `🚨 FINAL BOSS!`;
+        badgeText.innerText = 'FINAL BOSS';
         badgeText.style.color = '#ef4444';
       }
     }
@@ -553,13 +621,35 @@ export class MonsterManager {
   // Helper untuk pengujian cepat kemenangan Boss & Cutscene
   triggerTestVictory() {
     if (this.gateManager) {
-      this.gateManager.exp = Math.max(this.gateManager.exp, 350);
       this.gateManager.armyCount = Math.max(this.gateManager.armyCount, 10);
+      this.gateManager.exp = Math.max(this.gateManager.exp, 500);
+      this.gateManager.level = Math.max(this.gateManager.level, 5);
+      this.gateManager.nextLevelExp = Math.max(this.gateManager.nextLevelExp, 600);
       this.gateManager.updateHud();
       this.gateManager.drawHeadBadge(true);
       this.gateManager.syncArmyClones();
     }
-    this.spawnMonster();
+    this.prepareBoss();
+  }
+
+  prepareBoss() {
+    if (this.isPreparing || (this.isSpawned && !this.isDefeated)) return;
+    this.runTime = this.targetSpawnTime;
+    this.isPreparing = true;
+    this.preparationRemaining = this.preparationDuration;
+    this.projectileVolleyTimer = 0;
+
+    if (this.onRaceEnd) this.onRaceEnd();
+
+    const banner = document.getElementById('bossPreparationBanner');
+    if (banner) {
+      banner.style.display = 'block';
+      requestAnimationFrame(() => {
+        banner.style.opacity = '1';
+        banner.style.transform = 'translate(-50%, -50%) scale(1)';
+      });
+    }
+    this.playSfx('siren');
   }
 
   // -------------------------------------------------------------
@@ -567,13 +657,17 @@ export class MonsterManager {
   // -------------------------------------------------------------
   spawnMonster() {
     if (this.isSpawned && !this.isDefeated) return;
+    this.runTime = this.targetSpawnTime;
+    this.isPreparing = false;
     this.isSpawned = true;
     this.isDefeated = false;
     this.isBattleFinished = false;
 
-    // "Udahan Larinya" -> Hentikan putaran silinder & lari karakter!
-    if (this.onRaceEnd) {
-      this.onRaceEnd();
+    const banner = document.getElementById('bossPreparationBanner');
+    if (banner) {
+      banner.style.opacity = '0';
+      banner.style.transform = 'translate(-50%, -50%) scale(.92)';
+      banner.style.display = 'none';
     }
 
     if (this.firstModel) {
@@ -589,13 +683,22 @@ export class MonsterManager {
       this.dyingModel.visible = false;
     }
 
-    const army = this.gateManager ? this.gateManager.armyCount : 1;
-    const lvl = this.gateManager ? this.gateManager.level : 1;
-    this.maxHp = Math.max(5000, army * 75 + lvl * 250);
+    const { targetExp, advantage } = calculateBossTarget(this.gateManager, this.arenaType, elementAdvantage);
+    this.targetExp = targetExp;
+    this.battleAdvantage = advantage;
+    this.damagePerHit = calculateBossDamage(this.gateManager, advantage);
+    this.canDefeatBoss = canDefeatBoss(this.gateManager, this.targetExp);
+    this.attackVolleyCount = 0;
+    this.maxHp = getBossMaxHp(this.arenaType);
     this.hp = this.maxHp;
+    const subtitle = document.getElementById('bossSubtitle');
+    if (subtitle) subtitle.textContent = `${advantage > 0 ? 'Elemen unggul' : advantage < 0 ? 'Elemen lemah' : 'Elemen netral'} · Damage per volley ${this.damagePerHit}`;
+    const damageText = document.getElementById('bossDamageText');
+    if (damageText) damageText.textContent = 'Pasukan bersiap menyerang';
 
     // Bos hadir di depan pelari (0.44 rad)
-    this.currentDistance = 0.44;
+    this.currentDistance = 0.72;
+    this.bossEntranceProgress = 0;
     this.phaseTimer = 0.0;
     this.currentPhase = 'model1';
 
@@ -603,6 +706,7 @@ export class MonsterManager {
     this.bossTheta = (playerTheta + this.currentDistance) % (Math.PI * 2);
 
     this.updateBossTransform();
+    this.bossWrapper.scale.setScalar(0.05);
     this.bossWrapper.visible = true;
 
     // Tampilkan HP Container
@@ -615,7 +719,7 @@ export class MonsterManager {
     this.shakeIntensity = 0.065;
 
     // Eksekusi Konfrontasi Berdasarkan Syarat EXP (Durasi tatap muka epik 4.5 detik):
-    setTimeout(() => {
+    this.battleOutcomeTimer = setTimeout(() => {
       this.resolveBattleOutcome();
     }, 4500);
   }
@@ -642,23 +746,14 @@ export class MonsterManager {
 
     const currentExp = this.gateManager ? this.gateManager.exp : 0;
     const armyCount = this.gateManager ? this.gateManager.armyCount : 1;
-    const isWin = currentExp >= this.targetExp;
+    const isWin = this.canDefeatBoss;
 
     if (isWin) {
-      // 🏆 PEMAIN MENANG!
-      // Kurangi HP Boss hingga 0
-      let drainHp = this.hp;
-      const hpInterval = setInterval(() => {
-        drainHp -= this.maxHp * 0.12;
-        this.hp = Math.max(0, drainHp);
-        if (this.hp <= 0) {
-          clearInterval(hpInterval);
-          this.defeatMonster(currentExp, armyCount);
-        }
-      }, 50);
+      this.isResolvingAttack = true;
     } else {
-      // 💀 PEMAIN KALAH!
-      // Boss melakukan serangan cakar / laser mematikan
+      this.isResolvingAttack = false;
+
+      // Boss melakukan serangan balasan.
       if (this.firstModel) this.firstModel.visible = false;
       if (this.secondModel) this.secondModel.visible = true;
       if (this.dyingModel) this.dyingModel.visible = false;
@@ -675,21 +770,78 @@ export class MonsterManager {
     }
   }
 
+  showBossDamage(amount, isCritical = false) {
+    const damageText = document.getElementById('bossDamageText');
+    if (!damageText) return;
+    damageText.textContent = `-${Math.round(amount).toLocaleString('id-ID')} HP${isCritical ? '  KRITIS!' : ''}`;
+    damageText.style.color = isCritical ? '#fb923c' : '#facc15';
+    damageText.style.transform = 'scale(1.16)';
+    damageText.style.opacity = '1';
+    clearTimeout(this.damagePulseTimer);
+    this.damagePulseTimer = setTimeout(() => {
+      damageText.style.transform = 'scale(1)';
+      damageText.style.opacity = '0.72';
+    }, 150);
+
+    const stream = document.getElementById('bossDamageStream');
+    if (stream) {
+      const hit = document.createElement('span');
+      hit.textContent = `-${Math.round(amount).toLocaleString('id-ID')}${isCritical ? ' KRITIS' : ''}`;
+      hit.style.cssText = `color:${isCritical ? '#fb923c' : '#fde047'};font-size:13px;font-weight:900;text-shadow:0 1px 3px #000;opacity:1;transform:translateY(0);transition:opacity .7s ease,transform .7s ease;`;
+      stream.appendChild(hit);
+      requestAnimationFrame(() => {
+        hit.style.opacity = '0';
+        hit.style.transform = 'translateY(-18px)';
+      });
+      setTimeout(() => hit.remove(), 750);
+    }
+  }
+
+  applyProjectileDamage(amount, isCritical = false) {
+    if (!this.isSpawned || this.isDefeated) return;
+    const minimumHp = this.canDefeatBoss ? 0 : 1;
+    const appliedDamage = Math.min(Math.max(0, this.hp - minimumHp), Math.max(1, Math.round(amount)));
+    if (appliedDamage <= 0) return;
+
+    this.hp = Math.max(minimumHp, this.hp - appliedDamage);
+    this.showBossDamage(appliedDamage, isCritical);
+    this.updateHud(0);
+
+    if (this.hp <= 0 && this.canDefeatBoss) {
+      clearTimeout(this.battleOutcomeTimer);
+      this.isBattleFinished = true;
+      this.isResolvingAttack = false;
+      this.defeatMonster(this.gateManager?.exp || 0, this.gateManager?.armyCount || 1);
+    }
+  }
+
   // -------------------------------------------------------------
   // PERTARUNGAN: TEMBAKAN ENERGI PASUKAN KE MONSTER
   // -------------------------------------------------------------
   fireArmyProjectiles(avatarLaneY) {
+    this.playElementAttackSound();
     const surfaceX = Math.sqrt(this.cylinderRadius * this.cylinderRadius - 0.15 * 0.15);
     const startPos = new THREE.Vector3(surfaceX, avatarLaneY, 0.15);
 
     const bossWorldPos = new THREE.Vector3();
     this.bossWrapper.getWorldPosition(bossWorldPos);
 
-    const pColor = (this.arenaType === 'forest') ? 0xf97316 : (this.arenaType === 'cyber' || this.arenaType === 'robot') ? 0xc084fc : 0x38bdf8;
+    const element = this.gateManager?.elementType || 'electro';
+    const elementColors = {
+      fire: 0xff6b1a,
+      water: 0x22d3ee,
+      electro: 0xfacc15
+    };
+    const pColor = elementColors[element] || elementColors.electro;
 
-    const count = 3;
+    const armyCount = this.gateManager?.armyCount || 1;
+    const count = Math.min(5, Math.max(2, Math.ceil(armyCount / 8)));
+    this.attackVolleyCount++;
+    const isCriticalVolley = this.attackVolleyCount % 4 === 0;
+    const volleyDamage = Math.round(this.damagePerHit * (isCriticalVolley ? 1.5 : 1));
+    const damagePerProjectile = Math.max(1, Math.floor(volleyDamage / count));
     for (let k = 0; k < count; k++) {
-      const geo = new THREE.SphereGeometry(0.045, 8, 8);
+      const geo = new THREE.SphereGeometry(0.04, 10, 10);
       const mat = new THREE.MeshBasicMaterial({
         color: pColor,
         transparent: true,
@@ -700,12 +852,23 @@ export class MonsterManager {
       mesh.position.x += 0.15 + (Math.random() - 0.5) * 0.10;
       mesh.position.y += (Math.random() - 0.5) * 0.25;
 
+      const start = mesh.position.clone();
+      const target = bossWorldPos.clone().add(new THREE.Vector3(0.35, (k - (count - 1) / 2) * 0.07, 0));
+      const control = start.clone().lerp(target, 0.5);
+      control.x += 0.18;
+      control.y += (k - (count - 1) / 2) * 0.04;
+
       this.scene.add(mesh);
       this.projectiles.push({
         mesh: mesh,
-        targetPos: bossWorldPos.clone().add(new THREE.Vector3(0.35, 0, 0)),
+        startPos: start,
+        controlPos: control,
+        targetPos: target,
+        elapsed: 0,
+        duration: 0.78 + Math.random() * 0.17,
         progress: 0.0,
-        speed: 3.5 + Math.random() * 1.5
+        damage: k === count - 1 ? volleyDamage - damagePerProjectile * (count - 1) : damagePerProjectile,
+        isCritical: isCriticalVolley
       });
     }
   }
@@ -777,7 +940,7 @@ export class MonsterManager {
   }
 
   createVictoryBurst(pos) {
-    const count = 95;
+    const count = 22;
     const geo = new THREE.BufferGeometry();
     const positions = new Float32Array(count * 3);
     const velocities = [];
@@ -788,19 +951,19 @@ export class MonsterManager {
       positions[i * 3 + 2] = pos.z + (Math.random() - 0.5) * 0.4;
 
       velocities.push({
-        x: (Math.random() - 0.5) * 2.2,
-        y: 1.0 + Math.random() * 1.8,
-        z: (Math.random() - 0.5) * 2.2
+        x: (Math.random() - 0.5) * 0.8,
+        y: 0.4 + Math.random() * 0.7,
+        z: (Math.random() - 0.5) * 0.8
       });
     }
 
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     const mat = new THREE.PointsMaterial({
       color: (this.arenaType === 'cyber' || this.arenaType === 'robot') ? 0x38bdf8 : 0xfacc15,
-      size: 0.075,
+      size: 0.025,
       transparent: true,
-      opacity: 0.95,
-      blending: THREE.AdditiveBlending
+      opacity: 0.55,
+      blending: THREE.NormalBlending
     });
 
     const pSystem = new THREE.Points(geo, mat);
@@ -810,7 +973,7 @@ export class MonsterManager {
       points: pSystem,
       velocities: velocities,
       life: 0.0,
-      maxLife: 1.8
+      maxLife: 0.8
     });
   }
 
@@ -819,7 +982,7 @@ export class MonsterManager {
   // -------------------------------------------------------------
   update(delta, avatarLaneY, isAnimating) {
     // 1. Jalankan Timer Lari Menuju 60 Detik (1 Menit)
-    if (isAnimating && !this.isSpawned && !this.isBattleFinished) {
+    if (isAnimating && !this.isPreparing && !this.isSpawned && !this.isBattleFinished) {
       this.runTime += delta;
 
       if (this.runTime >= 55.0 && !this.warningActive) {
@@ -829,8 +992,15 @@ export class MonsterManager {
 
       // Tepat 60 detik -> Udahan Larinya & Final Boss Datang!
       if (this.runTime >= this.targetSpawnTime) {
-        this.spawnMonster();
+        this.prepareBoss();
       }
+    }
+
+    if (this.isPreparing) {
+      this.preparationRemaining = Math.max(0, this.preparationRemaining - delta);
+      const preparationText = document.getElementById('bossPreparationText');
+      if (preparationText) preparationText.textContent = `Boss muncul dalam ${Math.max(1, Math.ceil(this.preparationRemaining))}`;
+      if (this.preparationRemaining <= 0) this.spawnMonster();
     }
 
     this.updateHud(delta);
@@ -849,6 +1019,12 @@ export class MonsterManager {
     // 3. Logika Pergerakan & Fase Aksi Boss Saat Aktif
     if (this.isSpawned && !this.isDefeated) {
       const playerTheta = Math.asin(0.15 / this.cylinderRadius);
+
+      if (this.bossEntranceProgress < 1) {
+        this.bossEntranceProgress = Math.min(1, this.bossEntranceProgress + delta / 0.65);
+        const easedEntrance = 1 - Math.pow(1 - this.bossEntranceProgress, 3);
+        this.bossWrapper.scale.setScalar(0.05 + easedEntrance * 0.95);
+      }
 
       this.currentDistance = THREE.MathUtils.lerp(
         this.currentDistance,
@@ -876,9 +1052,14 @@ export class MonsterManager {
           }
         }
 
-        // Tembakan orbs pasukan ke arah tubuh boss
-        if (Math.random() < 0.40) {
+      }
+
+      if (!this.isBattleFinished || this.isResolvingAttack) {
+        // Volley terjadwal menjaga tembakan halus dan mencegah lonjakan objek per frame.
+        this.projectileVolleyTimer -= delta;
+        if (this.projectileVolleyTimer <= 0) {
           this.fireArmyProjectiles(avatarLaneY);
+          this.projectileVolleyTimer = 0.75;
         }
       }
     }
@@ -886,10 +1067,17 @@ export class MonsterManager {
     // 4. Update Peluru Energi Pasukan
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const p = this.projectiles[i];
-      p.progress += delta * p.speed;
-      p.mesh.position.lerp(p.targetPos, Math.min(1.0, delta * 8.0));
+      p.elapsed += delta;
+      p.progress = Math.min(1, p.elapsed / p.duration);
+      const t = p.progress;
+      const inverse = 1 - t;
+      p.mesh.position.copy(p.startPos).multiplyScalar(inverse * inverse)
+        .addScaledVector(p.controlPos, 2 * inverse * t)
+        .addScaledVector(p.targetPos, t * t);
+      p.mesh.scale.setScalar(0.75 + Math.sin(t * Math.PI) * 0.45);
 
       if (p.progress >= 1.0) {
+        this.applyProjectileDamage(p.damage, p.isCritical);
         this.scene.remove(p.mesh);
         p.mesh.geometry.dispose();
         p.mesh.material.dispose();

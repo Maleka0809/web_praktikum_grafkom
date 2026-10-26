@@ -15,15 +15,19 @@ Kredit tetap dicantumkan sebagai bentuk apresiasi kepada pembuatnya.
 | textures/metal/ | Metal049A | ambientCG | https://ambientcg.com/view?id=Metal049A |
 | particles/ | Particle Pack | Kenney | https://opengameart.org/content/particle-pack-80-sprites |
 | hdr/sky.hdr | Venice Sunset | Poly Haven | https://polyhaven.com/a/venice_sunset |
+| audio/serangan-api.ogg, audio/serangan-listrik.ogg | Sci-fi Sounds | Kenney | https://kenney.nl/assets/sci-fi-sounds |
+| audio/serangan-air.wav | Water Splash and Sand Footsteps (`splash1.wav`) | Peludo | https://opengameart.org/content/water-splash-and-sand-footsteps |
 
 ## Pengolahan yang dilakukan
 - Model KayKit `.gltf` + `.bin` + `.png` digabung menjadi satu file `.glb` (gltf-transform).
 - Model Kenney `.glb` di-embed ulang agar teksturnya menyatu di dalam file.
 - Tekstur ambientCG diperkecil dari 2048 ke 1024 piksel (color, normal GL, roughness, metalness).
 - Sprite partikel diperkecil dari 512 ke 128 piksel dan dikonversi ke PNG RGBA.
+- Nama berkas audio disederhanakan sesuai elemen dan volume serta pitch diatur saat diputar di dalam game.
 
 ## Format
 - `.glb`: model 3D glTF biner (bisa dibuka di Blender, three.js, Babylon.js, https://gltf-viewer.donmccurdy.com)
 - `.jpg`: tekstur PBR (format asli ambientCG)
 - `.png`: sprite partikel
 - `.hdr`: peta lingkungan untuk pencahayaan
+- `.ogg` / `.wav`: efek suara serangan elemen

@@ -1,3 +1,4 @@
+import '@fortawesome/fontawesome-free/css/all.min.css';
 /**
  * ETS Grafika Komputer - Lingkungan 03: Kota Futuristik Malam (Cyber City)
  * Final Boss: Mecha Robot (idle, attack, dying)
@@ -7,9 +8,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
-import { GateManager } from './gates.js?v=banjar_same_size_v4';
-import { MonsterManager } from './monster.js?v=boss_v7';
+import { GateManager } from '../game/gates.js';
+import { changeArmyElement } from '../game/army-element.js';
+import { MonsterManager } from '../game/monster.js';
 
 const canvas = document.getElementById('mainCanvas');
 const fpsDisplay = document.getElementById('fpsDisplay');
@@ -103,11 +104,11 @@ function createMoon(scene) {
     map: moonTex,
     blending: THREE.AdditiveBlending,
     transparent: true,
-    opacity: 0.95,
+    opacity: 0.70,
     depthWrite: false
   });
   const coreSprite = new THREE.Sprite(coreMat);
-  coreSprite.scale.set(7.5, 7.5, 1);
+  coreSprite.scale.set(7, 7, 1);
   moonGroup.add(coreSprite);
 
   // 2. Aura Pendaran Luar Cahaya Bulan (Soft Ethereal Moonlight Bloom)
@@ -115,11 +116,11 @@ function createMoon(scene) {
     map: moonTex,
     blending: THREE.AdditiveBlending,
     transparent: true,
-    opacity: 0.45,
+    opacity: 0.20,
     depthWrite: false
   });
   const bloomSprite = new THREE.Sprite(bloomMat);
-  bloomSprite.scale.set(16.5, 16.5, 1);
+  bloomSprite.scale.set(12, 12, 1);
   moonGroup.add(bloomSprite);
 
   scene.add(moonGroup);
@@ -131,7 +132,7 @@ function createMoon(scene) {
   scene.add(moonLight);
   scene.add(moonLight.target);
 
-  const moonPoint = new THREE.PointLight(0xc7d2fe, 1.7, 75, 1.2);
+  const moonPoint = new THREE.PointLight(0xc7d2fe, 1.0, 75, 1.2);
   moonPoint.position.copy(moonPos);
   scene.add(moonPoint);
 
@@ -214,7 +215,7 @@ function createRunnerAvatar(scene) {
 }
 
 function createElectroSparkEffect(parentGroup) {
-  const particleCount = 28;
+  const particleCount = 10;
   const positions = new Float32Array(particleCount * 3);
   sparkVelocities = [];
 
@@ -236,10 +237,10 @@ function createElectroSparkEffect(parentGroup) {
 
   const mat = new THREE.PointsMaterial({
     color: 0xfacc15,
-    size: 0.022,
+    size: 0.014,
     transparent: true,
-    opacity: 0.90,
-    blending: THREE.AdditiveBlending
+    opacity: 0.50,
+    blending: THREE.NormalBlending
   });
 
   sparkParticles = new THREE.Points(geo, mat);
@@ -263,7 +264,7 @@ function playCyberPowerGridSound() {
     osc1.frequency.setValueAtTime(65, now);
     osc1.frequency.exponentialRampToValueAtTime(320, now + 0.8);
     gain1.gain.setValueAtTime(0.01, now);
-    gain1.gain.linearRampToValueAtTime(0.35, now + 0.5);
+    gain1.gain.linearRampToValueAtTime(0.08, now + 0.5);
     gain1.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
     osc1.connect(gain1);
     gain1.connect(ctx.destination);
@@ -279,7 +280,7 @@ function playCyberPowerGridSound() {
       osc2.type = 'square';
       osc2.frequency.setValueAtTime(880, t);
       osc2.frequency.exponentialRampToValueAtTime(110, t + 0.12);
-      gain2.gain.setValueAtTime(0.40, t);
+      gain2.gain.setValueAtTime(0.08, t);
       gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
       osc2.connect(gain2);
       gain2.connect(ctx.destination);
@@ -287,24 +288,7 @@ function playCyberPowerGridSound() {
       osc2.stop(t + 0.16);
     }, 450);
 
-    // 3. Glorious Neon Power Chime (C-Major Power On Arpeggio)
-    const notes = [523.25, 659.25, 783.99, 1046.50];
-    notes.forEach((freq, idx) => {
-      setTimeout(() => {
-        if (ctx.state === 'closed') return;
-        const t = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, t);
-        gain.gain.setValueAtTime(0.22, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(t);
-        osc.stop(t + 1.25);
-      }, 700 + idx * 140);
-    });
+    setTimeout(() => ctx.close(), 1800);
   } catch (e) {
     console.warn('Audio synthesis not permitted:', e);
   }
@@ -320,41 +304,41 @@ function restoreCyberPower() {
   // 1. Lampu jalan menyala terang keemasan / neon cyan
   streetLampMaterials.forEach((m) => {
     m.emissive.setHex(0xfacc15);
-    m.emissiveIntensity = 2.8;
+    m.emissiveIntensity = 0.9;
     if (m.color) m.color.setHex(0xffedd5);
   });
 
   // 2. Gedung pencakar langit cyberpunk menyalakan lampu jendela neon
   cyberBuildingMaterials.forEach((item) => {
     item.material.emissive.setHex(item.cyberColor);
-    item.material.emissiveIntensity = 1.25;
+    item.material.emissiveIntensity = 0.35;
   });
 
   // 3. Rambu lalu lintas menyala terang
   cyberTrafficMaterials.forEach((m) => {
     m.emissive.setHex(0x10b981);
-    m.emissiveIntensity = 2.5;
+    m.emissiveIntensity = 0.8;
   });
 
   // 4. Garis neon trotoar & ring jalan menyala
   if (rimMat) {
     rimMat.color.setHex(0x38bdf8);
     rimMat.emissive.setHex(0x0284c7);
-    rimMat.emissiveIntensity = 1.8;
+    rimMat.emissiveIntensity = 0.45;
   }
   if (kerbMatDark) {
     kerbMatDark.color.setHex(0xc084fc);
     kerbMatDark.emissive.setHex(0x9333ea);
-    kerbMatDark.emissiveIntensity = 1.5;
+    kerbMatDark.emissiveIntensity = 0.35;
   }
 
   // 5. Booster lampu neon overhead
   neonLights.forEach((n) => {
-    n.targetIntensity = 5.5;
+    n.targetIntensity = 2.3;
   });
 
   if (infoDetail) {
-    infoDetail.textContent = '⚡ CUTSCENE: Daya Kota Dipulihkan! Seluruh lampu jalan, gedung cyberpunk & jaringan neon kota menyala terang benderang!';
+    infoDetail.textContent = ' CUTSCENE: Daya Kota Dipulihkan! Seluruh lampu jalan, gedung cyberpunk & jaringan neon kota menyala terang benderang!';
   }
 }
 
@@ -424,14 +408,11 @@ function initCyberCity() {
     scene.add(skySphere);
   };
 
-  const exrLoader = new EXRLoader();
-  exrLoader.load(
-    './assets/textures/sky/milkyway.exr',
-    (tex) => setupSkyTexture(tex),
+  new THREE.TextureLoader().load(
+    './assets/hdr/eso_milkyway_galaxy_360.jpg',
+    setupSkyTexture,
     undefined,
-    () => {
-      new THREE.TextureLoader().load('./assets/textures/sky/milkyway.png', (pngTex) => setupSkyTexture(pngTex));
-    }
+    (error) => console.warn('Gagal memuat langit galaksi:', error)
   );
 
   // 4. Pendar Cahaya Bulan Murni di Langit Malam
@@ -543,6 +524,15 @@ function initCyberCity() {
 
   // 13. Sistem Gerbang Interaktif Runner (Pasukan Army, Multiplier, EXP, Minus & Elemen)
   gateManager = new GateManager(scene, mainMesh, cylinderRadius, avatarGroup, () => avatarModel);
+  gateManager.onElementChange = (element) => changeArmyElement(gateManager, avatarGroup, avatarModel, element, (model, mixer, action) => {
+    if (avatarMixer) {
+      avatarMixer.stopAllAction();
+      avatarMixer.uncacheRoot(avatarModel);
+    }
+    avatarModel = model;
+    avatarMixer = mixer;
+    avatarRunAction = action;
+  });
 
   // 14. Sistem Final Boss Mecha Robot (Muncul setelah 1 menit / 60 detik berlari)
   monsterManager = new MonsterManager(
@@ -980,7 +970,7 @@ function setCameraView(mode) {
     );
 
     if (btnToggleCam) {
-      btnToggleCam.innerText = '📷 Kamera: Di Selimut (Third-Person)';
+      btnToggleCam.innerText = ' Kamera: Di Selimut (Third-Person)';
       btnToggleCam.style.borderColor = '#facc15';
       btnToggleCam.style.color = '#facc15';
     }
@@ -998,7 +988,7 @@ function setCameraView(mode) {
     controls.update();
 
     if (btnToggleCam) {
-      btnToggleCam.innerText = '📷 Kamera: Orbit Bebas (Mouse Look)';
+      btnToggleCam.innerText = ' Kamera: Orbit Bebas (Mouse Look)';
       btnToggleCam.style.borderColor = '#38bdf8';
       btnToggleCam.style.color = '#38bdf8';
     }
@@ -1015,12 +1005,12 @@ function setupControls() {
 
   btnToggleAnim?.addEventListener('click', () => {
     isAnimating = !isAnimating;
-    btnToggleAnim.innerText = isAnimating ? '⏸️ Pause (Space)' : '▶️ Putar (Space)';
+    btnToggleAnim.innerText = isAnimating ? ' Pause (Space)' : ' Putar (Space)';
   });
 
   btnSpawnMonster = document.getElementById('btnSpawnMonster');
   btnSpawnMonster?.addEventListener('click', () => {
-    if (monsterManager) monsterManager.spawnMonster();
+    if (monsterManager) monsterManager.prepareBoss();
   });
 
   const btnTestWin = document.getElementById('btnTestWin');
@@ -1032,7 +1022,7 @@ function setupControls() {
     if (e.code === 'Space') {
       isAnimating = !isAnimating;
       if (btnToggleAnim) {
-        btnToggleAnim.innerText = isAnimating ? '⏸️ Pause (Space)' : '▶️ Putar (Space)';
+        btnToggleAnim.innerText = isAnimating ? ' Pause (Space)' : ' Putar (Space)';
       }
     } else if (e.code === 'KeyC') {
       setCameraView(cameraView === 'surface' ? 'orbit' : 'surface');
@@ -1041,9 +1031,9 @@ function setupControls() {
     } else if (e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') {
       avatarTargetLaneY = 0.21; // Jalur Kanan
     } else if (e.code === 'KeyM') {
-      if (monsterManager) monsterManager.spawnMonster();
+      if (monsterManager) monsterManager.prepareBoss();
     } else if (e.key.toLowerCase() === 'm') {
-      if (monsterManager) monsterManager.spawnMonster();
+      if (monsterManager) monsterManager.prepareBoss();
     }
   });
 
@@ -1065,7 +1055,7 @@ function setupControls() {
   btnSpeed?.addEventListener('click', () => {
     speedIndex = (speedIndex + 1) % speedLevels.length;
     rollSpeed = speedLevels[speedIndex];
-    btnSpeed.innerText = `⚡ Kecepatan Jalan: ${rollSpeed.toFixed(1)}x`;
+    btnSpeed.innerText = ` Kecepatan Jalan: ${rollSpeed.toFixed(1)}x`;
   });
 }
 
@@ -1174,13 +1164,6 @@ function animate(currentTime) {
 
   if (skySphere) {
     skySphere.position.copy(camera.position);
-  }
-
-  // Pendaran lembut cahaya bulan murni di langit malam
-  if (moonVisuals) {
-    const mPulse = 1.0 + Math.sin(currentTime * 0.0015) * 0.04;
-    moonVisuals.coreSprite.scale.set(7.5 * mPulse, 7.5 * mPulse, 1);
-    moonVisuals.bloomSprite.scale.set(16.5 * mPulse, 16.5 * mPulse, 1);
   }
 
   renderer.render(scene, camera);

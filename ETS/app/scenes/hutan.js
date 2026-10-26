@@ -1,3 +1,4 @@
+import '@fortawesome/fontawesome-free/css/all.min.css';
 /**
  * ETS Grafika Komputer - Lingkungan 02: Hutan Malam Kebakaran (Galaxy Wildfire Forest)
  * - Background langit malam galaksi 360° (Galaxy Deep Space) & Bulan bersinar sama seperti kota2.
@@ -13,8 +14,9 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
-import { GateManager } from './gates.js?v=banjar_same_size_v4';
-import { MonsterManager } from './monster.js?v=boss_v1';
+import { GateManager } from '../game/gates.js';
+import { changeArmyElement } from '../game/army-element.js';
+import { MonsterManager } from '../game/monster.js';
 
 const canvas = document.getElementById('mainCanvas');
 const fpsDisplay = document.getElementById('fpsDisplay');
@@ -65,6 +67,8 @@ const animatedFireMixers = [];
 const dynamicFireLights = [];
 let emberVelocities = [];
 const allFireWrappers = [];
+let fireFadeTimer = null;
+let wildfireExtinguished = false;
 const allTreeLeavesMaterials = [];
 const allTreeTrunkMaterials = [];
 
@@ -105,22 +109,22 @@ function createMoon(scene) {
     map: moonTex,
     blending: THREE.AdditiveBlending,
     transparent: true,
-    opacity: 0.95,
+    opacity: 0.70,
     depthWrite: false
   });
   const coreSprite = new THREE.Sprite(coreMat);
-  coreSprite.scale.set(7.5, 7.5, 1);
+  coreSprite.scale.set(7, 7, 1);
   moonGroup.add(coreSprite);
 
   const bloomMat = new THREE.SpriteMaterial({
     map: moonTex,
     blending: THREE.AdditiveBlending,
     transparent: true,
-    opacity: 0.45,
+    opacity: 0.20,
     depthWrite: false
   });
   const bloomSprite = new THREE.Sprite(bloomMat);
-  bloomSprite.scale.set(16.5, 16.5, 1);
+  bloomSprite.scale.set(12, 12, 1);
   moonGroup.add(bloomSprite);
 
   scene.add(moonGroup);
@@ -131,7 +135,7 @@ function createMoon(scene) {
   scene.add(moonLight);
   scene.add(moonLight.target);
 
-  const moonPoint = new THREE.PointLight(0xc7d2fe, 2.30, 85, 1.1); // Pendaran bulan diterangkan
+  const moonPoint = new THREE.PointLight(0xc7d2fe, 1.2, 85, 1.1); // Pendaran bulan diterangkan
   moonPoint.position.copy(moonPos);
   scene.add(moonPoint);
 
@@ -311,7 +315,7 @@ function createRunnerAvatar(scene) {
 }
 
 function createWaterFootstepEffect(parentGroup) {
-  const particleCount = 28;
+  const particleCount = 10;
   const positions = new Float32Array(particleCount * 3);
   splashVelocities = [];
 
@@ -333,10 +337,10 @@ function createWaterFootstepEffect(parentGroup) {
 
   const mat = new THREE.PointsMaterial({
     color: 0x38bdf8,
-    size: 0.022,
+    size: 0.014,
     transparent: true,
-    opacity: 0.85,
-    blending: THREE.AdditiveBlending
+    opacity: 0.50,
+    blending: THREE.NormalBlending
   });
 
   splashParticles = new THREE.Points(geo, mat);
@@ -479,6 +483,18 @@ function initForest() {
 
   // 12. Sistem Gerbang Interaktif Runner (Pasukan Army, Multiplier, EXP, Minus & Elemen)
   gateManager = new GateManager(scene, mainMesh, cylinderRadius, avatarGroup, () => avatarModel);
+  gateManager.activeElement = 'WATER';
+  gateManager.elementType = 'water';
+  gateManager.updateHud();
+  gateManager.onElementChange = (element) => changeArmyElement(gateManager, avatarGroup, avatarModel, element, (model, mixer, action) => {
+    if (avatarMixer) {
+      avatarMixer.stopAllAction();
+      avatarMixer.uncacheRoot(avatarModel);
+    }
+    avatarModel = model;
+    avatarMixer = mixer;
+    avatarRunAction = action;
+  });
 
   // 13. Sistem Final Boss Monster Lava Hutan (Muncul setelah 1 menit / 60 detik berlari)
   monsterManager = new MonsterManager(
@@ -923,7 +939,7 @@ function buildForestScenery() {
   }
 
   // 4. Sumber Cahaya Api Berkedip (Dynamic Flickering Firelights)
-  const lightCount = 6;
+  const lightCount = 10;
   for (let l = 0; l < lightCount; l++) {
     const theta = (l / lightCount) * Math.PI * 2;
     const side = (l % 2 === 0) ? 1 : -1;
@@ -933,8 +949,8 @@ function buildForestScenery() {
 
     const fireLight = new THREE.PointLight(
       l % 2 === 0 ? 0xff6600 : 0xff4400,
-      2.2,
-      5.5,
+      1.8,
+      7.0,
       1.5
     );
 
@@ -947,7 +963,7 @@ function buildForestScenery() {
 
     dynamicFireLights.push({
       light: fireLight,
-      baseIntensity: 2.2,
+      baseIntensity: 1.8,
       speed: 8.0 + Math.random() * 6.0,
       offset: Math.random() * 10
     });
@@ -958,7 +974,7 @@ function buildForestScenery() {
 // SISTEM PARTIKEL BARA API & ASAP MALAM
 // -------------------------------------------------------------
 function buildEmbersAndSmoke() {
-  const emberCount = 320;
+  const emberCount = 180;
   const emberGeo = new THREE.BufferGeometry();
   const emberPositions = new Float32Array(emberCount * 3);
   emberVelocities = [];
@@ -982,10 +998,10 @@ function buildEmbersAndSmoke() {
   const emberMat = new THREE.PointsMaterial({
     map: createEmberTexture(),
     color: 0xffedd5,
-    size: 0.14,
+    size: 0.085,
     transparent: true,
-    opacity: 0.95,
-    blending: THREE.AdditiveBlending,
+    opacity: 0.78,
+    blending: THREE.NormalBlending,
     depthWrite: false
   });
 
@@ -1030,7 +1046,7 @@ function loadFireAssetsAndPopulate() {
 
   Promise.all([p1, p2])
     .then(([gltfFire, gltfBomberman]) => {
-      console.log('✅ Asset 3D Api Berhasil Dimuat:', gltfFire, gltfBomberman);
+      console.log(' Asset 3D Api Berhasil Dimuat:', gltfFire, gltfBomberman);
 
       setupFireModelMaterials(gltfFire.scene);
       const fireClip = gltfFire.animations && gltfFire.animations.length > 0 ? gltfFire.animations[0] : null;
@@ -1041,7 +1057,7 @@ function loadFireAssetsAndPopulate() {
       spawnFireInstances(gltfFire.scene, fireClip, gltfBomberman.scene, bombermanClip);
     })
     .catch((err) => {
-      console.error('⚠️ Gagal memuat asset model api:', err);
+      console.error(' Gagal memuat asset model api:', err);
     });
 }
 
@@ -1054,7 +1070,7 @@ function setupFireModelMaterials(rootScene) {
         child.material.side = THREE.DoubleSide;
         if (child.material.emissive) {
           child.material.emissive.setHex(0xff5500);
-          child.material.emissiveIntensity = 1.3;
+          child.material.emissiveIntensity = 0.90;
         }
       }
     }
@@ -1066,7 +1082,7 @@ function spawnFireInstances(fireModel, fireClip, bombermanModel, bombermanClip) 
 
   // A. Api di Tepi Jalan / Bahu Tanah (Ukuran Agak Kecil & Pas Seperti Api Unggun)
   // 14 Titik Api Unggun di Atas Bahu Tanah
-  const roadsideCount = 14;
+  const roadsideCount = 22;
   for (let r = 0; r < roadsideCount; r++) {
     const isBomberman = (r % 3 === 0);
     const sourceModel = isBomberman ? bombermanModel : fireModel;
@@ -1085,15 +1101,18 @@ function spawnFireInstances(fireModel, fireClip, bombermanModel, bombermanClip) 
     // SKALA API KECIL & PROPORSIONAL (Campfire / Ground Fire)
     if (isBomberman) {
       // bomberman_fire: skala kecil rapi (~25cm - 35cm)
-      const s = 0.0024 + Math.random() * 0.0010;
+      const s = 0.0032 + Math.random() * 0.0012;
       fireClone.scale.set(s, s, s);
       fireClone.position.y = 0.02;
     } else {
       // fire.glb: skala kecil rapi (~20cm - 32cm)
-      const s = 0.10 + Math.random() * 0.05;
+      const s = 0.15 + Math.random() * 0.07;
       fireClone.scale.set(s, s, s);
       fireClone.position.y = 0.08;
     }
+
+    // Kobaran dibuat lebih tinggi tanpa memperlebar area api secara berlebihan.
+    fireClone.scale.y *= 1.28;
 
     fireClone.rotation.y = Math.random() * Math.PI * 2;
 
@@ -1122,7 +1141,7 @@ function spawnFireInstances(fireModel, fireClip, bombermanModel, bombermanClip) 
 
   // B. Api di Pangkal & Batang Pohon Hutan
   // 10 Titik Api Menjilat Pangkal Pohon
-  const treeFireCount = 10;
+  const treeFireCount = 16;
   for (let t = 0; t < treeFireCount; t++) {
     const isBomberman = (t % 2 === 0);
     const sourceModel = isBomberman ? bombermanModel : fireModel;
@@ -1139,15 +1158,17 @@ function spawnFireInstances(fireModel, fireClip, bombermanModel, bombermanClip) 
 
     if (isBomberman) {
       // Skala sedang di pangkal pohon (~40cm - 55cm)
-      const s = 0.0038 + Math.random() * 0.0016;
+      const s = 0.0050 + Math.random() * 0.0018;
       fireClone.scale.set(s, s, s);
       fireClone.position.y = 0.12;
     } else {
       // Skala sedang di pangkal pohon (~32cm - 45cm)
-      const s = 0.16 + Math.random() * 0.07;
+      const s = 0.22 + Math.random() * 0.09;
       fireClone.scale.set(s, s, s);
       fireClone.position.y = 0.14;
     }
+
+    fireClone.scale.y *= 1.32;
 
     fireClone.rotation.y = Math.random() * Math.PI * 2;
 
@@ -1180,19 +1201,20 @@ function spawnFireInstances(fireModel, fireClip, bombermanModel, bombermanClip) 
 // -------------------------------------------------------------
 function extinguishWildfire() {
   // 1. Api 3D mengecil lalu padam menghilang
-  allFireWrappers.forEach((fw) => {
-    let s = 1.0;
-    const fadeInterval = setInterval(() => {
-      s -= 0.08;
-      if (s <= 0) {
-        clearInterval(fadeInterval);
-        fw.model.scale.set(0, 0, 0);
-        fw.wrapper.visible = false;
-      } else {
-        fw.model.scale.copy(fw.baseScale).multiplyScalar(s);
-      }
-    }, 35);
-  });
+  if (fireFadeTimer) clearInterval(fireFadeTimer);
+  let scale = 1;
+  fireFadeTimer = setInterval(() => {
+    scale = Math.max(0, scale - 0.05);
+    allFireWrappers.forEach((fw) => {
+      fw.model.scale.copy(fw.baseScale).multiplyScalar(scale);
+      if (scale === 0) fw.wrapper.visible = false;
+    });
+    if (scale === 0) {
+      wildfireExtinguished = true;
+      clearInterval(fireFadeTimer);
+      fireFadeTimer = null;
+    }
+  }, 40);
 
   // 2. Padamkan cahaya api dinamis
   dynamicFireLights.forEach((fl) => {
@@ -1221,11 +1243,16 @@ function extinguishWildfire() {
 
   // 6. Update HUD detail
   if (infoDetail) {
-    infoDetail.textContent = '🌲 CUTSCENE: Kebakaran Hutan Padam! Api padam, bara menghilang, dan hutan kembali hijau asri serta damai!';
+    infoDetail.textContent = ' CUTSCENE: Kebakaran Hutan Padam! Api padam, bara menghilang, dan hutan kembali hijau asri serta damai!';
   }
 }
 
 function restoreWildfire() {
+  wildfireExtinguished = false;
+  if (fireFadeTimer) {
+    clearInterval(fireFadeTimer);
+    fireFadeTimer = null;
+  }
   allFireWrappers.forEach((fw) => {
     fw.wrapper.visible = true;
     fw.model.scale.copy(fw.baseScale);
@@ -1265,7 +1292,7 @@ function setCameraView(mode) {
     camera.lookAt(camX - Math.sin(basePitchDown) * targetDist, 0, camZOffset + Math.cos(basePitchDown) * targetDist);
 
     if (btnToggleCam) {
-      btnToggleCam.textContent = '📷 Kamera: Di Selimut (Third-Person)';
+      btnToggleCam.textContent = ' Kamera: Di Selimut (Third-Person)';
       btnToggleCam.style.borderColor = '#38bdf8';
       btnToggleCam.style.color = '#38bdf8';
     }
@@ -1279,7 +1306,7 @@ function setCameraView(mode) {
     controls.target.set(0, 0, 0);
     controls.update();
     if (btnToggleCam) {
-      btnToggleCam.textContent = '🛰️ Kamera: Luar (Orbit 3D)';
+      btnToggleCam.textContent = ' Kamera: Luar (Orbit 3D)';
       btnToggleCam.style.borderColor = 'rgba(255, 255, 255, 0.2)';
       btnToggleCam.style.color = '#cbd5e1';
     }
@@ -1328,15 +1355,19 @@ function animate(time) {
       });
     }
 
-    for (let i = 0; i < animatedFireMixers.length; i++) {
-      animatedFireMixers[i].update(delta);
+    if (!wildfireExtinguished) {
+      for (let i = 0; i < animatedFireMixers.length; i++) {
+        animatedFireMixers[i].update(delta);
+      }
     }
 
-    dynamicFireLights.forEach((fl) => {
-      const flick = Math.sin(elapsed * fl.speed + fl.offset) * 0.28
-                  + Math.sin(elapsed * 17.3 + fl.offset) * 0.12;
-      fl.light.intensity = Math.max(0.5, fl.baseIntensity * (1.0 + flick));
-    });
+    if (!wildfireExtinguished) {
+      dynamicFireLights.forEach((fl) => {
+        const flick = Math.sin(elapsed * fl.speed + fl.offset) * 0.28
+                    + Math.sin(elapsed * 17.3 + fl.offset) * 0.12;
+        fl.light.intensity = Math.max(0.5, fl.baseIntensity * (1.0 + flick));
+      });
+    }
 
     if (emberParticles && emberParticles.geometry) {
       const pos = emberParticles.geometry.attributes.position.array;
@@ -1443,11 +1474,6 @@ function animate(time) {
     skySphere.position.copy(camera.position);
   }
 
-  if (moonVisuals) {
-    const pulse = 1.0 + Math.sin(time * 0.002) * 0.04;
-    moonVisuals.coreSprite.scale.set(7.5 * pulse, 7.5 * pulse, 1);
-    moonVisuals.bloomSprite.scale.set(16.5 * pulse, 16.5 * pulse, 1);
-  }
 
   renderer.render(scene, camera);
 }
@@ -1459,20 +1485,20 @@ btnToggleCam.addEventListener('click', () => {
 
 btnToggleAnim.addEventListener('click', () => {
   isAnimating = !isAnimating;
-  btnToggleAnim.textContent = isAnimating ? '⏸️ Pause (Space)' : '▶️ Play (Space)';
+  btnToggleAnim.textContent = isAnimating ? ' Pause (Space)' : ' Play (Space)';
 });
 
 btnWireframe.addEventListener('click', () => {
   isWireframe = !isWireframe;
   sideMaterial.wireframe = isWireframe;
   capMaterial.wireframe = isWireframe;
-  btnWireframe.textContent = isWireframe ? '🧊 Solid' : '🕸️ Wireframe';
+  btnWireframe.textContent = isWireframe ? ' Solid' : ' Wireframe';
 });
 
 btnSpeed.addEventListener('click', () => {
   speedIndex = (speedIndex + 1) % speedLevels.length;
   rollSpeed = speedLevels[speedIndex];
-  btnSpeed.textContent = `⚡ Kecepatan Jalan: ${rollSpeed.toFixed(2)}x`;
+  btnSpeed.textContent = ` Kecepatan Jalan: ${rollSpeed.toFixed(2)}x`;
 });
 
 
@@ -1501,7 +1527,7 @@ if (btnLaneRight) {
 }
 if (btnSpawnMonster) {
   btnSpawnMonster.addEventListener('click', () => {
-    if (monsterManager) monsterManager.spawnMonster();
+    if (monsterManager) monsterManager.prepareBoss();
   });
 }
 const btnTestWin = document.getElementById('btnTestWin');
