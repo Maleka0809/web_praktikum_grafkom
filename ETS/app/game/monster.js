@@ -393,7 +393,7 @@ export class MonsterManager {
     });
   }
 
-  triggerDefeatByArmy() {
+  triggerDefeatByArmy(armyCount = null) {
     if (this.isBattleFinished || this.isDefeated) return;
     this.isBattleFinished = true;
     this.playSfx('defeat');
@@ -402,8 +402,9 @@ export class MonsterManager {
       try { this.onRaceEnd(); } catch (e) {}
     }
     const currentExp = this.gateManager ? this.gateManager.exp : 0;
+    const finalCount = (armyCount !== null && armyCount !== undefined) ? armyCount : (this.gateManager ? this.gateManager.armyCount : 0);
     setTimeout(() => {
-      this.showResultModal(false, currentExp, 0, 'army_zero');
+      this.showResultModal(false, currentExp, finalCount, 'army_zero');
     }, 450);
   }
 
@@ -447,8 +448,8 @@ export class MonsterManager {
         icon.innerHTML = '<i class="ui-icon fa-solid fa-skull-crossbones" aria-hidden="true" style="color: #ef4444;"></i>';
         title.innerText = 'GAME OVER — PASUKAN HABIS!';
         title.style.color = '#ef4444';
-        desc.innerText = 'Pasukanmu Habis Tereliminasi oleh Gerbang Minus!';
-        feedback.innerHTML = `Jumlah pasukanmu tidak mencukupi untuk melewati gerbang penalti merah (pasukan menjadi 0).<br><br>Gunakan tombol <kbd>A</kbd> dan <kbd>D</kbd> dengan lincah untuk menghindari gerbang minus berwarna merah!`;
+        desc.innerText = `Sisa Pasukan: ${armyCount} (Pasukan ≤ 0)`;
+        feedback.innerHTML = `Pasukanmu mencapai angka <b>${armyCount}</b> (kurang dari atau sama dengan 0) akibat melewati gerbang penalti merah.<br><br>Gunakan tombol <kbd>A</kbd> dan <kbd>D</kbd> dengan lincah untuk menghindari gerbang minus berwarna merah!`;
       } else {
         const currentElement = (this.gateManager?.elementType || '').toUpperCase();
         const arenaRules = {

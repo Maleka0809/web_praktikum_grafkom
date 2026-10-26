@@ -793,24 +793,22 @@ export class GateManager {
         break;
 
       case 'army_sub':
-        const newArmyCount = applyMinusGate(this.armyCount, config.value);
-        if (newArmyCount <= 0) {
-          const removed = this.armyCount;
-          this.armyCount = 0;
+        const penalty = config.value;
+        this.armyCount = applyMinusGate(this.armyCount, penalty);
+        if (this.armyCount <= 0) {
           this.clearArmyClones();
           if (this.avatarGroup) this.avatarGroup.visible = false;
-          this.createFloatingPopup(`-${removed} PASUKAN (HABIS!)`, '#ef4444', hitPos);
+          this.createFloatingPopup(`-${penalty} PASUKAN (${this.armyCount})`, '#ef4444', hitPos);
           this.createPassBurst(hitPos, 0xef4444);
           this.playSound('negative');
           this.updateHud();
           this.drawHeadBadge(true);
           if (this.onGameOver) {
-            this.onGameOver('army_zero');
+            this.onGameOver('army_zero', this.armyCount);
           }
           return;
         } else {
-          this.armyCount = newArmyCount;
-          this.createFloatingPopup(`-${config.value} PASUKAN`, config.borderColor, hitPos);
+          this.createFloatingPopup(`-${penalty} PASUKAN`, config.borderColor, hitPos);
           this.createPassBurst(hitPos, config.pipeColor);
           soundType = 'negative';
         }

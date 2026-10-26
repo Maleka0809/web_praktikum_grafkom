@@ -525,7 +525,7 @@ function initForest() {
       extinguishWildfire();
     }
   );
-  gateManager.onGameOver = () => monsterManager.triggerDefeatByArmy();
+  gateManager.onGameOver = (reason, armyCount) => monsterManager.triggerDefeatByArmy(armyCount);
 }
 
 // -------------------------------------------------------------

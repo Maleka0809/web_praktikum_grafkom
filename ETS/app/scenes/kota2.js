@@ -566,7 +566,7 @@ function initCyberCity() {
       restoreCyberPower();
     }
   );
-  gateManager.onGameOver = () => monsterManager.triggerDefeatByArmy();
+  gateManager.onGameOver = (reason, armyCount) => monsterManager.triggerDefeatByArmy(armyCount);
 
   // 15. Event Listeners
   window.addEventListener('resize', onWindowResize);
