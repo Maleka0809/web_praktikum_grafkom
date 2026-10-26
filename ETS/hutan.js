@@ -64,6 +64,9 @@ let moonVisuals;
 const animatedFireMixers = [];
 const dynamicFireLights = [];
 let emberVelocities = [];
+const allFireWrappers = [];
+const allTreeLeavesMaterials = [];
+const allTreeTrunkMaterials = [];
 
 // Tekstur Pendaran Cahaya Bulan (Sama persis seperti di kota2)
 function createMoonGlareTexture() {
@@ -496,6 +499,11 @@ function initForest() {
       if (avatarMixer) avatarMixer.timeScale = 1.0;
       avatarTargetLaneY = -0.21;
       avatarLaneY = -0.21;
+      restoreWildfire();
+    },
+    () => {
+      // onVictoryCutscene: Kebakaran hutan padam!
+      extinguishWildfire();
     }
   );
 }
@@ -558,6 +566,8 @@ function createPineTree(state = 'burning') {
     emissive: state === 'burning' ? 0x551111 : 0x000000,
     emissiveIntensity: 0.42
   });
+  allTreeTrunkMaterials.push({ material: trunkMat, origColor: trunkMat.color.getHex(), origEmissive: trunkMat.emissive.getHex(), origEmissiveIntensity: trunkMat.emissiveIntensity });
+
   const trunk = new THREE.Mesh(trunkGeo, trunkMat);
   trunk.position.y = 0.62;
   treeGroup.add(trunk);
@@ -600,6 +610,10 @@ function createPineTree(state = 'burning') {
     emissiveIntensity: 0.25
   });
 
+  allTreeLeavesMaterials.push({ material: mat1, origColor: mat1.color.getHex(), origEmissive: mat1.emissive.getHex(), origEmissiveIntensity: mat1.emissiveIntensity });
+  allTreeLeavesMaterials.push({ material: mat2, origColor: mat2.color.getHex(), origEmissive: mat2.emissive.getHex(), origEmissiveIntensity: mat2.emissiveIntensity });
+  allTreeLeavesMaterials.push({ material: mat3, origColor: mat3.color.getHex(), origEmissive: mat3.emissive.getHex(), origEmissiveIntensity: mat3.emissiveIntensity });
+
   const cone1 = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.60, 7), mat1);
   cone1.position.y = 1.10;
   treeGroup.add(cone1);
@@ -626,6 +640,8 @@ function createBroadleafTree(state = 'burning') {
     emissive: state === 'burning' ? 0x4d1203 : 0x000000,
     emissiveIntensity: 0.40
   });
+  allTreeTrunkMaterials.push({ material: trunkMat, origColor: trunkMat.color.getHex(), origEmissive: trunkMat.emissive.getHex(), origEmissiveIntensity: trunkMat.emissiveIntensity });
+
   const trunk = new THREE.Mesh(trunkGeo, trunkMat);
   trunk.position.y = 0.67;
   treeGroup.add(trunk);
@@ -657,6 +673,9 @@ function createBroadleafTree(state = 'burning') {
     emissiveIntensity: 0.35
   });
 
+  allTreeLeavesMaterials.push({ material: foliageMat1, origColor: foliageMat1.color.getHex(), origEmissive: foliageMat1.emissive.getHex(), origEmissiveIntensity: foliageMat1.emissiveIntensity });
+  allTreeLeavesMaterials.push({ material: foliageMat2, origColor: foliageMat2.color.getHex(), origEmissive: foliageMat2.emissive.getHex(), origEmissiveIntensity: foliageMat2.emissiveIntensity });
+
   const c1 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.32, 1), foliageMat1);
   c1.position.set(0, 1.45, 0);
   treeGroup.add(c1);
@@ -684,6 +703,8 @@ function createCharredStump() {
     emissive: 0x7c2d12,
     emissiveIntensity: 0.45
   });
+  allTreeTrunkMaterials.push({ material: stumpMat, origColor: stumpMat.color.getHex(), origEmissive: stumpMat.emissive.getHex(), origEmissiveIntensity: stumpMat.emissiveIntensity });
+
   const stump = new THREE.Mesh(stumpGeo, stumpMat);
   stump.position.y = height / 2;
   stump.rotation.z = (Math.random() - 0.5) * 0.2;
@@ -1085,6 +1106,7 @@ function spawnFireInstances(fireModel, fireClip, bombermanModel, bombermanClip) 
     wrapper.position.set(posX, posY, posZ);
 
     forestGroup.add(wrapper);
+    allFireWrappers.push({ wrapper, model: fireClone, baseScale: fireClone.scale.clone() });
 
     if (clip) {
       const mixer = new THREE.AnimationMixer(fireClone);
@@ -1138,6 +1160,7 @@ function spawnFireInstances(fireModel, fireClip, bombermanModel, bombermanClip) 
     wrapper.position.set(posX, posY, posZ);
 
     forestGroup.add(wrapper);
+    allFireWrappers.push({ wrapper, model: fireClone, baseScale: fireClone.scale.clone() });
 
     if (clip) {
       const mixer = new THREE.AnimationMixer(fireClone);
@@ -1148,6 +1171,80 @@ function spawnFireInstances(fireModel, fireClip, bombermanModel, bombermanClip) 
       animatedFireMixers.push(mixer);
     }
   }
+}
+
+// -------------------------------------------------------------
+// CUTSCENE PEMULIHAN HUTAN: KEBAKARAN HUTAN PADAM
+// -------------------------------------------------------------
+function extinguishWildfire() {
+  // 1. Api 3D mengecil lalu padam menghilang
+  allFireWrappers.forEach((fw) => {
+    let s = 1.0;
+    const fadeInterval = setInterval(() => {
+      s -= 0.08;
+      if (s <= 0) {
+        clearInterval(fadeInterval);
+        fw.model.scale.set(0, 0, 0);
+        fw.wrapper.visible = false;
+      } else {
+        fw.model.scale.copy(fw.baseScale).multiplyScalar(s);
+      }
+    }, 35);
+  });
+
+  // 2. Padamkan cahaya api dinamis
+  dynamicFireLights.forEach((fl) => {
+    fl.light.intensity = 0.0;
+  });
+
+  // 3. Matikan percikan bara api malam & kurangi kepekatan asap
+  if (emberParticles) emberParticles.visible = false;
+  if (smokeParticles && smokeParticles.material) {
+    smokeParticles.material.opacity = 0.04;
+  }
+
+  // 4. Ubah dedaunan pohon dari membara merah/oranye menjadi hijau alami asri
+  allTreeLeavesMaterials.forEach((item) => {
+    item.material.color.setHex(0x15803d); // Hijau asri alami
+    item.material.emissive.setHex(0x000000);
+    item.material.emissiveIntensity = 0.0;
+  });
+
+  // 5. Ubah batang pohon terbakar menjadi coklat kayu alami tanpa bara
+  allTreeTrunkMaterials.forEach((item) => {
+    item.material.color.setHex(0x5c3822);
+    item.material.emissive.setHex(0x000000);
+    item.material.emissiveIntensity = 0.0;
+  });
+
+  // 6. Update HUD detail
+  if (infoDetail) {
+    infoDetail.textContent = '🌲 CUTSCENE: Kebakaran Hutan Padam! Api padam, bara menghilang, dan hutan kembali hijau asri serta damai!';
+  }
+}
+
+function restoreWildfire() {
+  allFireWrappers.forEach((fw) => {
+    fw.wrapper.visible = true;
+    fw.model.scale.copy(fw.baseScale);
+  });
+  dynamicFireLights.forEach((fl) => {
+    fl.light.intensity = fl.baseIntensity;
+  });
+  if (emberParticles) emberParticles.visible = true;
+  if (smokeParticles && smokeParticles.material) {
+    smokeParticles.material.opacity = 0.22;
+  }
+  allTreeLeavesMaterials.forEach((item) => {
+    item.material.color.setHex(item.origColor);
+    item.material.emissive.setHex(item.origEmissive);
+    item.material.emissiveIntensity = item.origEmissiveIntensity;
+  });
+  allTreeTrunkMaterials.forEach((item) => {
+    item.material.color.setHex(item.origColor);
+    item.material.emissive.setHex(item.origEmissive);
+    item.material.emissiveIntensity = item.origEmissiveIntensity;
+  });
 }
 
 // -------------------------------------------------------------
@@ -1403,6 +1500,12 @@ if (btnLaneRight) {
 if (btnSpawnMonster) {
   btnSpawnMonster.addEventListener('click', () => {
     if (monsterManager) monsterManager.spawnMonster();
+  });
+}
+const btnTestWin = document.getElementById('btnTestWin');
+if (btnTestWin) {
+  btnTestWin.addEventListener('click', () => {
+    if (monsterManager) monsterManager.triggerTestVictory();
   });
 }
 

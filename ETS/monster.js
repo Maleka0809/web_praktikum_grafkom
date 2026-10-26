@@ -1,19 +1,26 @@
 /**
  * ETS Grafika Komputer - Sistem Final Boss Event (1 Menit Lari & Evaluasi EXP)
- * Mendukung 2 Arena:
+ * Mendukung 3 Arena:
  * 1. Kota Metropolitan ('city'):
  *    - flexmusc_sampah.glb (Pamer Otot / Intimidasi)
  *    - swipping_sampah.glb (Serangan Cakar Sampah)
  * 2. Hutan Malam Kebakaran ('forest'):
  *    - idle_lava.glb (Idle Golem Lahar Api)
  *    - swipping_lava.glb (Serangan Hentakan Lahar)
+ * 3. Kota Futuristik Malam ('cyber' / 'robot'):
+ *    - idle_robot.glb (Idle Mecha Robot)
+ *    - attack_robot.glb (Serangan Senjata / Pukulan Mecha)
+ *    - dying_robot.glb (Animasi Roboh Mati saat Dikalahkan)
  *
  * Mekanisme:
  * - Waktu lari tepat 1 menit (60 detik)
- * - Tepat 60 detik: "UDpreference: Udahan Larinya" -> Putaran jalan & animasi lari berhenti
+ * - Tepat 60 detik: "Udahan Larinya" -> Putaran jalan & animasi lari berhenti
  * - Final Boss muncul di depan jalan
  * - Evaluasi EXP:
- *   - Jika EXP >= Target (300 EXP): MENANG! Boss dikalahkan & perayaan kemenangan.
+ *   - Jika EXP >= Target (300 EXP): MENANG! Boss dikalahkan & cutscene pemulihan lingkungan aktif.
+ *     * Kota 2: Mati lampu jadi nyala (cyberpunk power grid pulih)
+ *     * Hutan: Kebakaran hutan padam (hutan kembali hijau asri & sejuk)
+ *     * Kota: Banjir surut menyusut ke drainase kota
  *   - Jika EXP < Target (300 EXP): KALAH! Boss menyerang & game over.
  * - Tombol "Main Lagi (Restart)" & "Pilih Lingkungan Lain".
  */
@@ -22,15 +29,16 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 export class MonsterManager {
-  constructor(scene, mainMesh, cylinderRadius, camera, gateManager = null, arenaType = 'city', onRaceEnd = null, onRestart = null) {
+  constructor(scene, mainMesh, cylinderRadius, camera, gateManager = null, arenaType = 'city', onRaceEnd = null, onRestart = null, onVictoryCutscene = null) {
     this.scene = scene;
     this.mainMesh = mainMesh;
     this.cylinderRadius = cylinderRadius;
     this.camera = camera;
     this.gateManager = gateManager;
-    this.arenaType = arenaType; // 'city' | 'forest'
+    this.arenaType = arenaType; // 'city' | 'forest' | 'cyber'
     this.onRaceEnd = onRaceEnd;
     this.onRestart = onRestart;
+    this.onVictoryCutscene = onVictoryCutscene;
 
     // Timer & Target State
     this.runTime = 0.0;
@@ -47,13 +55,23 @@ export class MonsterManager {
       this.bossSub = 'Kalahkan Monster Lava dengan Mengumpulkan Min. 300 EXP!';
       this.modelPath1 = './assets/idle_lava.glb';
       this.modelPath2 = './assets/swipping_lava.glb';
+      this.modelPathDying = null;
       this.modelScale = 0.35;
       this.lightColor = 0xff6600;
+    } else if (this.arenaType === 'cyber' || this.arenaType === 'robot') {
+      this.bossName = '🤖 FINAL BOSS: CYBER MECHA ROBOT';
+      this.bossSub = 'Kalahkan Mecha Robot dengan Mengumpulkan Min. 300 EXP!';
+      this.modelPath1 = './assets/idle_robot.glb';
+      this.modelPath2 = './assets/attack_robot.glb';
+      this.modelPathDying = './assets/dying_robot.glb';
+      this.modelScale = 0.85;
+      this.lightColor = 0xa855f7;
     } else {
       this.bossName = '👾 FINAL BOSS: MONSTER SAMPAH KOTA';
       this.bossSub = 'Kalahkan Monster Sampah dengan Mengumpulkan Min. 300 EXP!';
       this.modelPath1 = './assets/flexmusc_sampah.glb';
       this.modelPath2 = './assets/swipping_sampah.glb';
+      this.modelPathDying = null;
       this.modelScale = 0.46;
       this.lightColor = 0xffedd5;
     }
@@ -79,6 +97,10 @@ export class MonsterManager {
     this.secondModel = null;
     this.secondMixer = null;
     this.secondAction = null;
+
+    this.dyingModel = null;
+    this.dyingMixer = null;
+    this.dyingAction = null;
 
     // Projectile & Combat Particles
     this.projectiles = [];
@@ -121,7 +143,8 @@ export class MonsterManager {
 
     if (type === 'roar') {
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(this.arenaType === 'forest' ? 80 : 95, now);
+      const startFreq = (this.arenaType === 'forest') ? 80 : (this.arenaType === 'cyber' || this.arenaType === 'robot') ? 140 : 95;
+      osc.frequency.setValueAtTime(startFreq, now);
       osc.frequency.exponentialRampToValueAtTime(45, now + 0.95);
       gain.gain.setValueAtTime(0.30, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
@@ -339,7 +362,17 @@ export class MonsterManager {
       title.innerText = 'KEMENANGAN TELAH DIRAIH!';
       title.style.color = '#facc15';
       desc.innerText = `${this.bossName.replace(/^[^\w]+/, '')} Berhasil Dikalahkan!`;
-      feedback.innerHTML = `Hebat sekali! Pasukanmu berhasil mengumpulkan <b>${currentExp} EXP</b> (melampaui target ${this.targetExp} EXP) dan menumbangkan Final Boss!`;
+
+      let cutsceneInfo = '';
+      if (this.arenaType === 'cyber' || this.arenaType === 'robot') {
+        cutsceneInfo = 'Daya kota cyberpunk telah pulih: lampu jalan & gedung menyala terang benderang!';
+      } else if (this.arenaType === 'forest') {
+        cutsceneInfo = 'Kobaran api kebakaran hutan padam: pepohonan kembali hijau asri & udara sejuk!';
+      } else {
+        cutsceneInfo = 'Banjir bandang surut menyusut: jalanan kota kembali bersih dan kering!';
+      }
+
+      feedback.innerHTML = `Hebat sekali! Pasukanmu berhasil mengumpulkan <b>${currentExp} EXP</b> (melampaui target ${this.targetExp} EXP) dan menumbangkan Final Boss!<br><span style="color:#38bdf8; font-weight:600; display:inline-block; margin-top:6px;">✨ ${cutsceneInfo}</span>`;
     } else {
       card.style.border = '2px solid #ef4444';
       card.style.boxShadow = '0 0 45px rgba(239, 68, 68, 0.50)';
@@ -368,6 +401,10 @@ export class MonsterManager {
     this.bossWrapper.visible = false;
     if (this.firstModel) this.firstModel.position.set(0, 0.015, 0);
     if (this.secondModel) this.secondModel.position.set(0, 0.015, 0);
+    if (this.dyingModel) {
+      this.dyingModel.position.set(0, 0.015, 0);
+      this.dyingModel.visible = false;
+    }
 
     // Reset Gate Manager
     if (this.gateManager) {
@@ -421,7 +458,7 @@ export class MonsterManager {
   }
 
   // -------------------------------------------------------------
-  // LOAD DUA ASET GLB MONSTER
+  // LOAD ASET GLB MONSTER (IDLE, ATTACK & DYING)
   // -------------------------------------------------------------
   loadMonsterModels() {
     const gltfLoader = new GLTFLoader();
@@ -440,7 +477,7 @@ export class MonsterManager {
       this.firstModel.visible = true;
     });
 
-    // 2. Model Kedua (Swiping Attack)
+    // 2. Model Kedua (Swiping / Attack)
     gltfLoader.load(this.modelPath2, (gltf) => {
       this.secondModel = gltf.scene;
       this.prepareMonsterModel(this.secondModel);
@@ -454,8 +491,25 @@ export class MonsterManager {
       this.secondModel.visible = false;
     });
 
-    // Lampu Khusus Boss (Sorotan Keemasan / Lahar)
-    const bossLight = new THREE.PointLight(this.lightColor, 3.5, 4.5);
+    // 3. Model Ketiga (Dying Model - Khusus Robot)
+    if (this.modelPathDying) {
+      gltfLoader.load(this.modelPathDying, (gltf) => {
+        this.dyingModel = gltf.scene;
+        this.prepareMonsterModel(this.dyingModel);
+        this.bossWrapper.add(this.dyingModel);
+
+        if (gltf.animations && gltf.animations.length > 0) {
+          this.dyingMixer = new THREE.AnimationMixer(this.dyingModel);
+          this.dyingAction = this.dyingMixer.clipAction(gltf.animations[0]);
+          this.dyingAction.setLoop(THREE.LoopOnce);
+          this.dyingAction.clampWhenFinished = true;
+        }
+        this.dyingModel.visible = false;
+      });
+    }
+
+    // Lampu Khusus Boss (Sorotan Keemasan / Lahar / Neon Robot)
+    const bossLight = new THREE.PointLight(this.lightColor, 3.8, 5.0);
     bossLight.position.set(0, 0.75, -0.60);
     this.bossWrapper.add(bossLight);
   }
@@ -473,15 +527,39 @@ export class MonsterManager {
         node.receiveShadow = true;
         if (node.material) {
           node.material = node.material.clone();
-          node.material.roughness = 0.40;
-          node.material.metalness = 0.20;
-          if (node.material.color) {
-            node.material.emissive = node.material.color.clone();
-            node.material.emissiveIntensity = this.arenaType === 'forest' ? 0.35 : 0.25;
+          if (this.arenaType === 'cyber' || this.arenaType === 'robot') {
+            node.material.roughness = 0.35;
+            node.material.metalness = 0.70;
+            node.material.emissive = new THREE.Color(0xa855f7);
+            node.material.emissiveIntensity = 0.40;
+          } else if (this.arenaType === 'forest') {
+            node.material.roughness = 0.40;
+            node.material.metalness = 0.20;
+            node.material.emissive = new THREE.Color(0xff4400);
+            node.material.emissiveIntensity = 0.35;
+          } else {
+            node.material.roughness = 0.40;
+            node.material.metalness = 0.20;
+            if (node.material.color) {
+              node.material.emissive = node.material.color.clone();
+              node.material.emissiveIntensity = 0.25;
+            }
           }
         }
       }
     });
+  }
+
+  // Helper untuk pengujian cepat kemenangan Boss & Cutscene
+  triggerTestVictory() {
+    if (this.gateManager) {
+      this.gateManager.exp = Math.max(this.gateManager.exp, 350);
+      this.gateManager.armyCount = Math.max(this.gateManager.armyCount, 10);
+      this.gateManager.updateHud();
+      this.gateManager.drawHeadBadge(true);
+      this.gateManager.syncArmyClones();
+    }
+    this.spawnMonster();
   }
 
   // -------------------------------------------------------------
@@ -498,8 +576,18 @@ export class MonsterManager {
       this.onRaceEnd();
     }
 
-    if (this.firstModel) this.firstModel.position.set(0, 0.015, 0);
-    if (this.secondModel) this.secondModel.position.set(0, 0.015, 0);
+    if (this.firstModel) {
+      this.firstModel.position.set(0, 0.015, 0);
+      this.firstModel.visible = true;
+    }
+    if (this.secondModel) {
+      this.secondModel.position.set(0, 0.015, 0);
+      this.secondModel.visible = false;
+    }
+    if (this.dyingModel) {
+      this.dyingModel.position.set(0, 0.015, 0);
+      this.dyingModel.visible = false;
+    }
 
     const army = this.gateManager ? this.gateManager.armyCount : 1;
     const lvl = this.gateManager ? this.gateManager.level : 1;
@@ -525,9 +613,6 @@ export class MonsterManager {
     setTimeout(() => this.playSfx('roar'), 600);
 
     this.shakeIntensity = 0.065;
-
-    if (this.firstModel) this.firstModel.visible = true;
-    if (this.secondModel) this.secondModel.visible = false;
 
     // Eksekusi Konfrontasi Berdasarkan Syarat EXP (Durasi tatap muka epik 4.5 detik):
     setTimeout(() => {
@@ -573,9 +658,11 @@ export class MonsterManager {
       }, 50);
     } else {
       // 💀 PEMAIN KALAH!
-      // Boss melakukan serangan cakar mematikan
+      // Boss melakukan serangan cakar / laser mematikan
       if (this.firstModel) this.firstModel.visible = false;
       if (this.secondModel) this.secondModel.visible = true;
+      if (this.dyingModel) this.dyingModel.visible = false;
+
       this.playSfx('roar');
       this.playSfx('defeat');
       this.shakeIntensity = 0.09;
@@ -598,11 +685,13 @@ export class MonsterManager {
     const bossWorldPos = new THREE.Vector3();
     this.bossWrapper.getWorldPosition(bossWorldPos);
 
+    const pColor = (this.arenaType === 'forest') ? 0xf97316 : (this.arenaType === 'cyber' || this.arenaType === 'robot') ? 0xc084fc : 0x38bdf8;
+
     const count = 3;
     for (let k = 0; k < count; k++) {
       const geo = new THREE.SphereGeometry(0.045, 8, 8);
       const mat = new THREE.MeshBasicMaterial({
-        color: this.arenaType === 'forest' ? 0xf97316 : 0x38bdf8,
+        color: pColor,
         transparent: true,
         opacity: 0.90
       });
@@ -622,7 +711,7 @@ export class MonsterManager {
   }
 
   // -------------------------------------------------------------
-  // KEMENANGAN: MONSTER DIKALAHKAN
+  // KEMENANGAN: MONSTER DIKALAHKAN & CUTSCENE PEMULIHAN
   // -------------------------------------------------------------
   defeatMonster(currentExp, armyCount) {
     if (this.isDefeated) return;
@@ -638,7 +727,39 @@ export class MonsterManager {
     this.bossWrapper.getWorldPosition(bossWorldPos);
     this.createVictoryBurst(bossWorldPos);
 
-    // Animasi monster tenggelam perlahan ke bawah aspal
+    // Aktifkan Cutscene Pemulihan Lingkungan Segera!
+    if (this.onVictoryCutscene) {
+      try {
+        this.onVictoryCutscene();
+      } catch (err) {
+        console.warn('Error during onVictoryCutscene:', err);
+      }
+    }
+
+    // Jika Arena Robot (Kota 2): Jalankan scene dying robot
+    if ((this.arenaType === 'cyber' || this.arenaType === 'robot') && this.dyingModel) {
+      if (this.firstModel) this.firstModel.visible = false;
+      if (this.secondModel) this.secondModel.visible = false;
+      this.dyingModel.visible = true;
+      this.dyingModel.position.set(0, 0.015, 0);
+
+      if (this.dyingAction) {
+        this.dyingAction.reset();
+        this.dyingAction.setLoop(THREE.LoopOnce);
+        this.dyingAction.clampWhenFinished = true;
+        this.dyingAction.play();
+      }
+
+      this.shakeIntensity = 0.075;
+
+      // Beri jeda 2.5 detik agar animasi roboh dying robot selesai dinikmati
+      setTimeout(() => {
+        this.showResultModal(true, currentExp, armyCount);
+      }, 2500);
+      return;
+    }
+
+    // Untuk Arena Kota & Hutan: Animasi monster tenggelam perlahan ke bawah aspal
     let sinkY = 0.015;
     const sinkInterval = setInterval(() => {
       sinkY -= 0.025;
@@ -656,7 +777,7 @@ export class MonsterManager {
   }
 
   createVictoryBurst(pos) {
-    const count = 85;
+    const count = 95;
     const geo = new THREE.BufferGeometry();
     const positions = new Float32Array(count * 3);
     const velocities = [];
@@ -667,16 +788,16 @@ export class MonsterManager {
       positions[i * 3 + 2] = pos.z + (Math.random() - 0.5) * 0.4;
 
       velocities.push({
-        x: (Math.random() - 0.5) * 2.0,
-        y: 1.0 + Math.random() * 1.5,
-        z: (Math.random() - 0.5) * 2.0
+        x: (Math.random() - 0.5) * 2.2,
+        y: 1.0 + Math.random() * 1.8,
+        z: (Math.random() - 0.5) * 2.2
       });
     }
 
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     const mat = new THREE.PointsMaterial({
-      color: 0xfacc15,
-      size: 0.065,
+      color: (this.arenaType === 'cyber' || this.arenaType === 'robot') ? 0x38bdf8 : 0xfacc15,
+      size: 0.075,
       transparent: true,
       opacity: 0.95,
       blending: THREE.AdditiveBlending
@@ -689,7 +810,7 @@ export class MonsterManager {
       points: pSystem,
       velocities: velocities,
       life: 0.0,
-      maxLife: 1.5
+      maxLife: 1.8
     });
   }
 
@@ -720,6 +841,9 @@ export class MonsterManager {
     }
     if (this.secondMixer && this.secondModel && this.secondModel.visible) {
       this.secondMixer.update(delta * 1.2);
+    }
+    if (this.dyingMixer && this.dyingModel && this.dyingModel.visible) {
+      this.dyingMixer.update(delta * 1.0);
     }
 
     // 3. Logika Pergerakan & Fase Aksi Boss Saat Aktif

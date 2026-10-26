@@ -402,6 +402,17 @@ function initCity() {
       if (avatarMixer) avatarMixer.timeScale = 1.0;
       avatarTargetLaneY = -0.21;
       avatarLaneY = -0.21;
+      if (floodState === 'cleared') {
+        floodState = 'flooded';
+        if (floodMesh) floodMesh.scale.set(1, 1, 1);
+        if (floodMaterial) floodMaterial.opacity = 0.82;
+      }
+    },
+    () => {
+      // onVictoryCutscene: Banjirnya surut!
+      if (floodState === 'flooded') {
+        triggerFloodRestoration();
+      }
     }
   );
 }
@@ -1237,6 +1248,12 @@ if (btnLaneRight) {
 if (btnSpawnMonster) {
   btnSpawnMonster.addEventListener('click', () => {
     if (monsterManager) monsterManager.spawnMonster();
+  });
+}
+const btnTestWin = document.getElementById('btnTestWin');
+if (btnTestWin) {
+  btnTestWin.addEventListener('click', () => {
+    if (monsterManager) monsterManager.triggerTestVictory();
   });
 }
 

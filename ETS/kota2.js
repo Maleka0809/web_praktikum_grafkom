@@ -1,5 +1,7 @@
 /**
  * ETS Grafika Komputer - Lingkungan 03: Kota Futuristik Malam (Cyber City)
+ * Final Boss: Mecha Robot (idle, attack, dying)
+ * Victory Cutscene: Mati lampu jadi nyala (Cyberpunk Power Grid Restored)
  */
 
 import * as THREE from 'three';
@@ -7,6 +9,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { GateManager } from './gates.js';
+import { MonsterManager } from './monster.js?v=boss_v2';
 
 const canvas = document.getElementById('mainCanvas');
 const fpsDisplay = document.getElementById('fpsDisplay');
@@ -18,6 +21,7 @@ const btnWireframe = document.getElementById('btnWireframe');
 const btnSpeed = document.getElementById('btnSpeed');
 const btnLaneLeft = document.getElementById('btnLaneLeft');
 const btnLaneRight = document.getElementById('btnLaneRight');
+let btnSpawnMonster = null;
 
 let scene, camera, renderer, controls;
 let mainMesh, sideMaterial, capMaterial, standardMaterials;
@@ -30,6 +34,15 @@ let avatarTargetLaneY = -0.21;
 let sparkParticles = null;
 let sparkVelocities = null;
 let gateManager = null;
+let monsterManager = null;
+
+// Environmental Restoration (Mati Lampu -> Nyala) Tracking
+const streetLampMaterials = [];
+const cyberBuildingMaterials = [];
+const cyberTrafficMaterials = [];
+let rimMat = null;
+let kerbMatDark = null;
+let powerRestored = false;
 
 const cylinderRadius = 2.6; // Diameter diperbesar menjadi 5.2
 const cylinderHeight = 3.8; // Diperlebar agar memuat 2 layer gedung (depan & belakang)
@@ -125,7 +138,6 @@ function createMoon(scene) {
   return { moonGroup, coreSprite, bloomSprite, moonLight };
 }
 
-
 // -------------------------------------------------------------
 // AVATAR KARAKTER: ELECTRORUN (GLB) + ANIMASI LARI & EFEK SPARK
 // -------------------------------------------------------------
@@ -148,45 +160,49 @@ function createRunnerAvatar(scene) {
   avatarGroup.setRotationFromMatrix(rotMatrix);
   avatarGroup.position.set(surfaceX, 0, targetZ);
 
+  // Load Model Avatar Electrorun
   const gltfLoader = new GLTFLoader();
-  gltfLoader.load('./assets/electrorun.glb', (gltf) => {
-    avatarModel = gltf.scene;
-    // Skala sama persis dengan kota & hutan (s = 0.038)
-    const s = 0.038;
-    avatarModel.scale.set(s, s, s);
-    avatarModel.position.y = 0.009; // Menapak pas di atas aspal jalan raya
+  gltfLoader.load(
+    './assets/electrorun.glb',
+    (gltf) => {
+      avatarModel = gltf.scene;
 
-    avatarModel.traverse((child) => {
-      if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-        if (child.material) {
-          child.material.roughness = 0.60;
-          child.material.metalness = 0.05;
-          // Ambient lembut berbasis warna asli material karakter agar rambut kuning,
-          // jaket hijau, warna kulit, dan celana terlihat jelas & hidup di malam hari tanpa silau
-          if (child.material.color) {
-            child.material.emissive = child.material.color.clone();
-            child.material.emissiveIntensity = 0.28;
+      // Skala dan orientasi proporsional
+      avatarModel.scale.set(0.14, 0.14, 0.14);
+      avatarModel.rotation.y = 0;
+      avatarModel.position.set(0, 0.005, 0);
+
+      avatarModel.traverse((node) => {
+        if (node.isMesh) {
+          node.castShadow = true;
+          node.receiveShadow = true;
+          if (node.material) {
+            node.material = node.material.clone();
+            node.material.roughness = 0.42;
+            node.material.metalness = 0.28;
+            node.material.emissive = new THREE.Color(0xfacc15);
+            node.material.emissiveIntensity = 0.35;
           }
         }
+      });
+
+      avatarGroup.add(avatarModel);
+
+      // Setup Animasi Running Loop
+      if (gltf.animations && gltf.animations.length > 0) {
+        avatarMixer = new THREE.AnimationMixer(avatarModel);
+        avatarRunAction = avatarMixer.clipAction(gltf.animations[0]);
+        avatarRunAction.play();
       }
-    });
+    },
+    undefined,
+    (err) => console.warn('Could not load electrorun.glb:', err)
+  );
 
-    avatarGroup.add(avatarModel);
-
-    // Cahaya aura listrik kuning lembut di sekeliling karakter (subtle, tidak menyilaukan aspal jalan)
-    const electroLight = new THREE.PointLight(0xfacc15, 0.45, 0.85, 2.0);
-    electroLight.position.set(0.04, 0.16, 0.08);
-    avatarGroup.add(electroLight);
-
-    // Jalankan animasi lari bawaan electrorun.glb
-    if (gltf.animations && gltf.animations.length > 0) {
-      avatarMixer = new THREE.AnimationMixer(avatarModel);
-      avatarRunAction = avatarMixer.clipAction(gltf.animations[0]);
-      avatarRunAction.play();
-    }
-  });
+  // Lampu Amber Sorotan Avatar (Electrorun Light)
+  const avatarLight = new THREE.PointLight(0xfacc15, 1.8, 2.5);
+  avatarLight.position.set(0.08, 0.18, 0.10);
+  avatarGroup.add(avatarLight);
 
   // Efek percikan listrik / sparks neon di kaki avatar saat berlari
   createElectroSparkEffect(avatarGroup);
@@ -225,6 +241,148 @@ function createElectroSparkEffect(parentGroup) {
   parentGroup.add(sparkParticles);
 }
 
+// -------------------------------------------------------------
+// AUDIO SINTESIS: CYBER POWER GRID RESTORATION
+// -------------------------------------------------------------
+function playCyberPowerGridSound() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const now = ctx.currentTime;
+
+    // 1. Power Generator Hum (Ramping UP)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(65, now);
+    osc1.frequency.exponentialRampToValueAtTime(320, now + 0.8);
+    gain1.gain.setValueAtTime(0.01, now);
+    gain1.gain.linearRampToValueAtTime(0.35, now + 0.5);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 1.65);
+
+    // 2. High Voltage Relay Switch (Click)
+    setTimeout(() => {
+      if (ctx.state === 'closed') return;
+      const t = ctx.currentTime;
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'square';
+      osc2.frequency.setValueAtTime(880, t);
+      osc2.frequency.exponentialRampToValueAtTime(110, t + 0.12);
+      gain2.gain.setValueAtTime(0.40, t);
+      gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(t);
+      osc2.stop(t + 0.16);
+    }, 450);
+
+    // 3. Glorious Neon Power Chime (C-Major Power On Arpeggio)
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((freq, idx) => {
+      setTimeout(() => {
+        if (ctx.state === 'closed') return;
+        const t = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0.22, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 1.25);
+      }, 700 + idx * 140);
+    });
+  } catch (e) {
+    console.warn('Audio synthesis not permitted:', e);
+  }
+}
+
+// -------------------------------------------------------------
+// CUTSCENE PEMULIHAN: MATI LAMPU JADI NYALA
+// -------------------------------------------------------------
+function restoreCyberPower() {
+  powerRestored = true;
+  playCyberPowerGridSound();
+
+  // 1. Lampu jalan menyala terang keemasan / neon cyan
+  streetLampMaterials.forEach((m) => {
+    m.emissive.setHex(0xfacc15);
+    m.emissiveIntensity = 2.8;
+    if (m.color) m.color.setHex(0xffedd5);
+  });
+
+  // 2. Gedung pencakar langit cyberpunk menyalakan lampu jendela neon
+  cyberBuildingMaterials.forEach((item) => {
+    item.material.emissive.setHex(item.cyberColor);
+    item.material.emissiveIntensity = 1.25;
+  });
+
+  // 3. Rambu lalu lintas menyala terang
+  cyberTrafficMaterials.forEach((m) => {
+    m.emissive.setHex(0x10b981);
+    m.emissiveIntensity = 2.5;
+  });
+
+  // 4. Garis neon trotoar & ring jalan menyala
+  if (rimMat) {
+    rimMat.color.setHex(0x38bdf8);
+    rimMat.emissive.setHex(0x0284c7);
+    rimMat.emissiveIntensity = 1.8;
+  }
+  if (kerbMatDark) {
+    kerbMatDark.color.setHex(0xc084fc);
+    kerbMatDark.emissive.setHex(0x9333ea);
+    kerbMatDark.emissiveIntensity = 1.5;
+  }
+
+  // 5. Booster lampu neon overhead
+  neonLights.forEach((n) => {
+    n.targetIntensity = 5.5;
+  });
+
+  if (infoDetail) {
+    infoDetail.textContent = '⚡ CUTSCENE: Daya Kota Dipulihkan! Seluruh lampu jalan, gedung cyberpunk & jaringan neon kota menyala terang benderang!';
+  }
+}
+
+function restoreBlackout() {
+  powerRestored = false;
+  streetLampMaterials.forEach((m) => {
+    m.emissive.setHex(0x000000);
+    m.emissiveIntensity = 0.0;
+    if (m.color) m.color.multiplyScalar(0.40);
+  });
+  cyberBuildingMaterials.forEach((item) => {
+    item.material.emissive.setHex(0x000000);
+    item.material.emissiveIntensity = 0.0;
+  });
+  cyberTrafficMaterials.forEach((m) => {
+    m.emissive.setHex(0x000000);
+    m.emissiveIntensity = 0.0;
+  });
+  if (rimMat) {
+    rimMat.color.setHex(0x1e293b);
+    rimMat.emissive.setHex(0x000000);
+    rimMat.emissiveIntensity = 0.0;
+  }
+  if (kerbMatDark) {
+    kerbMatDark.color.setHex(0x1e293b);
+    kerbMatDark.emissive.setHex(0x000000);
+    kerbMatDark.emissiveIntensity = 0.0;
+  }
+  neonLights.forEach((n) => {
+    n.targetIntensity = (n.light.color.getHex() === 0xec4899) ? 2.0 : 1.4;
+  });
+}
+
 function initCyberCity() {
   // 1. Scene & Sky (Deep Dark Galaxy 360° EXR)
   scene = new THREE.Scene();
@@ -258,45 +416,39 @@ function initCyberCity() {
     skySphere = new THREE.Mesh(skyGeo, skyMat);
     skySphere.rotation.order = 'ZXY';
     skySphere.rotation.z = -Math.PI / 2; // Menyelaraskan zenith langit dengan UP kamera (+X)
-    skySphere.rotation.x = Math.PI * 0.42; // Arahkan lengkungan galaksi megah melintang di langit atas-depan
     scene.add(skySphere);
   };
 
-  const galaxyTexLoader = new THREE.TextureLoader();
-  galaxyTexLoader.load(
-    './assets/hdr/galaxy_deep_space_1k.jpg',
-    setupSkyTexture,
+  const exrLoader = new EXRLoader();
+  exrLoader.load(
+    './assets/textures/sky/milkyway.exr',
+    (tex) => setupSkyTexture(tex),
     undefined,
     () => {
-      const exrLoader = new EXRLoader();
-      exrLoader.setDataType(THREE.HalfFloatType);
-      exrLoader.load('./assets/hdr/galaxy_deep_space_1k.exr', setupSkyTexture);
+      new THREE.TextureLoader().load('./assets/textures/sky/milkyway.png', (pngTex) => setupSkyTexture(pngTex));
     }
   );
 
-  // 4. OrbitControls
-  controls = new OrbitControls(camera, canvas);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.05;
-
-  setCameraView('surface');
-
-  // 5. Pencahayaan Cahaya Bulan & Suasana Malam Galaksi
+  // 4. Pendar Cahaya Bulan Murni di Langit Malam
   moonVisuals = createMoon(scene);
 
-  // Ambient diterangi agar detail tekstur jalan, aspal, dan arsitektur gedung terlihat jelas
-  const ambientLight = new THREE.AmbientLight(0x3b4a6b, 0.95);
+  // 5. Controls (Orbit 3D untuk inspeksi bebas)
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.enabled = false;
+
+  // 6. Pencahayaan Kota Cyberpunk Malam Hari (Mati Lampu Awal)
+  const ambientLight = new THREE.AmbientLight(0x1e1e38, 0.45);
   scene.add(ambientLight);
 
-  // Hemisphere Light langit malam bermandikan cahaya bulan (sky: cool slate blue, ground: subtle pavement bounce)
-  const moonHemi = new THREE.HemisphereLight(0x4c5e87, 0x242e42, 1.05);
-  scene.add(moonHemi);
+  const cyanKey = new THREE.DirectionalLight(0x38bdf8, 0.95);
+  cyanKey.position.set(6, 9, 7);
+  scene.add(cyanKey);
 
-  // Lampu Neon Point Lights Lokal (Aksen neon kontras tinggi)
-  const cyanPoint = new THREE.PointLight(0x06b6d4, 1.8, 16);
-  cyanPoint.position.set(-4.5, 3.5, 3.0);
-  scene.add(cyanPoint);
-  neonLights.push({ light: cyanPoint, baseColor: 0x06b6d4, speed: 2.1, targetIntensity: 1.8 });
+  const magentaFill = new THREE.DirectionalLight(0xa855f7, 0.75);
+  magentaFill.position.set(-6, -4, -5);
+  scene.add(magentaFill);
 
   const pinkPoint = new THREE.PointLight(0xec4899, 2.0, 16);
   pinkPoint.position.set(4.5, 4.0, -2.5);
@@ -356,7 +508,7 @@ function initCyberCity() {
 
   // Ring Logam Penjepit di Kedua Sisi (Gelap Malam Hari / Mati Lampu)
   const rimGeo = new THREE.TorusGeometry(cylinderRadius + 0.02, 0.04, 16, 64);
-  const rimMat = new THREE.MeshStandardMaterial({
+  rimMat = new THREE.MeshStandardMaterial({
     color: 0x1e293b,
     metalness: 0.85,
     roughness: 0.4
@@ -387,11 +539,40 @@ function initCyberCity() {
   // 13. Sistem Gerbang Interaktif Runner (Pasukan Army, Multiplier, EXP, Minus & Elemen)
   gateManager = new GateManager(scene, mainMesh, cylinderRadius, avatarGroup, () => avatarModel);
 
-  // 14. Event Listeners
+  // 14. Sistem Final Boss Mecha Robot (Muncul setelah 1 menit / 60 detik berlari)
+  monsterManager = new MonsterManager(
+    scene,
+    mainMesh,
+    cylinderRadius,
+    camera,
+    gateManager,
+    'cyber',
+    () => {
+      // onRaceEnd: Udahan larinya!
+      isAnimating = false;
+      rollSpeed = 0;
+      if (avatarMixer) avatarMixer.timeScale = 0;
+    },
+    () => {
+      // onRestart: Main lagi!
+      isAnimating = true;
+      rollSpeed = 0.75;
+      if (avatarMixer) avatarMixer.timeScale = 1.0;
+      avatarTargetLaneY = -0.21;
+      avatarLaneY = -0.21;
+      restoreBlackout();
+    },
+    () => {
+      // onVictoryCutscene: Mati lampu jadi nyala!
+      restoreCyberPower();
+    }
+  );
+
+  // 15. Event Listeners
   window.addEventListener('resize', onWindowResize);
   setupControls();
 
-  // 13. Render Loop
+  // 16. Render Loop
   requestAnimationFrame(animate);
 }
 
@@ -454,7 +635,7 @@ function buildCyberSidewalks() {
 
   // Tepi Kerb Trotoar Fisik Gelap (Objek Biasa di Malam Hari / Mati Lampu)
   const kerbGeo = new THREE.TorusGeometry(sidewalkRadius, 0.016, 8, 64);
-  const kerbMatDark = new THREE.MeshStandardMaterial({
+  kerbMatDark = new THREE.MeshStandardMaterial({
     color: 0x1e293b,
     roughness: 0.85,
     metalness: 0.2
@@ -515,17 +696,29 @@ function createCyberCityScenery() {
   const xAxis = new THREE.Vector3(0, -1, 0);
   const sidewalkRadius = cylinderRadius + 0.018; // Di atas trotoar
 
-  // Helper normalisasi pivot model: letakkan titik tumpu tepat di dasar (Y=0) dan tengah (X=0, Z=0)
+  // Helper normalisasi pivot model
   function prepareModel(scene) {
     const box = new THREE.Box3().setFromObject(scene);
     const center = box.getCenter(new THREE.Vector3());
     scene.position.x = -center.x;
     scene.position.z = -center.z;
     scene.position.y = -box.min.y;
+
+    const cyberPalette = [0x06b6d4, 0xec4899, 0xfacc15, 0x3b82f6, 0xa855f7];
+
     scene.traverse((node) => {
       if (node.isMesh) {
         node.castShadow = true;
         node.receiveShadow = true;
+        if (node.material) {
+          node.material = node.material.clone();
+          node.material.emissive = new THREE.Color(0x000000);
+          node.material.emissiveIntensity = 0.0;
+          cyberBuildingMaterials.push({
+            material: node.material,
+            cyberColor: cyberPalette[Math.floor(Math.random() * cyberPalette.length)]
+          });
+        }
       }
     });
   }
@@ -554,8 +747,6 @@ function createCyberCityScenery() {
 
   // =========================================================================
   // 1. GEDUNG DEPAN (Boulevard Cyberpunk - 18 Lot Teratur Per Sisi)
-  // Jarak sudut teratur 2pi / 18 (~20 derajat), jarak antar kavling ~0.91m
-  // Setback Y = 1.34 (rapi di belakang trotoar 0.83, tidak bertumpuk)
   // =========================================================================
   const frontCyberLots = [
     { file: 'building-a.glb', scale: 0.38 },
@@ -602,8 +793,6 @@ function createCyberCityScenery() {
 
   // =========================================================================
   // 2. SKYLINE PENCAKAR LANGIT BELAKANG (22 Lot Teratur Per Sisi)
-  // Posisi staggered (+0.5 lot) mengisi celah antar gedung depan
-  // Setback Y = 1.85 - 2.27 (menutup rapat batas tabung 1.90)
   // =========================================================================
   const skylineCyberModels = [
     { file: 'building-skyscraper-a.glb', scale: 0.72 },
@@ -626,7 +815,6 @@ function createCyberCityScenery() {
           const clone = baseScene.clone(true);
           clone.scale.set(cfg.scale, cfg.scale, cfg.scale);
 
-          // Staggered (+0.5) agar terlihat pas di sela-sela antar gedung depan
           const theta = ((k + 0.5) / totalSkylineLots) * Math.PI * 2;
           const posY = side * (1.85 + (k % 4) * 0.14);
 
@@ -639,30 +827,24 @@ function createCyberCityScenery() {
   }
 
   // =========================================================================
-  // 3. PEPOHONAN MALAM CYBERPUNK (Selang-Seling Rapi Bulat & Pinus di Kedua Sisi)
-  // A. Pohon Tepi Trotoar: Berdiri di celah kavling trotoar (Y = 0.95), scale 0.58
-  // B. Pohon Background: Mengisi sela gedung pencakar langit (Y = 1.65 - 2.15), scale 0.85
+  // 3. PEPOHONAN MALAM CYBERPUNK
   // =========================================================================
   const boulevardTreeCount = 18;
   [-1, 1].forEach((side, sIdx) => {
-    // 3A. Pohon Trotoar Depan
     for (let k = 0; k < boulevardTreeCount; k++) {
-      // Selang-seling varian: k genap = bulat, k ganjil = pinus (di-offset per sisi)
       const variant = (k + sIdx) % 2;
       const tree = createNightTree(variant);
       tree.scale.set(0.58, 0.58, 0.58);
       tree.rotation.y = (k * 1.5) % (Math.PI * 2);
 
-      // Posisi di sela-sela antar kavling depan
       const theta = ((k + 0.5) / boulevardTreeCount) * Math.PI * 2;
-      const posY = side * 0.95; // Tepi trotoar bersih, tidak menabrak dinding gedung
+      const posY = side * 0.95;
 
       placeOnCylinder(tree, theta, posY, sidewalkRadius, side, false);
     }
 
-    // 3B. Pohon Latar Belakang (Skylines Alley Trees)
     for (let m = 0; m < boulevardTreeCount; m++) {
-      const variant = (m + sIdx + 1) % 2; // Selang-seling berkebalikan
+      const variant = (m + sIdx + 1) % 2;
       const tree = createNightTree(variant);
       const bScale = 0.85 + (m % 3) * 0.12;
       tree.scale.set(bScale, bScale, bScale);
@@ -677,7 +859,6 @@ function createCyberCityScenery() {
 
   // =========================================================================
   // 4. PROPS JALANAN (Tiang Lampu Jalan & Rambu Lalu Lintas)
-  // Tertata presisi di bibir trotoar jalan
   // =========================================================================
 
   // 4A. Tiang Lampu Jalan Modern (Light Square)
@@ -693,8 +874,9 @@ function createCyberCityScenery() {
           node.material.emissive = new THREE.Color(0x000000);
           node.material.emissiveIntensity = 0.0;
           if (node.material.color) {
-            node.material.color.multiplyScalar(0.40); // Warna siluet malam hari
+            node.material.color.multiplyScalar(0.40);
           }
+          streetLampMaterials.push(node.material);
         }
       });
 
@@ -705,7 +887,7 @@ function createCyberCityScenery() {
           clone.scale.set(0.85, 0.85, 0.85);
 
           const theta = ((k + 0.25) / lampCount) * Math.PI * 2;
-          const posY = side * 0.90; // Di atas trotoar menghadap jalan
+          const posY = side * 0.90;
 
           placeOnCylinder(clone, theta, posY, sidewalkRadius, side, false);
           clone.rotation.y = (side === 1) ? -Math.PI / 2 : Math.PI / 2;
@@ -722,6 +904,15 @@ function createCyberCityScenery() {
     (gltf) => {
       const trafficModel = gltf.scene;
       prepareModel(trafficModel);
+
+      trafficModel.traverse((node) => {
+        if (node.isMesh && node.material) {
+          node.material = node.material.clone();
+          node.material.emissive = new THREE.Color(0x000000);
+          node.material.emissiveIntensity = 0.0;
+          cyberTrafficMaterials.push(node.material);
+        }
+      });
 
       const trafficCount = 4;
       for (let side = -1; side <= 1; side += 2) {
@@ -822,6 +1013,16 @@ function setupControls() {
     btnToggleAnim.innerText = isAnimating ? '⏸️ Pause (Space)' : '▶️ Putar (Space)';
   });
 
+  btnSpawnMonster = document.getElementById('btnSpawnMonster');
+  btnSpawnMonster?.addEventListener('click', () => {
+    if (monsterManager) monsterManager.spawnMonster();
+  });
+
+  const btnTestWin = document.getElementById('btnTestWin');
+  btnTestWin?.addEventListener('click', () => {
+    if (monsterManager) monsterManager.triggerTestVictory();
+  });
+
   window.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
       isAnimating = !isAnimating;
@@ -834,6 +1035,8 @@ function setupControls() {
       avatarTargetLaneY = -0.21; // Jalur Kiri
     } else if (e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') {
       avatarTargetLaneY = 0.21; // Jalur Kanan
+    } else if (e.key.toLowerCase() === 'm') {
+      if (monsterManager) monsterManager.spawnMonster();
     }
   });
 
@@ -890,7 +1093,7 @@ function animate(currentTime) {
     mainMesh.rotation.y += rollSpeed * (delta || 0.016);
   }
 
-  // Animasi pulsing lampu neon terfokus (tetap gelap & kontras)
+  // Animasi pulsing lampu neon terfokus
   const timeSec = currentTime * 0.001;
   neonLights.forEach((n) => {
     n.light.intensity = (n.targetIntensity || 1.6) + Math.sin(timeSec * n.speed) * 0.4;
@@ -940,6 +1143,11 @@ function animate(currentTime) {
   // Update Sistem Gerbang Interaktif Runner (Muncul sebelum lewat, Collision, Terhapus, Popup & Partikel)
   if (gateManager) {
     gateManager.update(delta, avatarLaneY, isAnimating);
+  }
+
+  // Update Sistem Final Boss Mecha Robot (Timer 1 Menit, Idle/Attack/Dying, Evaluasi EXP)
+  if (monsterManager) {
+    monsterManager.update(delta, avatarLaneY, isAnimating);
   }
 
   if (cameraView === 'surface') {

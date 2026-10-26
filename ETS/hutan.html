@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🌌🔥 Hutan Malam Kebakaran (Galaxy Forest Fire) — ETS Grafika Komputer</title>
+  <title>Lingkungan Hutan Malam Terbakar — ETS Grafika Komputer</title>
   <link rel="stylesheet" href="./style.css" />
 
   <script type="importmap">
@@ -19,9 +19,9 @@
   <div class="app-container">
     <header class="app-header">
       <div>
-        <span class="badge" style="color: #f97316; border-color: rgba(249, 115, 22, 0.4); background: rgba(249, 115, 22, 0.15);">LINGKUNGAN 02 — HUTAN MALAM GALAKSI</span>
-        <h1>🌌🌲 Hutan Malam Kebakaran &amp; Avatar Waterun</h1>
-        <p>Kamera third-person mengikuti Avatar Waterun berlari kencang menyusuri jalan aspal di tengah rimba hutan kebakaran, berlatar langit malam galaksi 360° yang mempesona.</p>
+        <span class="badge" style="background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #f87171;">LINGKUNGAN 02 — NIGHT WILDFIRE</span>
+        <h1>🔥 Hutan Malam Terbakar &amp; Avatar Waterun</h1>
+        <p>Kamera third-person mengikuti Avatar Waterun berlari kencang menyusuri jalan raya aspal beraspal di tengah kebakaran hutan lebat pada malam hari.</p>
       </div>
       <div>
         <a href="./index.html" class="btn-hub-back">← Pilih Mode Lingkungan</a>
@@ -32,10 +32,10 @@
       <canvas id="mainCanvas"></canvas>
 
       <div class="hud-overlay">
-        <div class="hud-item">LINGKUNGAN: <span style="color: #f97316;">Hutan Malam Galaksi</span></div>
+        <div class="hud-item">LINGKUNGAN: <span style="color: #f87171;">Hutan Malam Terbakar</span></div>
         <div class="hud-item">AVATAR: <span style="color: #38bdf8;">💧 Waterun (Runner)</span></div>
         <div class="hud-item">FPS: <span id="fpsDisplay">60</span></div>
-        <div class="hud-item" id="infoDetail">Kamera di selimut tabung | Hutan lebat, bahu tanah &amp; langit galaksi malam</div>
+        <div class="hud-item" id="infoDetail">Kamera tetap di selimut tabung | Hutan lebat, bahu tanah &amp; langit galaksi malam</div>
       </div>
     </main>
 
@@ -47,9 +47,10 @@
       <button id="btnWireframe" class="control-btn">🕸️ Wireframe</button>
       <button id="btnSpeed" class="control-btn">⚡ Kecepatan Jalan: 1.0x</button>
       <button id="btnSpawnMonster" class="control-btn" style="border-color: #f97316; color: #f97316; background: rgba(249, 115, 22, 0.12);">🌋 Munculkan Boss Lava (Test)</button>
+      <button id="btnTestWin" class="control-btn" style="border-color: #10b981; color: #34d399;">🏆 Test Menang Boss (Cutscene)</button>
     </footer>
   </div>
 
-  <script type="module" src="./hutan.js?v=boss_v1"></script>
+  <script type="module" src="./hutan.js?v=boss_v2"></script>
 </body>
 </html>
