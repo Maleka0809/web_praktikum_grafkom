@@ -7,7 +7,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { GateManager } from './gates.js';
-import { MonsterManager } from './monster.js?v=monster_v3';
+import { MonsterManager } from './monster.js?v=boss_v2';
 
 const canvas = document.getElementById('mainCanvas');
 const fpsDisplay = document.getElementById('fpsDisplay');
@@ -22,11 +22,11 @@ const btnSpawnMonster = document.getElementById('btnSpawnMonster');
 const btnLaneLeft = document.getElementById('btnLaneLeft');
 const btnLaneRight = document.getElementById('btnLaneRight');
 
-// Avatar Karakter GLB: Firerun + Animasi Lari (Runner)
+// Avatar Karakter GLB: Firerun + Animasi Lari (Runner) - Hanya 2 Jalur: Kiri (-0.21) & Kanan (+0.21)
 let avatarGroup, avatarModel, avatarMixer, avatarRunAction;
-let avatarLaneY = 0.0;
-let avatarTargetLaneY = 0.0;
-const avatarBaseTargetZ = 0.15; // Posisi avatar tepat dekat dasar bawah kanvas dengan kedua kaki tetap terlihat saat berlari // Posisi avatar lebih ke bawah dekat dasar kanvas // Posisi avatar dekat dasar bawah kanvas agar pandangan jalan ke depan lapang // Posisi avatar dekat dasar bawah kanvas agar pandangan jalan ke depan lapang
+let avatarLaneY = -0.21;
+let avatarTargetLaneY = -0.21;
+const avatarBaseTargetZ = 0.15;
 let splashParticles = null;
 let splashVelocities = null;
 let gateManager = null;
@@ -382,7 +382,28 @@ function initCity() {
   gateManager = new GateManager(scene, mainMesh, cylinderRadius, avatarGroup, () => avatarModel);
 
   // 13. Sistem Monster Sampah Raksasa (Muncul setelah 1 menit / 60 detik berlari)
-  monsterManager = new MonsterManager(scene, mainMesh, cylinderRadius, camera, gateManager);
+  monsterManager = new MonsterManager(
+    scene,
+    mainMesh,
+    cylinderRadius,
+    camera,
+    gateManager,
+    'city',
+    () => {
+      // onRaceEnd: Udahan larinya!
+      isAnimating = false;
+      rollSpeed = 0;
+      if (avatarMixer) avatarMixer.timeScale = 0;
+    },
+    () => {
+      // onRestart: Main lagi!
+      isAnimating = true;
+      rollSpeed = 0.75;
+      if (avatarMixer) avatarMixer.timeScale = 1.0;
+      avatarTargetLaneY = -0.21;
+      avatarLaneY = -0.21;
+    }
+  );
 }
 
 function createWaterNormalTexture() {
@@ -1197,20 +1218,20 @@ window.addEventListener('keydown', (e) => {
   } else if (e.key.toLowerCase() === 'b' || e.key.toLowerCase() === 'r') {
     triggerFloodRestoration();
   } else if (e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft') {
-    avatarTargetLaneY = Math.max(-0.40, avatarTargetLaneY - 0.20);
+    avatarTargetLaneY = -0.21; // Jalur Kiri
   } else if (e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') {
-    avatarTargetLaneY = Math.min(0.40, avatarTargetLaneY + 0.20);
+    avatarTargetLaneY = 0.21; // Jalur Kanan
   }
 });
 
 if (btnLaneLeft) {
   btnLaneLeft.addEventListener('click', () => {
-    avatarTargetLaneY = Math.max(-0.40, avatarTargetLaneY - 0.20);
+    avatarTargetLaneY = -0.21;
   });
 }
 if (btnLaneRight) {
   btnLaneRight.addEventListener('click', () => {
-    avatarTargetLaneY = Math.min(0.40, avatarTargetLaneY + 0.20);
+    avatarTargetLaneY = 0.21;
   });
 }
 if (btnSpawnMonster) {

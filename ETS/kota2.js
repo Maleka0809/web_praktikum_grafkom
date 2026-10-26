@@ -25,8 +25,8 @@ let cyberCityGroup;
 let neonLights = [];
 let starsParticles;
 let avatarGroup, avatarModel, avatarMixer, avatarRunAction;
-let avatarLaneY = 0.0;
-let avatarTargetLaneY = 0.0;
+let avatarLaneY = -0.21;
+let avatarTargetLaneY = -0.21;
 let sparkParticles = null;
 let sparkVelocities = null;
 let gateManager = null;
@@ -831,18 +831,18 @@ function setupControls() {
     } else if (e.code === 'KeyC') {
       setCameraView(cameraView === 'surface' ? 'orbit' : 'surface');
     } else if (e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft') {
-      avatarTargetLaneY = Math.max(-0.40, avatarTargetLaneY - 0.20);
+      avatarTargetLaneY = -0.21; // Jalur Kiri
     } else if (e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') {
-      avatarTargetLaneY = Math.min(0.40, avatarTargetLaneY + 0.20);
+      avatarTargetLaneY = 0.21; // Jalur Kanan
     }
   });
 
   btnLaneLeft?.addEventListener('click', () => {
-    avatarTargetLaneY = Math.max(-0.40, avatarTargetLaneY - 0.20);
+    avatarTargetLaneY = -0.21;
   });
 
   btnLaneRight?.addEventListener('click', () => {
-    avatarTargetLaneY = Math.min(0.40, avatarTargetLaneY + 0.20);
+    avatarTargetLaneY = 0.21;
   });
 
   btnWireframe?.addEventListener('click', () => {

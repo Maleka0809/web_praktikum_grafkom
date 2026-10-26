@@ -508,30 +508,23 @@ export class GateManager {
     stationWrapper.setRotationFromMatrix(basisMat);
     stationWrapper.position.set(posX, 0, posZ);
 
-    // Tentukan pola tata letak acak:
+    // Tentukan pola tata letak acak (Hanya 2 Jalur: Kiri atau Kanan, Tidak Ada Jalur Tengah):
     // 0: Hanya Jalur Kiri (Single Left)
     // 1: Hanya Jalur Kanan (Single Right)
-    // 2: Hanya Jalur Tengah (Single Center)
-    // 3 atau 4: Sepasang Pilihan Kiri & Kanan (Choice Pair)
+    // 2: Sepasang Pilihan Kiri & Kanan (Choice Pair)
     const patternRand = Math.random();
     const gates = [];
 
-    if (patternRand < 0.25) {
+    if (patternRand < 0.30) {
       // 1 Gerbang Jalur Kiri Saja
       const cfg = this.getRandomGateConfig();
       const g = this.createSingleGate(cfg, 0.21);
       stationWrapper.add(g.group);
       gates.push(g);
-    } else if (patternRand < 0.50) {
+    } else if (patternRand < 0.60) {
       // 1 Gerbang Jalur Kanan Saja
       const cfg = this.getRandomGateConfig();
       const g = this.createSingleGate(cfg, -0.21);
-      stationWrapper.add(g.group);
-      gates.push(g);
-    } else if (patternRand < 0.65) {
-      // 1 Gerbang Jalur Tengah Saja
-      const cfg = this.getRandomGateConfig();
-      const g = this.createSingleGate(cfg, 0.0);
       stationWrapper.add(g.group);
       gates.push(g);
     } else {
@@ -841,23 +834,18 @@ export class GateManager {
         st.wrapper.setRotationFromMatrix(basisMat);
         st.wrapper.position.set(posX, 0, posZ);
 
-        // Buat formasi gerbang baru secara acak (tidak selalu berdampingan)
+        // Buat formasi gerbang baru secara acak (Hanya 2 Jalur: Kiri atau Kanan, Tidak Ada Tengah)
         const patternRand = Math.random();
         st.gates = [];
 
-        if (patternRand < 0.25) {
+        if (patternRand < 0.30) {
           const cfg = this.getRandomGateConfig();
           const g = this.createSingleGate(cfg, 0.21);
           st.wrapper.add(g.group);
           st.gates.push(g);
-        } else if (patternRand < 0.50) {
+        } else if (patternRand < 0.60) {
           const cfg = this.getRandomGateConfig();
           const g = this.createSingleGate(cfg, -0.21);
-          st.wrapper.add(g.group);
-          st.gates.push(g);
-        } else if (patternRand < 0.65) {
-          const cfg = this.getRandomGateConfig();
-          const g = this.createSingleGate(cfg, 0.0);
           st.wrapper.add(g.group);
           st.gates.push(g);
         } else {

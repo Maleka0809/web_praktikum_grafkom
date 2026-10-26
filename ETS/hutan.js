@@ -14,6 +14,7 @@ import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { GateManager } from './gates.js';
+import { MonsterManager } from './monster.js?v=boss_v1';
 
 const canvas = document.getElementById('mainCanvas');
 const fpsDisplay = document.getElementById('fpsDisplay');
@@ -25,16 +26,18 @@ const btnWireframe = document.getElementById('btnWireframe');
 const btnSpeed = document.getElementById('btnSpeed');
 const btnLaneLeft = document.getElementById('btnLaneLeft');
 const btnLaneRight = document.getElementById('btnLaneRight');
+const btnSpawnMonster = document.getElementById('btnSpawnMonster');
 
 let scene, camera, renderer, controls;
 let mainMesh, sideMaterial, capMaterial, standardMaterials;
 let forestGroup, emberParticles, smokeParticles;
 let avatarGroup, avatarModel, avatarMixer, avatarRunAction;
-let avatarLaneY = 0.0;
-let avatarTargetLaneY = 0.0;
+let avatarLaneY = -0.21;
+let avatarTargetLaneY = -0.21;
 let splashParticles = null;
 let splashVelocities = null;
 let gateManager = null;
+let monsterManager = null;
 
 const cylinderRadius = 2.6;
 const cylinderHeight = 3.8;
@@ -471,6 +474,30 @@ function initForest() {
 
   // 12. Sistem Gerbang Interaktif Runner (Pasukan Army, Multiplier, EXP, Minus & Elemen)
   gateManager = new GateManager(scene, mainMesh, cylinderRadius, avatarGroup, () => avatarModel);
+
+  // 13. Sistem Final Boss Monster Lava Hutan (Muncul setelah 1 menit / 60 detik berlari)
+  monsterManager = new MonsterManager(
+    scene,
+    mainMesh,
+    cylinderRadius,
+    camera,
+    gateManager,
+    'forest',
+    () => {
+      // onRaceEnd: Udahan larinya!
+      isAnimating = false;
+      rollSpeed = 0;
+      if (avatarMixer) avatarMixer.timeScale = 0;
+    },
+    () => {
+      // onRestart: Main lagi!
+      isAnimating = true;
+      rollSpeed = 0.75;
+      if (avatarMixer) avatarMixer.timeScale = 1.0;
+      avatarTargetLaneY = -0.21;
+      avatarLaneY = -0.21;
+    }
+  );
 }
 
 // -------------------------------------------------------------
@@ -1293,6 +1320,11 @@ function animate(time) {
     gateManager.update(delta, avatarLaneY, isAnimating);
   }
 
+  // Update Sistem Final Boss Monster Lava Hutan (Timer 1 Menit, Stomping, Combat, Animations)
+  if (monsterManager) {
+    monsterManager.update(delta, avatarLaneY, isAnimating);
+  }
+
   if (cameraView === 'surface') {
     const camX = cylinderRadius + eyeHeight;
     const camFollowY = avatarLaneY * 0.35;
@@ -1352,23 +1384,27 @@ window.addEventListener('keydown', (e) => {
   } else if (e.key.toLowerCase() === 'c') {
     btnToggleCam.click();
   } else if (e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft') {
-    avatarTargetLaneY = Math.max(-0.40, avatarTargetLaneY - 0.20);
+    avatarTargetLaneY = -0.21; // Jalur Kiri
   } else if (e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') {
-    avatarTargetLaneY = Math.min(0.40, avatarTargetLaneY + 0.20);
+    avatarTargetLaneY = 0.21; // Jalur Kanan
   }
 });
 
 if (btnLaneLeft) {
   btnLaneLeft.addEventListener('click', () => {
-    avatarTargetLaneY = Math.max(-0.40, avatarTargetLaneY - 0.20);
+    avatarTargetLaneY = -0.21;
   });
 }
 if (btnLaneRight) {
   btnLaneRight.addEventListener('click', () => {
-    avatarTargetLaneY = Math.min(0.40, avatarTargetLaneY + 0.20);
+    avatarTargetLaneY = 0.21;
   });
 }
-
+if (btnSpawnMonster) {
+  btnSpawnMonster.addEventListener('click', () => {
+    if (monsterManager) monsterManager.spawnMonster();
+  });
+}
 
 initForest();
 requestAnimationFrame(animate);
