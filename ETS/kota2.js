@@ -384,8 +384,8 @@ function initCyberCity() {
   // 12. Avatar Electrorun (Runner) berlari di atas jalan raya kota futuristik
   createRunnerAvatar(scene);
 
-  // 13. Sistem Gerbang Interaktif Runner (💧 +21 & ⇄ ⚡ UBAH)
-  gateManager = new GateManager(scene, mainMesh, cylinderRadius);
+  // 13. Sistem Gerbang Interaktif Runner (Pasukan Army, Multiplier, EXP, Minus & Elemen)
+  gateManager = new GateManager(scene, mainMesh, cylinderRadius, avatarGroup, () => avatarModel);
 
   // 14. Event Listeners
   window.addEventListener('resize', onWindowResize);

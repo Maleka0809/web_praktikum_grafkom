@@ -1,62 +1,327 @@
 /**
- * ETS Grafika Komputer - Sistem Gerbang Runner (Gate Multiplier & Element Modifier)
- * Berisi pembuatan 3D Arch Gates, selaput energi, badge teks, animasi spawn/despawn, dan collision detection.
+ * ETS Grafika Komputer - Sistem Gerbang Runner Terpadu (Gate Manager)
+ * Fitur:
+ * - Klasifikasi Gerbang Acak:
+ *   1. Tambah Army (👤 +5, +10, +15)
+ *   2. Penggandaan Army (👥 ×2, ×3)
+ *   3. Minus Army (👤 -3, -5, -8)
+ *   4. Tambah EXP (⭐ +50 EXP, +100 EXP) & Level Up!
+ *   5. Minus EXP (🔻 -30 EXP, -50 EXP)
+ *   6. Elemen Modifier (💧 +25, ⇄ ⚡ UBAH, ⇄ 🔥 UBAH)
+ * - Tata Letak Acak (TIDAK SELALU SEBELAH-SEBELAHAN):
+ *   Bisa jalur kiri saja, jalur kanan saja, jalur tengah, atau sepasang pilihan.
+ * - Pasukan Army 3D Berlari Mengikuti Karakter Pemimpin di Belakang
+ * - Bubble Counter 3D di Atas Kepala Karakter (👥 Pasukan)
+ * - Suara Sintesis Retro Web Audio API untuk efek bonus & minus
  */
 
 import * as THREE from 'three';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 export class GateManager {
-  constructor(scene, mainMesh, cylinderRadius) {
+  constructor(scene, mainMesh, cylinderRadius, avatarGroup = null, getAvatarModel = null) {
     this.scene = scene;
     this.mainMesh = mainMesh;
     this.cylinderRadius = cylinderRadius;
-    this.gatePairs = [];
+    this.avatarGroup = avatarGroup;
+    this.getAvatarModel = getAvatarModel;
+
+    this.gateStations = [];
     this.popups = [];
     this.burstParticles = [];
-    
-    // Player state
+
+    // Player State
+    this.armyCount = 1;
+    this.exp = 0;
+    this.level = 1;
+    this.nextLevelExp = 100;
     this.waterScore = 0;
     this.activeElement = '⚡ LISTRIK';
-    this.onScoreUpdate = null;
-    this.onElementChange = null;
 
-    // Inisialisasi HUD score bila belum ada
+    // Army Clones Visuals
+    this.armyClones = [];
+    this.armyHeadBadge = null;
+    this.headBadgeScale = 1.0;
+
+    // Web Audio Synthesizer (Tanpa perlu file audio eksternal)
+    this.initAudio();
+
+    // Inisialisasi HUD Overlay
     this.initHud();
 
-    // Buat 2 pasang gerbang (Foreground & Background di kejauhan)
-    this.createGatePairs();
+    // Buat Badge Angka Pasukan di Atas Kepala Avatar
+    if (this.avatarGroup) {
+      this.initHeadBadge();
+    }
+
+    // Bangun 3 stasiun gerbang acak pertama
+    this.initStations();
   }
 
+  // -------------------------------------------------------------
+  // AUDIO SYNTHESIZER (WEB AUDIO API)
+  // -------------------------------------------------------------
+  initAudio() {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) {
+        this.audioCtx = new AudioContext();
+      }
+    } catch (e) {
+      this.audioCtx = null;
+    }
+  }
+
+  playSound(type) {
+    if (!this.audioCtx) return;
+    if (this.audioCtx.state === 'suspended') {
+      this.audioCtx.resume();
+    }
+    const ctx = this.audioCtx;
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === 'positive') {
+      // Dua nada ceria naik (Arpeggio)
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(523.25, now); // C5
+      osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+      osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc.start(now);
+      osc.stop(now + 0.36);
+    } else if (type === 'negative') {
+      // Nada rendah peringatan / buzz
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.30);
+      osc.start(now);
+      osc.stop(now + 0.31);
+    } else if (type === 'levelup') {
+      // Fanfare gembira
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.setValueAtTime(554.37, now + 0.09);
+      osc.frequency.setValueAtTime(659.25, now + 0.18);
+      osc.frequency.setValueAtTime(880, now + 0.27);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+      osc.start(now);
+      osc.stop(now + 0.56);
+    }
+  }
+
+  // -------------------------------------------------------------
+  // HUD OVERLAY (STATISTIK LENGKAP)
+  // -------------------------------------------------------------
   initHud() {
     let hud = document.getElementById('runnerScoreHud');
-    if (!hud) {
-      const hudOverlay = document.querySelector('.hud-overlay');
-      if (hudOverlay) {
-        hud = document.createElement('div');
-        hud.id = 'runnerScoreHud';
-        hud.className = 'hud-item';
-        hud.style.cssText = 'background: rgba(15, 23, 42, 0.92); border: 1.5px solid #38bdf8; border-radius: 8px; padding: 5px 14px; font-weight: 600; display: flex; gap: 12px; align-items: center; box-shadow: 0 0 14px rgba(56, 189, 248, 0.40);';
-        hud.innerHTML = `<span>💧 AIR: <span id="hudWaterVal" style="color: #38bdf8; font-weight: 800; font-size: 1.1em;">0</span></span> <span style="color:#64748b;">|</span> <span>ELEMEN: <span id="hudElemVal" style="color: #facc15; font-weight: 800; font-size: 1.1em;">⚡ LISTRIK</span></span>`;
-        hudOverlay.appendChild(hud);
+    const hudOverlay = document.querySelector('.hud-overlay');
+    if (!hud && hudOverlay) {
+      hud = document.createElement('div');
+      hud.id = 'runnerScoreHud';
+      hud.className = 'hud-item';
+      hud.style.cssText = 'background: rgba(15, 23, 42, 0.92); border: 1.5px solid #38bdf8; border-radius: 8px; padding: 5px 14px; font-weight: 600; display: flex; gap: 12px; align-items: center; box-shadow: 0 0 14px rgba(56, 189, 248, 0.40); flex-wrap: wrap;';
+      hudOverlay.appendChild(hud);
+    }
+    this.updateHud();
+  }
+
+  updateHud() {
+    const hud = document.getElementById('runnerScoreHud');
+    if (hud) {
+      hud.innerHTML = `
+        <span>👥 PASUKAN: <span id="hudArmyVal" style="color: #38bdf8; font-weight: 800; font-size: 1.15em;">${this.armyCount}</span></span>
+        <span style="color:#64748b;">|</span>
+        <span>⭐ LVL: <span style="color: #facc15; font-weight: 800;">${this.level}</span> (<span style="color:#e2e8f0; font-size:0.9em;">EXP: ${this.exp}/${this.nextLevelExp}</span>)</span>
+        <span style="color:#64748b;">|</span>
+        <span>💧 AIR: <span style="color: #06b6d4; font-weight: 800;">${this.waterScore}</span></span>
+        <span style="color:#64748b;">|</span>
+        <span>ELEMEN: <span style="color: #f97316; font-weight: 800;">${this.activeElement}</span></span>
+      `;
+    }
+  }
+
+  // -------------------------------------------------------------
+  // BUBBLE BADGE DI ATAS KEPALA KARAKTER (COUNT MASTERS STYLE)
+  // -------------------------------------------------------------
+  initHeadBadge() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 128;
+    this.badgeCanvas = canvas;
+    this.badgeCtx = canvas.getContext('2d');
+    this.badgeTexture = new THREE.CanvasTexture(canvas);
+    this.badgeTexture.colorSpace = THREE.SRGBColorSpace;
+
+    const mat = new THREE.SpriteMaterial({
+      map: this.badgeTexture,
+      transparent: true,
+      depthTest: false
+    });
+    this.armyHeadBadge = new THREE.Sprite(mat);
+    this.armyHeadBadge.scale.set(0.18, 0.08, 1.0);
+    // +X adalah ke atas normal kepala di koordinat silinder
+    this.armyHeadBadge.position.set(0.0, 0.32, 0.0);
+    this.avatarGroup.add(this.armyHeadBadge);
+
+    this.drawHeadBadge();
+  }
+
+  drawHeadBadge(isPunch = false) {
+    if (!this.badgeCtx) return;
+    const ctx = this.badgeCtx;
+    const w = 256;
+    const h = 128;
+    ctx.clearRect(0, 0, w, h);
+
+    // Kapsul Pill
+    const r = 36;
+    const x = 16;
+    const y = 16;
+    const bw = w - 32;
+    const bh = h - 32;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + bw - r, y);
+    ctx.arcTo(x + bw, y, x + bw, y + r, r);
+    ctx.lineTo(x + bw, y + bh - r);
+    ctx.arcTo(x + bw, y + bh, x + bw - r, y + bh, r);
+    ctx.lineTo(x + r, y + bh);
+    ctx.arcTo(x, y + bh, x, y + bh - r, r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+
+    ctx.fillStyle = '#0f172a';
+    ctx.fill();
+
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = isPunch ? '#facc15' : '#38bdf8';
+    ctx.stroke();
+
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '900 56px "Segoe UI", Roboto, sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = '#38bdf8';
+    ctx.shadowBlur = 14;
+    ctx.fillText(`👥 ${this.armyCount}`, w / 2, h / 2 + 2);
+
+    this.badgeTexture.needsUpdate = true;
+    if (isPunch) {
+      this.headBadgeScale = 1.35;
+    }
+  }
+
+  // -------------------------------------------------------------
+  // UPDATE VISUAL PASUKAN (ARMY CLONES FORMATION)
+  // -------------------------------------------------------------
+  syncArmyClones() {
+    if (!this.avatarGroup) return;
+
+    // Maksimal klon 3D ditampilkan hingga 16 model agar FPS tetap 60+
+    const targetVisualCount = Math.min(16, Math.max(1, this.armyCount)) - 1;
+
+    // Ambil base model avatar jika tersedia
+    const baseModel = (this.getAvatarModel && this.getAvatarModel()) || null;
+
+    // Jika jumlah kurang, tambahkan klon
+    while (this.armyClones.length < targetVisualCount && baseModel) {
+      const idx = this.armyClones.length;
+      let clone = null;
+      try {
+        clone = SkeletonUtils.clone(baseModel);
+      } catch (e) {
+        clone = baseModel.clone(true);
+      }
+
+      // Hitung formasi kerumunan (V-formation / crowd cluster di belakang pemimpin)
+      const row = Math.floor(idx / 3) + 1;
+      const col = (idx % 3) - 1; // -1 (kiri), 0 (tengah), 1 (kanan)
+      const offsetX = col * 0.11 + (Math.random() - 0.5) * 0.03;
+      const offsetZ = -row * 0.12 - (Math.random() * 0.04);
+
+      clone.position.set(offsetX, 0.009, offsetZ);
+      clone.scale.set(0.034, 0.034, 0.034);
+
+      this.avatarGroup.add(clone);
+      this.armyClones.push(clone);
+    }
+
+    // Jika jumlah lebih (akibat minus), hapus klon berlebih
+    while (this.armyClones.length > targetVisualCount) {
+      const removed = this.armyClones.pop();
+      if (removed) {
+        this.avatarGroup.remove(removed);
       }
     }
   }
 
-  updateHud() {
-    const wVal = document.getElementById('hudWaterVal');
-    const eVal = document.getElementById('hudElemVal');
-    if (wVal) wVal.innerText = this.waterScore;
-    if (eVal) eVal.innerText = this.activeElement;
+  // -------------------------------------------------------------
+  // GENERATOR KONFIGURASI GERBANG ACAK (POOL LENGKAP)
+  // -------------------------------------------------------------
+  getRandomGateConfig(forcePositive = null) {
+    const POOL = [
+      // 1. TAMBAH ARMY (POSITIF)
+      { type: 'army_add', value: 5, icon: '👤', text: '+5', pipeColor: 0x38bdf8, veilColor: 'rgba(56, 189, 248, 0.45)', dotColor: 'rgba(224, 242, 254, 0.95)', borderColor: '#38bdf8', isPositive: true },
+      { type: 'army_add', value: 10, icon: '👤', text: '+10', pipeColor: 0x06b6d4, veilColor: 'rgba(6, 182, 212, 0.45)', dotColor: 'rgba(207, 250, 254, 0.95)', borderColor: '#06b6d4', isPositive: true },
+      { type: 'army_add', value: 15, icon: '👤', text: '+15', pipeColor: 0x0284c7, veilColor: 'rgba(2, 132, 199, 0.45)', dotColor: 'rgba(224, 242, 254, 0.95)', borderColor: '#0284c7', isPositive: true },
+
+      // 2. PENGGANDAAN ARMY (SUPER POSITIF)
+      { type: 'army_multiply', value: 2, icon: '👥', text: '×2', pipeColor: 0x10b981, veilColor: 'rgba(16, 185, 129, 0.45)', dotColor: 'rgba(209, 250, 229, 0.95)', borderColor: '#10b981', isPositive: true },
+      { type: 'army_multiply', value: 3, icon: '👥', text: '×3', pipeColor: 0xfacc15, veilColor: 'rgba(250, 204, 21, 0.45)', dotColor: 'rgba(254, 240, 138, 0.95)', borderColor: '#facc15', isPositive: true },
+
+      // 3. MINUS ARMY (NEGATIF / MERAH)
+      { type: 'army_sub', value: 3, icon: '👤', text: '-3', pipeColor: 0xef4444, veilColor: 'rgba(239, 68, 68, 0.45)', dotColor: 'rgba(254, 202, 202, 0.95)', borderColor: '#ef4444', isPositive: false },
+      { type: 'army_sub', value: 5, icon: '👤', text: '-5', pipeColor: 0xdc2626, veilColor: 'rgba(220, 38, 38, 0.45)', dotColor: 'rgba(254, 202, 202, 0.95)', borderColor: '#dc2626', isPositive: false },
+      { type: 'army_sub', value: 8, icon: '👤', text: '-8', pipeColor: 0xb91c1c, veilColor: 'rgba(185, 28, 28, 0.45)', dotColor: 'rgba(254, 202, 202, 0.95)', borderColor: '#b91c1c', isPositive: false },
+
+      // 4. TAMBAH EXP (UNGU / EMAS)
+      { type: 'exp_add', value: 50, icon: '⭐', text: '+50 EXP', pipeColor: 0xa855f7, veilColor: 'rgba(168, 85, 247, 0.45)', dotColor: 'rgba(243, 232, 255, 0.95)', borderColor: '#a855f7', isPositive: true },
+      { type: 'exp_add', value: 100, icon: '⭐', text: '+100 EXP', pipeColor: 0x8b5cf6, veilColor: 'rgba(139, 92, 246, 0.45)', dotColor: 'rgba(237, 233, 254, 0.95)', borderColor: '#8b5cf6', isPositive: true },
+
+      // 5. MINUS EXP (MERAH MAWAR)
+      { type: 'exp_sub', value: 30, icon: '🔻', text: '-30 EXP', pipeColor: 0xf43f5e, veilColor: 'rgba(244, 63, 94, 0.45)', dotColor: 'rgba(255, 228, 230, 0.95)', borderColor: '#f43f5e', isPositive: false },
+
+      // 6. ELEMEN
+      { type: 'water_add', value: 25, icon: '💧', text: '+25', pipeColor: 0x38bdf8, veilColor: 'rgba(56, 189, 248, 0.45)', dotColor: 'rgba(224, 242, 254, 0.95)', borderColor: '#38bdf8', isPositive: true },
+      { type: 'transform_electro', value: '⚡ LISTRIK', icon: '⇄ ⚡', text: 'UBAH', pipeColor: 0xfacc15, veilColor: 'rgba(250, 204, 21, 0.45)', dotColor: 'rgba(254, 240, 138, 0.95)', borderColor: '#facc15', isPositive: true },
+      { type: 'transform_fire', value: '🔥 API', icon: '⇄ 🔥', text: 'UBAH', pipeColor: 0xf97316, veilColor: 'rgba(249, 115, 22, 0.45)', dotColor: 'rgba(254, 215, 170, 0.95)', borderColor: '#f97316', isPositive: true }
+    ];
+
+    let candidates = POOL;
+    if (forcePositive === true) {
+      candidates = POOL.filter((c) => c.isPositive);
+    } else if (forcePositive === false) {
+      candidates = POOL.filter((c) => !c.isPositive);
+    }
+
+    const picked = candidates[Math.floor(Math.random() * candidates.length)];
+    // Salin objek agar tidak saling mempengaruhi
+    return Object.assign({}, picked);
   }
 
-  // Membuat Canvas Texture Badge Capsule Teks di atas gerbang
+  // -------------------------------------------------------------
+  // PEMBUATAN 3D ARCH GATE & BADGE
+  // -------------------------------------------------------------
   createBadgeTexture(iconText, mainText, borderColor, bgColor = '#091124') {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 180;
     const ctx = canvas.getContext('2d');
 
-    // Gambar Capsule Kapsul
     const r = 52;
     const x = 14;
     const y = 14;
@@ -76,16 +341,13 @@ export class GateManager {
     ctx.arcTo(x, y, x + r, y, r);
     ctx.closePath();
 
-    // Background Kapsul
     ctx.fillStyle = bgColor;
     ctx.fill();
 
-    // Border Neon Tebal
     ctx.lineWidth = 14;
     ctx.strokeStyle = borderColor;
     ctx.stroke();
 
-    // Highlight Putih Dalam
     ctx.lineWidth = 4;
     ctx.strokeStyle = '#ffffff';
     ctx.globalAlpha = 0.55;
@@ -93,23 +355,20 @@ export class GateManager {
     ctx.globalAlpha = 1.0;
     ctx.restore();
 
-    // Tulisan Teks & Ikon
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = '900 70px "Segoe UI", Roboto, Arial, sans-serif';
+    ctx.font = '900 66px "Segoe UI", Roboto, Arial, sans-serif';
     ctx.fillStyle = '#ffffff';
     ctx.shadowColor = borderColor;
     ctx.shadowBlur = 26;
 
-    const fullText = `${iconText} ${mainText}`;
-    ctx.fillText(fullText, 256, 92);
+    ctx.fillText(`${iconText} ${mainText}`, 256, 92);
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     return texture;
   }
 
-  // Membuat Tekstur Selaput Energi Transparan di dalam Arch (Frosted Hologram Veil)
   createVeilTexture(themeColor, dotColor) {
     const canvas = document.createElement('canvas');
     canvas.width = 256;
@@ -118,7 +377,6 @@ export class GateManager {
 
     ctx.clearRect(0, 0, 256, 256);
 
-    // Gradien vertikal kabut energi semi-transparan
     const grad = ctx.createLinearGradient(0, 0, 0, 256);
     grad.addColorStop(0.00, 'rgba(255, 255, 255, 0.70)');
     grad.addColorStop(0.15, themeColor);
@@ -128,8 +386,7 @@ export class GateManager {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 256, 256);
 
-    // Partikel berkilau acak di dalam tirai portal (seperti tetesan air / percikan petir)
-    for (let i = 0; i < 45; i++) {
+    for (let i = 0; i < 40; i++) {
       const px = Math.random() * 256;
       const py = Math.random() * 256;
       const pr = Math.random() * 6 + 2.5;
@@ -146,16 +403,13 @@ export class GateManager {
     return texture;
   }
 
-  // Membuat 1 unit Arch Gate (Lengkungan, Kaki, Badge, dan Selaput Energi)
-  createSingleGate(config) {
+  createSingleGate(config, localX) {
     const gateGroup = new THREE.Group();
 
-    // Proporsi kartun yang gemuk & pas dengan lebar jalur
-    const archRadius = 0.205; // Lebar total 0.41m (pas menutup 1 jalur jalan)
+    const archRadius = 0.205;
     const legHeight = 0.24;
-    const pipeRadius = 0.034; // Pipa tebal bulat ala casual runner
+    const pipeRadius = 0.034;
 
-    // Material Pipa Rangka Bercahaya
     const pipeMat = new THREE.MeshStandardMaterial({
       color: config.pipeColor,
       roughness: 0.25,
@@ -164,7 +418,7 @@ export class GateManager {
       emissiveIntensity: 0.50
     });
 
-    // 1. Tiang Kiri & Kanan (Cylinder)
+    // 1. Tiang Kiri & Kanan
     const legGeo = new THREE.CylinderGeometry(pipeRadius, pipeRadius, legHeight, 20);
     const leftLeg = new THREE.Mesh(legGeo, pipeMat);
     leftLeg.position.set(-archRadius, legHeight / 2, 0);
@@ -174,18 +428,14 @@ export class GateManager {
     rightLeg.position.set(archRadius, legHeight / 2, 0);
     gateGroup.add(rightLeg);
 
-    // 2. Lengkungan Setengah Lingkaran Atas (Torus)
+    // 2. Lengkungan Torus
     const torusGeo = new THREE.TorusGeometry(archRadius, pipeRadius, 16, 32, Math.PI);
     const topArch = new THREE.Mesh(torusGeo, pipeMat);
     topArch.position.set(0, legHeight, 0);
     gateGroup.add(topArch);
 
-    // 3. Kaki Tumpuan Padat Bawah (Foot Pedestals)
-    const footMat = new THREE.MeshStandardMaterial({
-      color: 0xcbd5e1,
-      roughness: 0.35,
-      metalness: 0.60
-    });
+    // 3. Kaki Tumpuan Padat
+    const footMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.35, metalness: 0.60 });
     const footGeo = new THREE.CylinderGeometry(0.048, 0.055, 0.042, 20);
     const leftFoot = new THREE.Mesh(footGeo, footMat);
     leftFoot.position.set(-archRadius, 0.021, 0);
@@ -195,12 +445,8 @@ export class GateManager {
     rightFoot.position.set(archRadius, 0.021, 0);
     gateGroup.add(rightFoot);
 
-    // 4. Klem Putih 3 Segmen di Puncak Lengkungan
-    const claspMat = new THREE.MeshStandardMaterial({
-      color: 0xf8fafc,
-      roughness: 0.20,
-      metalness: 0.15
-    });
+    // 4. Klem Putih 3 Segmen
+    const claspMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.20, metalness: 0.15 });
     [-0.035, 0.0, 0.035].forEach((offsetZ) => {
       const claspGeo = new THREE.CylinderGeometry(0.045, 0.045, 0.028, 20);
       const clasp = new THREE.Mesh(claspGeo, claspMat);
@@ -209,7 +455,7 @@ export class GateManager {
       gateGroup.add(clasp);
     });
 
-    // 5. Selaput Energi Transparan (Veil Curtain)
+    // 5. Selaput Energi Transparan
     const veilTex = this.createVeilTexture(config.veilColor, config.dotColor);
     const veilMat = new THREE.MeshBasicMaterial({
       map: veilTex,
@@ -225,156 +471,146 @@ export class GateManager {
     veil.position.set(0, totalHeight / 2, 0);
     gateGroup.add(veil);
 
-    // 6. Badge Header Kapsul Teks di Atas Gerbang
+    // 6. Badge Header Kapsul
     const badgeTex = this.createBadgeTexture(config.icon, config.text, config.borderColor);
-    const badgeMat = new THREE.SpriteMaterial({
-      map: badgeTex,
-      transparent: true,
-      depthTest: true
-    });
+    const badgeMat = new THREE.SpriteMaterial({ map: badgeTex, transparent: true, depthTest: true });
     const badgeSprite = new THREE.Sprite(badgeMat);
     badgeSprite.scale.set(0.48, 0.17, 1.0);
     badgeSprite.position.set(0, totalHeight + 0.14, 0);
     gateGroup.add(badgeSprite);
 
+    gateGroup.position.x = localX;
+
     return {
       group: gateGroup,
       veil: veil,
       badgeSprite: badgeSprite,
-      config: config
+      config: config,
+      localX: localX // Local X > 0 = Kiri, Local X < 0 = Kanan, 0 = Tengah
     };
   }
 
-  // Membuat 1 pasang gerbang (Kiri & Kanan) yang terpasang pada silinder
-  createPair(thetaAngle, configs) {
-    const pairWrapper = new THREE.Group();
+  // -------------------------------------------------------------
+  // SPONSOR & TATA LETAK GERBANG ACAK (TIDAK SELALU SEBELAH-SEBELAHAN)
+  // -------------------------------------------------------------
+  createStation(thetaAngle) {
+    const stationWrapper = new THREE.Group();
 
     // Posisi pada keliling silinder
     const posX = this.cylinderRadius * Math.cos(thetaAngle);
     const posZ = this.cylinderRadius * Math.sin(thetaAngle);
 
-    // Basis rotasi agar gerbang berdiri tegak lurus di permukaan jalan silinder
     const xAxis = new THREE.Vector3(0, -1, 0);
     const yAxis = new THREE.Vector3(Math.cos(thetaAngle), 0, Math.sin(thetaAngle));
     const zAxis = new THREE.Vector3(-Math.sin(thetaAngle), 0, Math.cos(thetaAngle));
     const basisMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
 
-    pairWrapper.setRotationFromMatrix(basisMat);
-    pairWrapper.position.set(posX, 0, posZ);
+    stationWrapper.setRotationFromMatrix(basisMat);
+    stationWrapper.position.set(posX, 0, posZ);
 
-    // Gerbang Jalur Kiri (Y cylinder < 0 -> local X > 0)
-    // Diletakkan tepat di tengah jalur kiri (X = +0.21)
-    const leftGate = this.createSingleGate(configs.left);
-    leftGate.group.position.x = 0.21;
-    pairWrapper.add(leftGate.group);
+    // Tentukan pola tata letak acak:
+    // 0: Hanya Jalur Kiri (Single Left)
+    // 1: Hanya Jalur Kanan (Single Right)
+    // 2: Hanya Jalur Tengah (Single Center)
+    // 3 atau 4: Sepasang Pilihan Kiri & Kanan (Choice Pair)
+    const patternRand = Math.random();
+    const gates = [];
 
-    // Gerbang Jalur Kanan (Y cylinder > 0 -> local X < 0)
-    // Diletakkan tepat di tengah jalur kanan (X = -0.21)
-    const rightGate = this.createSingleGate(configs.right);
-    rightGate.group.position.x = -0.21;
-    pairWrapper.add(rightGate.group);
+    if (patternRand < 0.25) {
+      // 1 Gerbang Jalur Kiri Saja
+      const cfg = this.getRandomGateConfig();
+      const g = this.createSingleGate(cfg, 0.21);
+      stationWrapper.add(g.group);
+      gates.push(g);
+    } else if (patternRand < 0.50) {
+      // 1 Gerbang Jalur Kanan Saja
+      const cfg = this.getRandomGateConfig();
+      const g = this.createSingleGate(cfg, -0.21);
+      stationWrapper.add(g.group);
+      gates.push(g);
+    } else if (patternRand < 0.65) {
+      // 1 Gerbang Jalur Tengah Saja
+      const cfg = this.getRandomGateConfig();
+      const g = this.createSingleGate(cfg, 0.0);
+      stationWrapper.add(g.group);
+      gates.push(g);
+    } else {
+      // 2 Gerbang Sepasang (Pilihan Kiri vs Kanan)
+      // Dibuat pilihan menarik: misal satu positif dan satu negatif, atau add vs multiply
+      const isDilemma = Math.random() < 0.5;
+      let leftCfg, rightCfg;
 
-    this.mainMesh.add(pairWrapper);
+      if (isDilemma) {
+        // Satu positif, satu negatif (Pemain harus memilih dengan lincah!)
+        if (Math.random() < 0.5) {
+          leftCfg = this.getRandomGateConfig(true);
+          rightCfg = this.getRandomGateConfig(false);
+        } else {
+          leftCfg = this.getRandomGateConfig(false);
+          rightCfg = this.getRandomGateConfig(true);
+        }
+      } else {
+        // Dua-duanya positif tapi berbeda jenis (misal Army vs EXP)
+        leftCfg = this.getRandomGateConfig(true);
+        rightCfg = this.getRandomGateConfig(true);
+      }
+
+      const leftGate = this.createSingleGate(leftCfg, 0.21);
+      const rightGate = this.createSingleGate(rightCfg, -0.21);
+      stationWrapper.add(leftGate.group);
+      stationWrapper.add(rightGate.group);
+      gates.push(leftGate, rightGate);
+    }
+
+    this.mainMesh.add(stationWrapper);
 
     return {
-      wrapper: pairWrapper,
+      wrapper: stationWrapper,
       theta: thetaAngle,
-      leftGate: leftGate,
-      rightGate: rightGate,
+      gates: gates,
       isPassed: false,
       rise: 1.0
     };
   }
 
-  createGatePairs() {
+  initStations() {
     const playerTheta = Math.asin(0.15 / this.cylinderRadius); // ~0.0577 rad
 
-    // Pair 1 (Foreground, mendekati pemain):
-    // Kiri: 💧 +21 (Air)
-    // Kanan: ⇄ ⚡ UBAH (Listrik)
-    const pair1Configs = {
-      left: {
-        icon: '💧',
-        text: '+21',
-        type: 'water_add',
-        value: 21,
-        pipeColor: 0x38bdf8,
-        veilColor: 'rgba(56, 189, 248, 0.45)',
-        dotColor: 'rgba(224, 242, 254, 0.95)',
-        borderColor: '#38bdf8'
-      },
-      right: {
-        icon: '⇄ ⚡',
-        text: 'UBAH',
-        type: 'transform_electro',
-        value: '⚡ LISTRIK',
-        pipeColor: 0xfacc15,
-        veilColor: 'rgba(250, 204, 21, 0.45)',
-        dotColor: 'rgba(254, 240, 138, 0.95)',
-        borderColor: '#facc15'
-      }
-    };
+    // Buat 3 stasiun tersebar merata di depan pemain
+    // Stasiun 1: Dekat di depan (~45 derajat)
+    // Stasiun 2: Jarak menengah (~95 derajat)
+    // Stasiun 3: Di horizon kejauhan (~145 derajat)
+    const s1 = this.createStation(playerTheta + 0.80);
+    const s2 = this.createStation(playerTheta + 1.70);
+    const s3 = this.createStation(playerTheta + 2.60);
 
-    // Pair 2 (Background, di kejauhan):
-    // Kiri: 💧 +35
-    // Kanan: ⇄ 🔥 UBAH (Api)
-    const pair2Configs = {
-      left: {
-        icon: '💧',
-        text: '+35',
-        type: 'water_add',
-        value: 35,
-        pipeColor: 0x38bdf8,
-        veilColor: 'rgba(56, 189, 248, 0.45)',
-        dotColor: 'rgba(224, 242, 254, 0.95)',
-        borderColor: '#38bdf8'
-      },
-      right: {
-        icon: '⇄ 🔥',
-        text: 'UBAH',
-        type: 'transform_fire',
-        value: '🔥 API',
-        pipeColor: 0xf97316,
-        veilColor: 'rgba(249, 115, 22, 0.45)',
-        dotColor: 'rgba(254, 215, 170, 0.95)',
-        borderColor: '#f97316'
-      }
-    };
-
-    // Pair 1: Sekitar 45 derajat di depan pemain
-    const p1 = this.createPair(playerTheta + 0.75, pair1Configs);
-    // Pair 2: Sekitar 105 derajat di depan pemain (kejauhan)
-    const p2 = this.createPair(playerTheta + 1.85, pair2Configs);
-
-    this.gatePairs.push(p1, p2);
+    this.gateStations.push(s1, s2, s3);
   }
 
-  // Floating 3D Text Popup saat pemain melewati gerbang
+  // -------------------------------------------------------------
+  // FLOATING TEXT POPUP & BURST PARTICLES
+  // -------------------------------------------------------------
   createFloatingPopup(text, colorHex, position) {
     const canvas = document.createElement('canvas');
-    canvas.width = 384;
-    canvas.height = 128;
+    canvas.width = 440;
+    canvas.height = 130;
     const ctx = canvas.getContext('2d');
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = '900 56px "Segoe UI", Roboto, sans-serif';
+    ctx.font = '900 54px "Segoe UI", Roboto, sans-serif';
     ctx.fillStyle = '#ffffff';
     ctx.shadowColor = colorHex;
     ctx.shadowBlur = 20;
-    ctx.fillText(text, 192, 64);
+    ctx.fillText(text, 220, 65);
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
-    const mat = new THREE.SpriteMaterial({
-      map: texture,
-      transparent: true,
-      depthTest: false
-    });
+    const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
     const sprite = new THREE.Sprite(mat);
-    sprite.scale.set(0.68, 0.23, 1);
+    sprite.scale.set(0.72, 0.23, 1);
     sprite.position.copy(position);
-    sprite.position.x += 0.38; // Melayang di atas kepala karakter (+X adalah ke atas menjauhi jalan)
+    sprite.position.x += 0.38;
 
     this.scene.add(sprite);
 
@@ -386,7 +622,6 @@ export class GateManager {
     });
   }
 
-  // Efek ledakan partikel saat gerbang ditembus
   createPassBurst(position, colorHex) {
     const count = 30;
     const geo = new THREE.BufferGeometry();
@@ -399,9 +634,9 @@ export class GateManager {
       positions[i * 3 + 2] = position.z + (Math.random() - 0.5) * 0.15;
 
       velocities.push({
-        x: 0.50 + Math.random() * 0.60, // Melambung ke atas (+X)
-        y: (Math.random() - 0.5) * 0.70, // Menyebar ke samping
-        z: (Math.random() - 0.5) * 0.70  // Menyebar ke depan/belakang
+        x: 0.50 + Math.random() * 0.60,
+        y: (Math.random() - 0.5) * 0.70,
+        z: (Math.random() - 0.5) * 0.70
       });
     }
 
@@ -425,108 +660,233 @@ export class GateManager {
     });
   }
 
-  // Update di setiap frame animasi (Loop)
+  // -------------------------------------------------------------
+  // EKSEKUSI DAMPAK GERBANG (REWARD & PENALTY)
+  // -------------------------------------------------------------
+  applyGateEffect(config, hitPos) {
+    let soundType = 'positive';
+
+    switch (config.type) {
+      case 'army_add':
+        this.armyCount += config.value;
+        this.createFloatingPopup(`+${config.value} 👤 PASUKAN!`, config.borderColor, hitPos);
+        this.createPassBurst(hitPos, config.pipeColor);
+        soundType = 'positive';
+        break;
+
+      case 'army_multiply':
+        this.armyCount *= config.value;
+        this.createFloatingPopup(`×${config.value} 👥 PENGGANDAAN!`, config.borderColor, hitPos);
+        this.createPassBurst(hitPos, config.pipeColor);
+        soundType = 'positive';
+        break;
+
+      case 'army_sub':
+        this.armyCount = Math.max(1, this.armyCount - config.value);
+        this.createFloatingPopup(`-${config.value} 👤 PASUKAN!`, config.borderColor, hitPos);
+        this.createPassBurst(hitPos, config.pipeColor);
+        soundType = 'negative';
+        break;
+
+      case 'exp_add':
+        this.exp += config.value;
+        this.createFloatingPopup(`+${config.value} ⭐ EXP!`, config.borderColor, hitPos);
+        this.createPassBurst(hitPos, config.pipeColor);
+        soundType = 'positive';
+
+        // Cek Level Up!
+        if (this.exp >= this.nextLevelExp) {
+          this.level++;
+          this.exp -= this.nextLevelExp;
+          this.nextLevelExp = this.level * 100;
+          this.createFloatingPopup(`🎉 LEVEL UP! (Lv. ${this.level})`, '#facc15', {
+            x: hitPos.x + 0.25,
+            y: hitPos.y,
+            z: hitPos.z
+          });
+          soundType = 'levelup';
+        }
+        break;
+
+      case 'exp_sub':
+        this.exp = Math.max(0, this.exp - config.value);
+        this.createFloatingPopup(`-${config.value} ⭐ EXP!`, config.borderColor, hitPos);
+        this.createPassBurst(hitPos, config.pipeColor);
+        soundType = 'negative';
+        break;
+
+      case 'water_add':
+        this.waterScore += config.value;
+        this.createFloatingPopup(`+${config.value} 💧 AIR!`, config.borderColor, hitPos);
+        this.createPassBurst(hitPos, config.pipeColor);
+        soundType = 'positive';
+        break;
+
+      case 'transform_electro':
+        this.activeElement = '⚡ LISTRIK';
+        this.createFloatingPopup('⚡ ELEMEN LISTRIK!', '#facc15', hitPos);
+        this.createPassBurst(hitPos, 0xfacc15);
+        if (this.onElementChange) this.onElementChange('electro');
+        soundType = 'positive';
+        break;
+
+      case 'transform_fire':
+        this.activeElement = '🔥 API';
+        this.createFloatingPopup('🔥 ELEMEN API!', '#f97316', hitPos);
+        this.createPassBurst(hitPos, 0xf97316);
+        if (this.onElementChange) this.onElementChange('fire');
+        soundType = 'positive';
+        break;
+    }
+
+    this.playSound(soundType);
+    this.updateHud();
+    this.drawHeadBadge(true);
+    this.syncArmyClones();
+  }
+
+  // -------------------------------------------------------------
+  // UPDATE LOOP FRAME (ANIMASI, COLLISION, EMERGE, DESPAWN)
+  // -------------------------------------------------------------
   update(delta, avatarLaneY, isAnimating) {
     const playerTheta = Math.asin(0.15 / this.cylinderRadius); // ~0.0577 rad
 
-    // 1. Update Gerbang (Muncul, Lewat, Terhapus, Reposisi)
-    this.gatePairs.forEach((pair) => {
-      let angleDiff = (pair.theta - this.mainMesh.rotation.y - playerTheta) % (Math.PI * 2);
+    // Animasi bounce badge kepala
+    if (this.armyHeadBadge && this.headBadgeScale > 1.0) {
+      this.headBadgeScale = THREE.MathUtils.lerp(this.headBadgeScale, 1.0, delta * 8.0);
+      this.armyHeadBadge.scale.set(0.18 * this.headBadgeScale, 0.08 * this.headBadgeScale, 1.0);
+    }
+
+    // 1. Update Semua Stasiun Gerbang
+    this.gateStations.forEach((st) => {
+      let angleDiff = (st.theta - this.mainMesh.rotation.y - playerTheta) % (Math.PI * 2);
       if (angleDiff < 0) angleDiff += Math.PI * 2;
 
       // A. MUNCUL / KELUAR SEBELUM DILEWATI:
-      // Gerbang naik mulus dari dalam aspal saat mendekat dalam radius pandang
-      if (!pair.isPassed) {
-        if (angleDiff < 1.55) {
-          pair.wrapper.visible = true;
-          // Gerbang naik tegak mulus (rise dari 0 ke 1)
-          pair.rise = THREE.MathUtils.lerp(pair.rise, 1.0, delta * 5.5);
+      if (!st.isPassed) {
+        if (angleDiff < 1.65) {
+          st.wrapper.visible = true;
+          st.rise = THREE.MathUtils.lerp(st.rise, 1.0, delta * 5.5);
         } else {
-          // Terlalu jauh di belakang lengkungan silinder
-          pair.rise = 0.0;
+          st.rise = 0.0;
         }
 
-        // Posisi Y lokal: 0 adalah permukaan aspal, -0.6 adalah terkubur di bawah jalan
-        const curY = (pair.rise - 1.0) * 0.60;
-        pair.leftGate.group.position.y = curY;
-        pair.rightGate.group.position.y = curY;
-      }
-
-      // Animasi pendaran tirai energi di dalam gerbang
-      if (pair.leftGate.veil && pair.rightGate.veil) {
-        const pulse = 0.55 + Math.sin(Date.now() * 0.006) * 0.14;
-        pair.leftGate.veil.material.opacity = pulse;
-        pair.rightGate.veil.material.opacity = pulse;
+        const curY = (st.rise - 1.0) * 0.65;
+        st.gates.forEach((g) => {
+          g.group.position.y = curY;
+          if (g.veil) {
+            const pulse = 0.55 + Math.sin(Date.now() * 0.006) * 0.14;
+            g.veil.material.opacity = pulse;
+          }
+        });
       }
 
       // B. COLLISION & TERHAPUS SETELAH DILEWATI:
-      // Saat gerbang mencapai posisi pemain (angleDiff mendekati 0 atau tepat di depan 0.035)
-      const isCrossing = (angleDiff <= 0.035 || angleDiff >= Math.PI * 2 - 0.035);
-      if (!pair.isPassed && isCrossing) {
-        pair.isPassed = true;
+      const isCrossing = (angleDiff <= 0.038 || angleDiff >= Math.PI * 2 - 0.038);
+      if (!st.isPassed && isCrossing) {
+        st.isPassed = true;
 
-        // Tentukan gerbang mana yang dilewati pemain berdasarkan avatarLaneY:
-        // avatarLaneY < 0 -> Jalur Kiri (💧 +21)
-        // avatarLaneY >= 0 -> Jalur Kanan (⇄ ⚡ UBAH)
-        const isLeft = avatarLaneY < 0;
-        const chosenGate = isLeft ? pair.leftGate : pair.rightGate;
-        const config = chosenGate.config;
+        // Cek gerbang mana yang dilewati pemain berdasarkan avatarLaneY:
+        // Local X di wrapper gerbang:
+        // Local X = +0.21 adalah Jalur Kiri (avatarLaneY < -0.08)
+        // Local X = -0.21 adalah Jalur Kanan (avatarLaneY > 0.08)
+        // Local X = 0.0 adalah Jalur Tengah (|avatarLaneY| <= 0.15)
+        let hitGate = null;
+        let minLaneDist = 999;
 
-        // Posisi dunia karakter
+        st.gates.forEach((g) => {
+          // Konversi local X ke lane Y dunia: local X > 0 -> lane Y < 0
+          const gateLaneY = -g.localX;
+          const dist = Math.abs(avatarLaneY - gateLaneY);
+          if (dist < 0.22 && dist < minLaneDist) {
+            minLaneDist = dist;
+            hitGate = g;
+          }
+        });
+
+        // Posisi dunia kontak tabrakan
         const surfaceX = Math.sqrt(this.cylinderRadius * this.cylinderRadius - 0.15 * 0.15);
         const hitPos = new THREE.Vector3(surfaceX, avatarLaneY, 0.15);
 
-        // Eksekusi Efek Gerbang:
-        if (config.type === 'water_add') {
-          this.waterScore += config.value;
-          this.createFloatingPopup(`+${config.value} 💧`, '#38bdf8', hitPos);
-          this.createPassBurst(hitPos, 0x38bdf8);
-        } else if (config.type === 'transform_electro') {
-          this.activeElement = '⚡ LISTRIK';
-          this.createFloatingPopup('⚡ ELEMEN LISTRIK!', '#facc15', hitPos);
-          this.createPassBurst(hitPos, 0xfacc15);
-          if (this.onElementChange) this.onElementChange('electro');
-        } else if (config.type === 'transform_fire') {
-          this.activeElement = '🔥 API';
-          this.createFloatingPopup('🔥 ELEMEN API!', '#f97316', hitPos);
-          this.createPassBurst(hitPos, 0xf97316);
-          if (this.onElementChange) this.onElementChange('fire');
+        if (hitGate) {
+          this.applyGateEffect(hitGate.config, hitPos);
         }
 
-        this.updateHud();
-
-        // ANIMASI TERHAPUS (Despawn):
-        // Gerbang langsung terhapus dari pandangan setelah dilewati!
-        pair.wrapper.visible = false;
-        pair.rise = 0.0;
-        pair.leftGate.group.position.y = -0.65;
-        pair.rightGate.group.position.y = -0.65;
+        // DESPAWN / TERHAPUS LANGSUNG SETELAH DILEWATI
+        st.wrapper.visible = false;
+        st.rise = 0.0;
+        st.gates.forEach((g) => (g.group.position.y = -0.70));
       }
 
-      // C. RECYCLE / SPAWN KEMBALI DI KEJAUHAN:
-      // Setelah gerbang benar-benar lewat di belakang pemain (angleDiff di belakang pemain)
-      if (pair.isPassed && angleDiff > Math.PI * 0.50 && angleDiff < Math.PI * 1.80) {
-        pair.isPassed = false;
-        // Majukan sudut theta gerbang ke depan di kejauhan (~1.6 rad / 92 derajat di depan)
-        pair.theta = (this.mainMesh.rotation.y + playerTheta + 1.65) % (Math.PI * 2);
+      // C. RECYCLE / SPAWN KEMBALI DI KEJAUHAN DENGAN VARIASI BARU:
+      if (st.isPassed && angleDiff > Math.PI * 0.50 && angleDiff < Math.PI * 1.80) {
+        // Hapus gerbang lama dari wrapper
+        while (st.wrapper.children.length > 0) {
+          st.wrapper.remove(st.wrapper.children[0]);
+        }
 
-        // Update posisi & rotasi wrapper silinder
-        const posX = this.cylinderRadius * Math.cos(pair.theta);
-        const posZ = this.cylinderRadius * Math.sin(pair.theta);
+        st.isPassed = false;
+        // Majukan sudut theta gerbang ke depan di horizon (~2.5 rad / 143 derajat di depan)
+        st.theta = (this.mainMesh.rotation.y + playerTheta + 2.50) % (Math.PI * 2);
+
+        // Update posisi & rotasi wrapper
+        const posX = this.cylinderRadius * Math.cos(st.theta);
+        const posZ = this.cylinderRadius * Math.sin(st.theta);
 
         const xAxis = new THREE.Vector3(0, -1, 0);
-        const yAxis = new THREE.Vector3(Math.cos(pair.theta), 0, Math.sin(pair.theta));
-        const zAxis = new THREE.Vector3(-Math.sin(pair.theta), 0, Math.cos(pair.theta));
+        const yAxis = new THREE.Vector3(Math.cos(st.theta), 0, Math.sin(st.theta));
+        const zAxis = new THREE.Vector3(-Math.sin(st.theta), 0, Math.cos(st.theta));
         const basisMat = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
 
-        pair.wrapper.setRotationFromMatrix(basisMat);
-        pair.wrapper.position.set(posX, 0, posZ);
+        st.wrapper.setRotationFromMatrix(basisMat);
+        st.wrapper.position.set(posX, 0, posZ);
 
-        // Siap muncul kembali dari kejauhan
-        pair.rise = 0.0;
-        pair.leftGate.group.position.y = -0.65;
-        pair.rightGate.group.position.y = -0.65;
-        pair.wrapper.visible = true;
+        // Buat formasi gerbang baru secara acak (tidak selalu berdampingan)
+        const patternRand = Math.random();
+        st.gates = [];
+
+        if (patternRand < 0.25) {
+          const cfg = this.getRandomGateConfig();
+          const g = this.createSingleGate(cfg, 0.21);
+          st.wrapper.add(g.group);
+          st.gates.push(g);
+        } else if (patternRand < 0.50) {
+          const cfg = this.getRandomGateConfig();
+          const g = this.createSingleGate(cfg, -0.21);
+          st.wrapper.add(g.group);
+          st.gates.push(g);
+        } else if (patternRand < 0.65) {
+          const cfg = this.getRandomGateConfig();
+          const g = this.createSingleGate(cfg, 0.0);
+          st.wrapper.add(g.group);
+          st.gates.push(g);
+        } else {
+          // Pilihan sepasang Kiri & Kanan
+          const isDilemma = Math.random() < 0.55;
+          let leftCfg, rightCfg;
+          if (isDilemma) {
+            if (Math.random() < 0.5) {
+              leftCfg = this.getRandomGateConfig(true);
+              rightCfg = this.getRandomGateConfig(false);
+            } else {
+              leftCfg = this.getRandomGateConfig(false);
+              rightCfg = this.getRandomGateConfig(true);
+            }
+          } else {
+            leftCfg = this.getRandomGateConfig(true);
+            rightCfg = this.getRandomGateConfig(true);
+          }
+
+          const leftGate = this.createSingleGate(leftCfg, 0.21);
+          const rightGate = this.createSingleGate(rightCfg, -0.21);
+          st.wrapper.add(leftGate.group);
+          st.wrapper.add(rightGate.group);
+          st.gates.push(leftGate, rightGate);
+        }
+
+        st.rise = 0.0;
+        st.gates.forEach((g) => (g.group.position.y = -0.70));
+        st.wrapper.visible = true;
       }
     });
 
@@ -534,7 +894,7 @@ export class GateManager {
     for (let i = this.popups.length - 1; i >= 0; i--) {
       const p = this.popups[i];
       p.life += delta;
-      p.sprite.position.x = p.baseX + p.life * 0.40; // Melayang naik ke atas (+X)
+      p.sprite.position.x = p.baseX + p.life * 0.42;
       p.sprite.material.opacity = Math.max(0, 1.0 - (p.life / p.maxLife));
 
       if (p.life >= p.maxLife) {

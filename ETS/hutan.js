@@ -13,6 +13,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+import { GateManager } from './gates.js';
 
 const canvas = document.getElementById('mainCanvas');
 const fpsDisplay = document.getElementById('fpsDisplay');
@@ -33,6 +34,7 @@ let avatarLaneY = 0.0;
 let avatarTargetLaneY = 0.0;
 let splashParticles = null;
 let splashVelocities = null;
+let gateManager = null;
 
 const cylinderRadius = 2.6;
 const cylinderHeight = 3.8;
@@ -466,6 +468,9 @@ function initForest() {
 
   // 11. Avatar Waterun (Runner) berlari di atas jalan raya hutan
   createRunnerAvatar(scene);
+
+  // 12. Sistem Gerbang Interaktif Runner (Pasukan Army, Multiplier, EXP, Minus & Elemen)
+  gateManager = new GateManager(scene, mainMesh, cylinderRadius, avatarGroup, () => avatarModel);
 }
 
 // -------------------------------------------------------------
@@ -1281,6 +1286,11 @@ function animate(time) {
         splashParticles.visible = false;
       }
     }
+  }
+
+  // Update Sistem Gerbang Interaktif Runner (Muncul sebelum lewat, Collision, Terhapus, Popup & Partikel)
+  if (gateManager) {
+    gateManager.update(delta, avatarLaneY, isAnimating);
   }
 
   if (cameraView === 'surface') {

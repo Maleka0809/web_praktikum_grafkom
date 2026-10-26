@@ -375,8 +375,8 @@ function initCity() {
   // 11. Avatar Karakter Pelari (Firerun GLB)
   createRunnerAvatar(scene);
 
-  // 12. Sistem Gerbang Interaktif Runner (💧 +21 & ⇄ ⚡ UBAH)
-  gateManager = new GateManager(scene, mainMesh, cylinderRadius);
+  // 12. Sistem Gerbang Interaktif Runner (Pasukan Army, Multiplier, EXP, Minus & Elemen)
+  gateManager = new GateManager(scene, mainMesh, cylinderRadius, avatarGroup, () => avatarModel);
 }
 
 function createWaterNormalTexture() {
