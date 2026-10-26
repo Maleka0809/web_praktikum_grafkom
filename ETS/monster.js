@@ -64,7 +64,7 @@ export class MonsterManager {
       this.modelPath1 = './assets/idle_robot.glb';
       this.modelPath2 = './assets/attack_robot.glb';
       this.modelPathDying = './assets/dying_robot.glb';
-      this.modelScale = 0.85;
+      this.modelScale = 3.8;
       this.lightColor = 0xa855f7;
     } else {
       this.bossName = '👾 FINAL BOSS: MONSTER SAMPAH KOTA';
