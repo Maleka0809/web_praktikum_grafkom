@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
+import { GateManager } from './gates.js';
 
 const canvas = document.getElementById('mainCanvas');
 const fpsDisplay = document.getElementById('fpsDisplay');
@@ -26,6 +27,7 @@ let avatarTargetLaneY = 0.0;
 const avatarBaseTargetZ = 0.15; // Posisi avatar tepat dekat dasar bawah kanvas dengan kedua kaki tetap terlihat saat berlari // Posisi avatar lebih ke bawah dekat dasar kanvas // Posisi avatar dekat dasar bawah kanvas agar pandangan jalan ke depan lapang // Posisi avatar dekat dasar bawah kanvas agar pandangan jalan ke depan lapang
 let splashParticles = null;
 let splashVelocities = null;
+let gateManager = null;
 
 let scene, camera, renderer, controls;
 let mainMesh, sideMaterial, capMaterial, standardMaterials;
@@ -372,6 +374,9 @@ function initCity() {
 
   // 11. Avatar Karakter Pelari (Firerun GLB)
   createRunnerAvatar(scene);
+
+  // 12. Sistem Gerbang Interaktif Runner (💧 +21 & ⇄ ⚡ UBAH)
+  gateManager = new GateManager(scene, mainMesh, cylinderRadius);
 }
 
 function createWaterNormalTexture() {
@@ -959,6 +964,11 @@ function animate(time) {
         splashParticles.visible = false;
       }
     }
+  }
+
+  // Update Sistem Gerbang Interaktif Runner (Muncul sebelum lewat, Collision, Terhapus, Popup & Partikel)
+  if (gateManager) {
+    gateManager.update(delta, avatarLaneY, isAnimating);
   }
 
   if (cameraView === 'surface') {

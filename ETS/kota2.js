@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
+import { GateManager } from './gates.js';
 
 const canvas = document.getElementById('mainCanvas');
 const fpsDisplay = document.getElementById('fpsDisplay');
@@ -28,6 +29,7 @@ let avatarLaneY = 0.0;
 let avatarTargetLaneY = 0.0;
 let sparkParticles = null;
 let sparkVelocities = null;
+let gateManager = null;
 
 const cylinderRadius = 2.6; // Diameter diperbesar menjadi 5.2
 const cylinderHeight = 3.8; // Diperlebar agar memuat 2 layer gedung (depan & belakang)
@@ -382,7 +384,10 @@ function initCyberCity() {
   // 12. Avatar Electrorun (Runner) berlari di atas jalan raya kota futuristik
   createRunnerAvatar(scene);
 
-  // 12. Event Listeners
+  // 13. Sistem Gerbang Interaktif Runner (💧 +21 & ⇄ ⚡ UBAH)
+  gateManager = new GateManager(scene, mainMesh, cylinderRadius);
+
+  // 14. Event Listeners
   window.addEventListener('resize', onWindowResize);
   setupControls();
 
@@ -930,6 +935,11 @@ function animate(currentTime) {
         sparkParticles.visible = false;
       }
     }
+  }
+
+  // Update Sistem Gerbang Interaktif Runner (Muncul sebelum lewat, Collision, Terhapus, Popup & Partikel)
+  if (gateManager) {
+    gateManager.update(delta, avatarLaneY, isAnimating);
   }
 
   if (cameraView === 'surface') {
