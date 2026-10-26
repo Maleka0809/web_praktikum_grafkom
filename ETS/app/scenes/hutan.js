@@ -1,4 +1,3 @@
-import '@fortawesome/fontawesome-free/css/all.min.css';
 /**
  * ETS Grafika Komputer - Lingkungan 02: Hutan Malam Kebakaran (Galaxy Wildfire Forest)
  * - Background langit malam galaksi 360° (Galaxy Deep Space) & Bulan bersinar sama seperti kota2.

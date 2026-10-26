@@ -1,4 +1,3 @@
-import '@fortawesome/fontawesome-free/css/all.min.css';
 /**
  * ETS Grafika Komputer - Lingkungan 03: Kota Futuristik Malam (Cyber City)
  * Final Boss: Mecha Robot (idle, attack, dying)

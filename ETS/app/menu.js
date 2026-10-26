@@ -1,4 +1,3 @@
-import '@fortawesome/fontawesome-free/css/all.min.css';
 const selection = document.getElementById('arenaSelection');
 const start = document.getElementById('startGame');
 const dialog = document.getElementById('howToDialog');
