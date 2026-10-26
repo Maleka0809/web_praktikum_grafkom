@@ -253,14 +253,15 @@ export class GateManager {
       const row = Math.floor(idx / 2) + 1; // Deret baris ke belakang (1, 2, 3, 4)
       const col = idx % 2;                 // 0 = banjar kiri, 1 = banjar kanan
 
-      // Spacing berjarak sangat longgar dan jelas di jalan:
-      // Samping berjarak 0.180 (celah udara luas antar kepala/badan, tetap aman di dalam jalur aspal lebar 0.42)
-      // Depan-belakang berjarak 0.155 per baris (celah antar kepala sangat lapang, tidak mungkin menempel/tumpuk saat lari)
-      const offsetX = col === 0 ? -0.090 : 0.090;
-      const offsetZ = -row * 0.155;
+      // Spacing berjarak sangat longgar dan jelas di jalan (proporsional ukuran 0.038):
+      // Samping berjarak 0.192 (celah udara luas antar kepala/badan, tetap aman di dalam jalur aspal lebar 0.42)
+      // Depan-belakang berjarak 0.175 per baris (celah antar kepala sangat lapang, tidak mungkin menempel/tumpuk saat lari)
+      const offsetX = col === 0 ? -0.096 : 0.096;
+      const offsetZ = -row * 0.175;
 
       clone.position.set(offsetX, 0.009, offsetZ);
-      clone.scale.set(0.028, 0.028, 0.028);
+      // Ukuran pasukan sama persis seperti ukuran avatar pemimpin (s = 0.038)
+      clone.scale.set(0.038, 0.038, 0.038);
 
       // Pendaran cerah pada pakaian pasukan agar kontras dan memukau di atas aspal
       clone.traverse((node) => {
@@ -300,15 +301,15 @@ export class GateManager {
       }
     }
 
-    // Pastikan seluruh klon yang aktif berbaris presisi sesuai formasi 2 banjar berjarak longgar
+    // Pastikan seluruh klon yang aktif berbaris presisi sesuai formasi 2 banjar berjarak longgar & ukuran sama
     for (let idx = 0; idx < this.armyClones.length; idx++) {
       const clone = this.armyClones[idx];
       const row = Math.floor(idx / 2) + 1;
       const col = idx % 2;
-      const offsetX = col === 0 ? -0.090 : 0.090;
-      const offsetZ = -row * 0.155;
+      const offsetX = col === 0 ? -0.096 : 0.096;
+      const offsetZ = -row * 0.175;
       clone.position.set(offsetX, 0.009, offsetZ);
-      clone.scale.set(0.028, 0.028, 0.028);
+      clone.scale.set(0.038, 0.038, 0.038);
     }
   }
 

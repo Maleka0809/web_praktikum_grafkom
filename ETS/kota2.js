@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
-import { GateManager } from './gates.js?v=banjar_wide_v3';
+import { GateManager } from './gates.js?v=banjar_same_size_v4';
 import { MonsterManager } from './monster.js?v=boss_v7';
 
 const canvas = document.getElementById('mainCanvas');
@@ -46,9 +46,9 @@ let powerRestored = false;
 
 const cylinderRadius = 2.6; // Diameter diperbesar menjadi 5.2
 const cylinderHeight = 3.8; // Diperlebar agar memuat 2 layer gedung (depan & belakang)
-const eyeHeight = 1.15; // Posisi kamera di atas avatar agar sudut pandang luas dan celah antar personil terlihat jelas
-const basePitchDown = 34.0 * (Math.PI / 180); // Sudut kamera menunduk (pitch down)
-const camZOffset = -0.68; // Posisi offset Z kamera mundur memberi ruang leluasa bagi seluruh barisan pasukan 2 banjar berjarak longgar
+const eyeHeight = 1.18; // Posisi kamera di atas avatar agar sudut pandang luas dan celah antar personil terlihat jelas
+const basePitchDown = 34.5 * (Math.PI / 180); // Sudut kamera menunduk (pitch down)
+const camZOffset = -0.74; // Posisi offset Z kamera mundur memberi ruang leluasa bagi seluruh barisan pasukan ukuran sama 2 banjar
 const avatarBaseTargetZ = 0.15; // Posisi avatar tepat dekat dasar bawah kanvas
 
 let cameraView = 'surface'; // 'surface' | 'orbit'
