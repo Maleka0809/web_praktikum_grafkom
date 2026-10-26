@@ -384,6 +384,8 @@ function initCity() {
   gateManager = new GateManager(scene, mainMesh, cylinderRadius, avatarGroup, () => avatarModel);
   gateManager.activeElement = 'FIRE';
   gateManager.elementType = 'fire';
+  gateManager.initialActiveElement = 'FIRE';
+  gateManager.initialElementType = 'fire';
   gateManager.updateHud();
   gateManager.onElementChange = (element) => changeArmyElement(gateManager, avatarGroup, avatarModel, element, (model, mixer, action) => {
     if (avatarMixer) {
@@ -431,6 +433,7 @@ function initCity() {
       }
     }
   );
+  gateManager.onGameOver = () => monsterManager.triggerDefeatByArmy();
 }
 
 function createWaterNormalTexture() {

@@ -47,6 +47,9 @@ export class GateManager {
     this.elementHistory = [];
     this.positiveGateCount = 0;
     this.recycledStationCount = 0;
+    this.onGameOver = null;
+    this.initialElementType = null;
+    this.initialActiveElement = null;
 
     // Army Clones Visuals
     this.armyClones = [];
@@ -323,6 +326,26 @@ export class GateManager {
     });
     this.armyClones = [];
     this.armyMixers = [];
+  }
+
+  reset() {
+    this.armyCount = 1;
+    this.exp = 0;
+    this.level = 1;
+    this.nextLevelExp = 100;
+    this.waterScore = 0;
+    this.positiveGateCount = 0;
+    this.recycledStationCount = 0;
+    this.elementHistory = [];
+    if (this.avatarGroup) this.avatarGroup.visible = true;
+    this.clearArmyClones();
+    if (this.initialElementType) {
+      this.elementType = this.initialElementType;
+      this.activeElement = this.initialActiveElement || this.initialElementType.toUpperCase();
+      if (this.onElementChange) this.onElementChange(this.initialElementType);
+    }
+    this.updateHud();
+    this.drawHeadBadge(true);
   }
 
   // -------------------------------------------------------------
@@ -770,11 +793,27 @@ export class GateManager {
         break;
 
       case 'army_sub':
-        const removed = Math.min(config.value, this.armyCount - 1);
-        this.armyCount = applyMinusGate(this.armyCount, config.value);
-        this.createFloatingPopup(`-${removed} PASUKAN`, config.borderColor, hitPos);
-        this.createPassBurst(hitPos, config.pipeColor);
-        soundType = 'negative';
+        const newArmyCount = applyMinusGate(this.armyCount, config.value);
+        if (newArmyCount <= 0) {
+          const removed = this.armyCount;
+          this.armyCount = 0;
+          this.clearArmyClones();
+          if (this.avatarGroup) this.avatarGroup.visible = false;
+          this.createFloatingPopup(`-${removed} PASUKAN (HABIS!)`, '#ef4444', hitPos);
+          this.createPassBurst(hitPos, 0xef4444);
+          this.playSound('negative');
+          this.updateHud();
+          this.drawHeadBadge(true);
+          if (this.onGameOver) {
+            this.onGameOver('army_zero');
+          }
+          return;
+        } else {
+          this.armyCount = newArmyCount;
+          this.createFloatingPopup(`-${config.value} PASUKAN`, config.borderColor, hitPos);
+          this.createPassBurst(hitPos, config.pipeColor);
+          soundType = 'negative';
+        }
         break;
 
       case 'exp_add':

@@ -393,7 +393,21 @@ export class MonsterManager {
     });
   }
 
-  showResultModal(isWin, currentExp, armyCount) {
+  triggerDefeatByArmy() {
+    if (this.isBattleFinished || this.isDefeated) return;
+    this.isBattleFinished = true;
+    this.playSfx('defeat');
+    this.shakeIntensity = 0.08;
+    if (this.onRaceEnd) {
+      try { this.onRaceEnd(); } catch (e) {}
+    }
+    const currentExp = this.gateManager ? this.gateManager.exp : 0;
+    setTimeout(() => {
+      this.showResultModal(false, currentExp, 0, 'army_zero');
+    }, 450);
+  }
+
+  showResultModal(isWin, currentExp, armyCount, defeatReason = null) {
     const modal = document.getElementById('finalResultModal');
     const card = document.getElementById('resultCard');
     const icon = document.getElementById('resultIcon');
@@ -427,31 +441,41 @@ export class MonsterManager {
 
       feedback.innerHTML = `Hebat sekali! Pasukanmu berhasil mengumpulkan <b>${currentExp} EXP</b> dan menumbangkan Final Boss!<br><span style="color:#38bdf8; font-weight:600; display:inline-block; margin-top:6px;">${cutsceneInfo}</span>`;
     } else {
-      const currentElement = (this.gateManager?.elementType || '').toUpperCase();
-      const arenaRules = {
-        city: { name: 'Kota Banjir', required: 'FIRE (Api)' },
-        forest: { name: 'Hutan Kebakaran', required: 'WATER (Air)' },
-        cyber: { name: 'Kota Futuristik Mati Lampu', required: 'ELECTRO (Listrik)' },
-        robot: { name: 'Kota Futuristik Mati Lampu', required: 'ELECTRO (Listrik)' }
-      };
-      const rule = arenaRules[this.arenaType] || arenaRules.city;
-
-      if (!this.isCorrectElement) {
+      if (defeatReason === 'army_zero') {
         card.style.border = '1px solid #ef4444';
-        card.style.boxShadow = '0 18px 48px rgba(239, 68, 68, 0.35)';
-        icon.innerHTML = '<i class="ui-icon fa-solid fa-triangle-exclamation" aria-hidden="true" style="color: #ef4444;"></i>';
-        title.innerText = 'SALAH ELEMEN — PASUKAN KALAH!';
+        card.style.boxShadow = '0 18px 48px rgba(239, 68, 68, 0.45)';
+        icon.innerHTML = '<i class="ui-icon fa-solid fa-skull-crossbones" aria-hidden="true" style="color: #ef4444;"></i>';
+        title.innerText = 'GAME OVER — PASUKAN HABIS!';
         title.style.color = '#ef4444';
-        desc.innerText = `Kamu Membawa Elemen ${currentElement} di ${rule.name}!`;
-        feedback.innerHTML = `Di <b>${rule.name}</b>, Final Boss hanya bisa dikalahkan oleh pasukan elemen <b>${rule.required}</b>!<br><br>Jika kamu berpindah ke gerbang elemen lain selama berlari, seranganmu tidak akan mempan. Ulangi permainan dan pastikan pertahankan elemen <b>${rule.required}</b> saat menghadapi boss!`;
+        desc.innerText = 'Pasukanmu Habis Tereliminasi oleh Gerbang Minus!';
+        feedback.innerHTML = `Jumlah pasukanmu tidak mencukupi untuk melewati gerbang penalti merah (pasukan menjadi 0).<br><br>Gunakan tombol <kbd>A</kbd> dan <kbd>D</kbd> dengan lincah untuk menghindari gerbang minus berwarna merah!`;
       } else {
-        card.style.border = '1px solid #a75d58';
-        card.style.boxShadow = '0 18px 48px rgba(0, 0, 0, 0.45)';
-        icon.innerHTML = '<i class="ui-icon fa-solid fa-robot" aria-hidden="true"></i>';
-        title.innerText = 'PASUKAN BELUM CUKUP KUAT!';
-        title.style.color = '#f87171';
-        desc.innerText = `Kamu Terhempas Oleh Serangan ${this.bossName.replace(/^[^\w]+/, '')}!`;
-        feedback.innerHTML = `Elemenmu sudah tepat (<b>${rule.required}</b>), namun kekuatan pasukan belum mencukupi. Kumpulkan minimal 10 pasukan dan capai target EXP (${this.targetExp}) agar dapat menumbangkan Final Boss!`;
+        const currentElement = (this.gateManager?.elementType || '').toUpperCase();
+        const arenaRules = {
+          city: { name: 'Kota Banjir', required: 'FIRE (Api)' },
+          forest: { name: 'Hutan Kebakaran', required: 'WATER (Air)' },
+          cyber: { name: 'Kota Futuristik Mati Lampu', required: 'ELECTRO (Listrik)' },
+          robot: { name: 'Kota Futuristik Mati Lampu', required: 'ELECTRO (Listrik)' }
+        };
+        const rule = arenaRules[this.arenaType] || arenaRules.city;
+
+        if (!this.isCorrectElement) {
+          card.style.border = '1px solid #ef4444';
+          card.style.boxShadow = '0 18px 48px rgba(239, 68, 68, 0.35)';
+          icon.innerHTML = '<i class="ui-icon fa-solid fa-triangle-exclamation" aria-hidden="true" style="color: #ef4444;"></i>';
+          title.innerText = 'SALAH ELEMEN — PASUKAN KALAH!';
+          title.style.color = '#ef4444';
+          desc.innerText = `Kamu Membawa Elemen ${currentElement} di ${rule.name}!`;
+          feedback.innerHTML = `Di <b>${rule.name}</b>, Final Boss hanya bisa dikalahkan oleh pasukan elemen <b>${rule.required}</b>!<br><br>Jika kamu berpindah ke gerbang elemen lain selama berlari, seranganmu tidak akan mempan. Ulangi permainan dan pastikan pertahankan elemen <b>${rule.required}</b> saat menghadapi boss!`;
+        } else {
+          card.style.border = '1px solid #a75d58';
+          card.style.boxShadow = '0 18px 48px rgba(0, 0, 0, 0.45)';
+          icon.innerHTML = '<i class="ui-icon fa-solid fa-robot" aria-hidden="true"></i>';
+          title.innerText = 'PASUKAN BELUM CUKUP KUAT!';
+          title.style.color = '#f87171';
+          desc.innerText = `Kamu Terhempas Oleh Serangan ${this.bossName.replace(/^[^\w]+/, '')}!`;
+          feedback.innerHTML = `Elemenmu sudah tepat (<b>${rule.required}</b>), namun kekuatan pasukan belum mencukupi. Kumpulkan minimal 10 pasukan dan capai target EXP (${this.targetExp}) agar dapat menumbangkan Final Boss!`;
+        }
       }
     }
 
@@ -488,13 +512,17 @@ export class MonsterManager {
 
     // Reset Gate Manager
     if (this.gateManager) {
-      this.gateManager.exp = 0;
-      this.gateManager.armyCount = 1;
-      this.gateManager.level = 1;
-      this.gateManager.nextLevelExp = 100;
-      this.gateManager.updateHud();
-      this.gateManager.drawHeadBadge(true);
-      this.gateManager.syncArmyClones();
+      if (typeof this.gateManager.reset === 'function') {
+        this.gateManager.reset();
+      } else {
+        this.gateManager.exp = 0;
+        this.gateManager.armyCount = 1;
+        this.gateManager.level = 1;
+        this.gateManager.nextLevelExp = 100;
+        this.gateManager.updateHud();
+        this.gateManager.drawHeadBadge(true);
+        this.gateManager.syncArmyClones();
+      }
     }
 
     // Panggil callback restart arena utama

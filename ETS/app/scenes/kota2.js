@@ -523,6 +523,11 @@ function initCyberCity() {
 
   // 13. Sistem Gerbang Interaktif Runner (Pasukan Army, Multiplier, EXP, Minus & Elemen)
   gateManager = new GateManager(scene, mainMesh, cylinderRadius, avatarGroup, () => avatarModel);
+  gateManager.activeElement = 'ELECTRIC';
+  gateManager.elementType = 'electro';
+  gateManager.initialActiveElement = 'ELECTRIC';
+  gateManager.initialElementType = 'electro';
+  gateManager.updateHud();
   gateManager.onElementChange = (element) => changeArmyElement(gateManager, avatarGroup, avatarModel, element, (model, mixer, action) => {
     if (avatarMixer) {
       avatarMixer.stopAllAction();
@@ -561,6 +566,7 @@ function initCyberCity() {
       restoreCyberPower();
     }
   );
+  gateManager.onGameOver = () => monsterManager.triggerDefeatByArmy();
 
   // 15. Event Listeners
   window.addEventListener('resize', onWindowResize);

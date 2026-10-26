@@ -22,7 +22,7 @@ const BOSS_ELEMENT = Object.freeze({
 });
 
 export function applyMinusGate(currentArmy, minusAmount) {
-  return Math.max(MIN_ARMY, currentArmy - minusAmount);
+  return currentArmy - minusAmount;
 }
 
 export function pickBalancedElement(history = [], randomValue = Math.random()) {

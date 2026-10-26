@@ -484,6 +484,8 @@ function initForest() {
   gateManager = new GateManager(scene, mainMesh, cylinderRadius, avatarGroup, () => avatarModel);
   gateManager.activeElement = 'WATER';
   gateManager.elementType = 'water';
+  gateManager.initialActiveElement = 'WATER';
+  gateManager.initialElementType = 'water';
   gateManager.updateHud();
   gateManager.onElementChange = (element) => changeArmyElement(gateManager, avatarGroup, avatarModel, element, (model, mixer, action) => {
     if (avatarMixer) {
@@ -523,6 +525,7 @@ function initForest() {
       extinguishWildfire();
     }
   );
+  gateManager.onGameOver = () => monsterManager.triggerDefeatByArmy();
 }
 
 // -------------------------------------------------------------
