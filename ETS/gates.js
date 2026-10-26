@@ -227,45 +227,16 @@ export class GateManager {
   }
 
   // -------------------------------------------------------------
-  // UPDATE VISUAL PASUKAN (COUNT MASTERS CROWD CLUSTER)
+  // UPDATE VISUAL PASUKAN (BERBARIS 3 ORANG PER DERET BERJARAK)
   // -------------------------------------------------------------
   syncArmyClones() {
     if (!this.avatarGroup) return;
 
-    // Tampilkan hingga 15 klon 3D pasukan nyata berlari bersama dengan jarak renggang yang jelas
+    // Tampilkan hingga 15 klon 3D (5 deret baris × 3 orang berjarak rapi)
     const targetVisualCount = Math.min(15, Math.max(1, this.armyCount)) - 1;
 
     // Ambil base model avatar jika tersedia
     const baseModel = (this.getAvatarModel && this.getAvatarModel()) || null;
-
-    // Slot formasi kerumunan berjarak renggang (Count Masters flocking)
-    // Melebar ke samping kiri-kanan & mengelilingi pemimpin tanpa menumpuk
-    const CLUSTER_OFFSETS = [
-      // Flank sayap kiri & kanan sejajar pemimpin
-      { x: -0.068, z: -0.015 },
-      { x:  0.068, z: -0.015 },
-      // Tepat di belakang pemimpin
-      { x:  0.000, z: -0.050 },
-      // Sayap luar kiri & kanan
-      { x: -0.130, z: -0.030 },
-      { x:  0.130, z: -0.030 },
-      // Baris kedua kiri & kanan
-      { x: -0.068, z: -0.072 },
-      { x:  0.068, z: -0.072 },
-      // Sayap terluar kiri & kanan
-      { x: -0.180, z: -0.045 },
-      { x:  0.180, z: -0.045 },
-      // Baris tengah belakang
-      { x:  0.000, z: -0.095 },
-      // Baris ketiga kiri & kanan
-      { x: -0.125, z: -0.088 },
-      { x:  0.125, z: -0.088 },
-      // Baris belakang luar
-      { x: -0.065, z: -0.118 },
-      { x:  0.065, z: -0.118 },
-      // Belakang tengah penutup
-      { x:  0.000, z: -0.132 }
-    ];
 
     // Jika jumlah kurang, tambahkan klon baru
     while (this.armyClones.length < targetVisualCount && baseModel) {
@@ -277,20 +248,17 @@ export class GateManager {
         clone = baseModel.clone(true);
       }
 
-      // Ambil slot formasi atau hitung sebaran spiral organik
-      let pos;
-      if (idx < CLUSTER_OFFSETS.length) {
-        pos = CLUSTER_OFFSETS[idx];
-      } else {
-        const angle = idx * 2.399; // Golden angle spiral
-        const dist = 0.08 + Math.floor(idx / 6) * 0.035;
-        pos = {
-          x: Math.cos(angle) * Math.min(0.18, dist),
-          z: -0.045 + Math.sin(angle) * 0.055
-        };
-      }
+      // Berbaris 3 orang per deret ke belakang:
+      // Deret 1 (idx 0,1,2), Deret 2 (idx 3,4,5), Deret 3 (idx 6,7,8), dst.
+      const row = Math.floor(idx / 3) + 1; // Deret baris ke belakang
+      const col = (idx % 3) - 1;          // Kolom: -1 (kiri), 0 (tengah), 1 (kanan)
 
-      clone.position.set(pos.x, 0.009, pos.z);
+      // Spacing renggang agar tidak menempel & tetap aman di dalam jalur:
+      // Total lebar formasi hanya 0.15 unit (sangat aman di dalam lebar jalur 0.42)
+      const offsetX = col * 0.075;
+      const offsetZ = -row * 0.052;
+
+      clone.position.set(offsetX, 0.009, offsetZ);
       clone.scale.set(0.034, 0.034, 0.034);
 
       // Pendaran cerah pada pakaian pasukan agar kontras dan memukau di atas aspal
@@ -745,15 +713,16 @@ export class GateManager {
         break;
 
       case 'exp_add':
-        this.exp += config.value;
-        this.createFloatingPopup(`+${config.value} ⭐ EXP!`, config.borderColor, hitPos);
+        // EXP per orang: nilai gerbang dikali jumlah pasukan!
+        const gainedExp = config.value * Math.max(1, this.armyCount);
+        this.exp += gainedExp;
+        this.createFloatingPopup(`+${gainedExp} ⭐ EXP! (+${config.value} × ${this.armyCount})`, config.borderColor, hitPos);
         this.createPassBurst(hitPos, config.pipeColor);
         soundType = 'positive';
 
-        // Cek Level Up!
-        if (this.exp >= this.nextLevelExp) {
+        // Cek Level Up! (EXP akumulatif: tidak dikurangi / tidak di-reset ke 0 saat level up)
+        while (this.exp >= this.nextLevelExp) {
           this.level++;
-          this.exp -= this.nextLevelExp;
           this.nextLevelExp = this.level * 100;
           this.createFloatingPopup(`🎉 LEVEL UP! (Lv. ${this.level})`, '#facc15', {
             x: hitPos.x + 0.25,
