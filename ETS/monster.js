@@ -64,7 +64,7 @@ export class MonsterManager {
       this.modelPath1 = './assets/idle_robot.glb';
       this.modelPath2 = './assets/attack_robot.glb';
       this.modelPathDying = './assets/dying_robot.glb';
-      this.modelScale = 3.8;
+      this.modelScale = 5.8;
       this.lightColor = 0xa855f7;
     } else {
       this.bossName = '👾 FINAL BOSS: MONSTER SAMPAH KOTA';
@@ -80,14 +80,14 @@ export class MonsterManager {
     this.maxHp = 5000;
     this.hp = 5000;
     this.bossTheta = 0.0;
-    this.currentDistance = 1.30; // Radian di depan pelari
-    this.targetCombatDistance = 0.38; // Jarak arena tempur di depan kamera pelari
+    this.currentDistance = 0.44; // Radian di depan pelari
+    this.targetCombatDistance = 0.40; // Jarak arena tempur di depan kamera pelari
     this.phaseTimer = 0.0;
     this.currentPhase = 'model1'; // 'model1' | 'model2' | 'finished'
 
     // 3D Objects & Animations
     this.bossWrapper = new THREE.Group();
-    this.mainMesh.add(this.bossWrapper);
+    this.scene.add(this.bossWrapper);
     this.bossWrapper.visible = false;
 
     this.firstModel = null;
@@ -594,13 +594,13 @@ export class MonsterManager {
     this.maxHp = Math.max(5000, army * 75 + lvl * 250);
     this.hp = this.maxHp;
 
-    // Bos hadir di depan pelari (0.42 rad)
-    this.currentDistance = 0.42;
+    // Bos hadir di depan pelari (0.44 rad)
+    this.currentDistance = 0.44;
     this.phaseTimer = 0.0;
     this.currentPhase = 'model1';
 
     const playerTheta = Math.asin(0.15 / this.cylinderRadius);
-    this.bossTheta = (this.mainMesh.rotation.y + playerTheta + this.currentDistance) % (Math.PI * 2);
+    this.bossTheta = (playerTheta + this.currentDistance) % (Math.PI * 2);
 
     this.updateBossTransform();
     this.bossWrapper.visible = true;
@@ -856,7 +856,7 @@ export class MonsterManager {
         delta * 1.5
       );
 
-      this.bossTheta = (this.mainMesh.rotation.y + playerTheta + this.currentDistance) % (Math.PI * 2);
+      this.bossTheta = (playerTheta + this.currentDistance) % (Math.PI * 2);
       this.updateBossTransform();
 
       if (!this.isBattleFinished) {

@@ -9,7 +9,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { GateManager } from './gates.js';
-import { MonsterManager } from './monster.js?v=boss_v2';
+import { MonsterManager } from './monster.js?v=boss_v7';
 
 const canvas = document.getElementById('mainCanvas');
 const fpsDisplay = document.getElementById('fpsDisplay');
@@ -1039,6 +1039,8 @@ function setupControls() {
       avatarTargetLaneY = -0.21; // Jalur Kiri
     } else if (e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') {
       avatarTargetLaneY = 0.21; // Jalur Kanan
+    } else if (e.code === 'KeyM') {
+      if (monsterManager) monsterManager.spawnMonster();
     } else if (e.key.toLowerCase() === 'm') {
       if (monsterManager) monsterManager.spawnMonster();
     }
