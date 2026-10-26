@@ -227,13 +227,13 @@ export class GateManager {
   }
 
   // -------------------------------------------------------------
-  // UPDATE VISUAL PASUKAN (BERBARIS 3 ORANG PER DERET BERJARAK)
+  // UPDATE VISUAL PASUKAN (BERBARIS 2 BANJAR BERJARAK RAPI)
   // -------------------------------------------------------------
   syncArmyClones() {
     if (!this.avatarGroup) return;
 
-    // Tampilkan hingga 15 klon 3D (5 deret baris × 3 orang berjarak rapi)
-    const targetVisualCount = Math.min(15, Math.max(1, this.armyCount)) - 1;
+    // Tampilkan hingga 10 klon 3D (5 deret baris × 2 banjar berjarak rapi dan longgar)
+    const targetVisualCount = Math.min(10, Math.max(1, this.armyCount)) - 1;
 
     // Ambil base model avatar jika tersedia
     const baseModel = (this.getAvatarModel && this.getAvatarModel()) || null;
@@ -248,18 +248,19 @@ export class GateManager {
         clone = baseModel.clone(true);
       }
 
-      // Berbaris 3 orang per deret ke belakang:
-      // Deret 1 (idx 0,1,2), Deret 2 (idx 3,4,5), Deret 3 (idx 6,7,8), dst.
-      const row = Math.floor(idx / 3) + 1; // Deret baris ke belakang
-      const col = (idx % 3) - 1;          // Kolom: -1 (kiri), 0 (tengah), 1 (kanan)
+      // Berbaris 2 banjar ke belakang:
+      // Banjar kiri (col 0: -0.075) dan banjar kanan (col 1: +0.075)
+      const row = Math.floor(idx / 2) + 1; // Deret baris ke belakang (1, 2, 3...)
+      const col = idx % 2;                 // 0 = banjar kiri, 1 = banjar kanan
 
-      // Spacing renggang agar tidak menempel & tetap aman di dalam jalur:
-      // Total lebar formasi hanya 0.15 unit (sangat aman di dalam lebar jalur 0.42)
-      const offsetX = col * 0.075;
-      const offsetZ = -row * 0.052;
+      // Spacing berjarak renggang nyata samping & depan-belakang:
+      // Antar kolom samping berjarak 0.150 (memberi celah udara jelas antar kepala & badan, aman dari marka jalur 0.42)
+      // Antar baris depan-belakang berjarak 0.108 (ruang gerak bebas sehingga kepala & torso tidak saling menempel saat lari)
+      const offsetX = col === 0 ? -0.075 : 0.075;
+      const offsetZ = -row * 0.108;
 
       clone.position.set(offsetX, 0.009, offsetZ);
-      clone.scale.set(0.034, 0.034, 0.034);
+      clone.scale.set(0.031, 0.031, 0.031);
 
       // Pendaran cerah pada pakaian pasukan agar kontras dan memukau di atas aspal
       clone.traverse((node) => {
@@ -297,6 +298,17 @@ export class GateManager {
         }
         this.avatarGroup.remove(removed);
       }
+    }
+
+    // Pastikan seluruh klon yang aktif berbaris presisi sesuai formasi 2 banjar berjarak
+    for (let idx = 0; idx < this.armyClones.length; idx++) {
+      const clone = this.armyClones[idx];
+      const row = Math.floor(idx / 2) + 1;
+      const col = idx % 2;
+      const offsetX = col === 0 ? -0.075 : 0.075;
+      const offsetZ = -row * 0.108;
+      clone.position.set(offsetX, 0.009, offsetZ);
+      clone.scale.set(0.031, 0.031, 0.031);
     }
   }
 

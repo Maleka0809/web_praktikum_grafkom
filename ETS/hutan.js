@@ -13,7 +13,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
-import { GateManager } from './gates.js?v=deret_v1';
+import { GateManager } from './gates.js?v=banjar2_v2';
 import { MonsterManager } from './monster.js?v=boss_v1';
 
 const canvas = document.getElementById('mainCanvas');
@@ -41,9 +41,9 @@ let monsterManager = null;
 
 const cylinderRadius = 2.6;
 const cylinderHeight = 3.8;
-const eyeHeight = 0.94; // Posisi kamera sama persis seperti di kota (lapang melihat lintasan jalan)
-const basePitchDown = 31.0 * (Math.PI / 180); // Sudut kamera menunduk (pitch down) sama persis seperti di kota
-const camZOffset = -0.28; // Ruang lega ke belakang agar seluruh barisan pasukan terlihat rapi
+const eyeHeight = 1.02; // Posisi kamera sama persis seperti di kota (lapang melihat lintasan jalan)
+const basePitchDown = 32.5 * (Math.PI / 180); // Sudut kamera menunduk (pitch down) sama persis seperti di kota
+const camZOffset = -0.42; // Ruang lega ke belakang agar seluruh barisan pasukan 2 banjar berjarak longgar terlihat rapi
 const avatarBaseTargetZ = 0.15; // Posisi avatar tepat dekat dasar bawah kanvas (sama seperti di kota)
 
 let cameraView = 'surface'; // 'surface' | 'orbit'

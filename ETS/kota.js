@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
-import { GateManager } from './gates.js?v=deret_v1';
+import { GateManager } from './gates.js?v=banjar2_v2';
 import { MonsterManager } from './monster.js?v=boss_v2';
 
 const canvas = document.getElementById('mainCanvas');
@@ -52,9 +52,9 @@ const waterTotalHeight = 3.78; // Menyelimuti penuh seluruh aspal dan kedua sisi
 
 const cylinderRadius = 2.6; // Diameter 5.2
 const cylinderHeight = 3.8; // Diperlebar agar memuat 2 layer gedung (depan & belakang)
-const eyeHeight = 0.94; // Posisi kamera di atas avatar agar lintasan jalan dan rintangan/gate terlihat jelas
-const basePitchDown = 31.0 * (Math.PI / 180); // Sudut kamera menunduk (pitch down) lebih jelas ke permukaan jalan
-const camZOffset = -0.28; // Ruang lega ke belakang agar seluruh barisan pasukan terlihat rapi
+const eyeHeight = 1.02; // Posisi kamera di atas avatar agar lintasan jalan dan rintangan/gate terlihat jelas
+const basePitchDown = 32.5 * (Math.PI / 180); // Sudut kamera menunduk (pitch down) lebih jelas ke permukaan jalan
+const camZOffset = -0.42; // Ruang lega ke belakang agar seluruh barisan pasukan 2 banjar berjarak longgar terlihat rapi
 
 let cameraView = 'surface'; // 'surface' | 'orbit'
 let isAnimating = true;
