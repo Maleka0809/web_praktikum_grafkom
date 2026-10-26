@@ -167,10 +167,11 @@ function createRunnerAvatar(scene) {
     (gltf) => {
       avatarModel = gltf.scene;
 
-      // Skala dan orientasi proporsional
-      avatarModel.scale.set(0.14, 0.14, 0.14);
+      // Skala normal proporsional sama persis seperti di kota & hutan (s = 0.038)
+      const s = 0.038;
+      avatarModel.scale.set(s, s, s);
       avatarModel.rotation.y = 0;
-      avatarModel.position.set(0, 0.005, 0);
+      avatarModel.position.set(0, 0.009, 0);
 
       avatarModel.traverse((node) => {
         if (node.isMesh) {
@@ -178,10 +179,13 @@ function createRunnerAvatar(scene) {
           node.receiveShadow = true;
           if (node.material) {
             node.material = node.material.clone();
-            node.material.roughness = 0.42;
-            node.material.metalness = 0.28;
-            node.material.emissive = new THREE.Color(0xfacc15);
-            node.material.emissiveIntensity = 0.35;
+            node.material.roughness = 0.60;
+            node.material.metalness = 0.05;
+            // Ambient lembut berbasis warna asli material karakter agar rambut, jaket, dan celana terlihat natural
+            if (node.material.color) {
+              node.material.emissive = node.material.color.clone();
+              node.material.emissiveIntensity = 0.28;
+            }
           }
         }
       });
@@ -199,9 +203,9 @@ function createRunnerAvatar(scene) {
     (err) => console.warn('Could not load electrorun.glb:', err)
   );
 
-  // Lampu Amber Sorotan Avatar (Electrorun Light)
-  const avatarLight = new THREE.PointLight(0xfacc15, 1.8, 2.5);
-  avatarLight.position.set(0.08, 0.18, 0.10);
+  // Lampu Amber Sorotan Avatar (Electrorun Light) lembut
+  const avatarLight = new THREE.PointLight(0xfacc15, 0.45, 0.85, 2.0);
+  avatarLight.position.set(0.04, 0.16, 0.08);
   avatarGroup.add(avatarLight);
 
   // Efek percikan listrik / sparks neon di kaki avatar saat berlari
