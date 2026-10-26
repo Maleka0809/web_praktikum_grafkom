@@ -7,6 +7,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { GateManager } from './gates.js';
+import { MonsterManager } from './monster.js?v=monster_v3';
 
 const canvas = document.getElementById('mainCanvas');
 const fpsDisplay = document.getElementById('fpsDisplay');
@@ -17,6 +18,7 @@ const btnToggleCam = document.getElementById('btnToggleCam');
 const btnWireframe = document.getElementById('btnWireframe');
 const btnSpeed = document.getElementById('btnSpeed');
 const btnFloodRestoration = document.getElementById('btnFloodRestoration');
+const btnSpawnMonster = document.getElementById('btnSpawnMonster');
 const btnLaneLeft = document.getElementById('btnLaneLeft');
 const btnLaneRight = document.getElementById('btnLaneRight');
 
@@ -28,6 +30,7 @@ const avatarBaseTargetZ = 0.15; // Posisi avatar tepat dekat dasar bawah kanvas 
 let splashParticles = null;
 let splashVelocities = null;
 let gateManager = null;
+let monsterManager = null;
 
 let scene, camera, renderer, controls;
 let mainMesh, sideMaterial, capMaterial, standardMaterials;
@@ -377,6 +380,9 @@ function initCity() {
 
   // 12. Sistem Gerbang Interaktif Runner (Pasukan Army, Multiplier, EXP, Minus & Elemen)
   gateManager = new GateManager(scene, mainMesh, cylinderRadius, avatarGroup, () => avatarModel);
+
+  // 13. Sistem Monster Sampah Raksasa (Muncul setelah 1 menit / 60 detik berlari)
+  monsterManager = new MonsterManager(scene, mainMesh, cylinderRadius, camera, gateManager);
 }
 
 function createWaterNormalTexture() {
@@ -971,6 +977,11 @@ function animate(time) {
     gateManager.update(delta, avatarLaneY, isAnimating);
   }
 
+  // Update Sistem Monster Sampah Raksasa (Timer 1 Menit, Stomping, Combat, Animations)
+  if (monsterManager) {
+    monsterManager.update(delta, avatarLaneY, isAnimating);
+  }
+
   if (cameraView === 'surface') {
     const camX = cylinderRadius + eyeHeight;
     // Kamera third-person elevated: posisi lebih tinggi dan menunduk ke arah jalan
@@ -1200,6 +1211,11 @@ if (btnLaneLeft) {
 if (btnLaneRight) {
   btnLaneRight.addEventListener('click', () => {
     avatarTargetLaneY = Math.min(0.40, avatarTargetLaneY + 0.20);
+  });
+}
+if (btnSpawnMonster) {
+  btnSpawnMonster.addEventListener('click', () => {
+    if (monsterManager) monsterManager.spawnMonster();
   });
 }
 
