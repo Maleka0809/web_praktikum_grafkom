@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Praktikum 08 Grafika Komputer - Blender Fundamental & 3D Modeling (.blend dan .glb) dengan Koneksi Interaktif Canvas Three.js." />
+  <title>Praktikum 08 — Blender Fundamental & 3D Modeling (.blend & .glb)</title>
+  
+  <link rel="stylesheet" href="./style.css" />
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="app-shell">
+    
+    <!-- TOP NAVIGATION -->
+    <nav class="top-nav">
+      <a href="../index.html" class="brand">
+        <span class="brand-icon">💻</span>Grafika<span>Komputer</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html">Home</a>
+        <a href="../halaman_awal/halaman_praktikum.html" class="active">Praktikum</a>
+        <a href="../halaman_awal/kontak_kami.html">Kontak Kami</a>
+      </div>
+    </nav>
+
+    <!-- PAGE HEADER -->
+    <header class="page-header">
+      <div>
+        <span class="eyebrow"><span class="brand-icon">✦</span> PRAKTIKUM 08 · BLENDER FUNDAMENTALS &amp; 3D ASSET MODELING</span>
+        <h1>Interactive 3D Asset Studio &amp; Blender Fundamental</h1>
+        <p>
+          Integrasi pemodelan 3D Blender (<code>grafkom1.blend</code>) dan format ekspor runtime WebGL (<code>grafkom1.glb</code>) secara langsung dengan Canvas interaktif Three.js, topologi poligon, multi-material PBR, dan normal shading.
+        </p>
+        <a href="../halaman_awal/halaman_praktikum.html" class="back-link">
+          <span>←</span> Kembali ke Daftar Praktikum
+        </a>
+      </div>
+      <div id="statusBadge" class="status-badge">
+        <span class="status-dot"></span> MENGHUBUNGKAN ASET KE CANVAS...
+      </div>
+    </header>
+
+    <!-- ASSET CONNECTION & PIPELINE CARD (Connecting .blend and .glb directly to Canvas) -->
+    <section class="asset-connection-card">
+      <div class="asset-connection-header">
+        <div class="asset-connection-title">
+          <span>🔗</span>
+          <span>Koneksi Berkas Aset 3D dengan Canvas Praktikum 08</span>
+        </div>
+        <div class="asset-connection-status" id="assetPipelineStatus">
+          <span class="status-dot"></span> TERHUBUNG KE CANVAS (2.577 Verts · 1.449 Tris · 4 Slots)
+        </div>
+      </div>
+
+      <div class="asset-files-grid">
+        <!-- Blend Master Card -->
+        <div class="file-card-box">
+          <div class="file-card-top">
+            <div class="file-icon-badge">🧊</div>
+            <div class="file-meta-info">
+              <h3>grafkom1.blend <span class="concept-badge amber">Master File</span></h3>
+              <p>Berkas sumber proyek Blender 3D. Berisi geometri asli, node shader, modifier stack, dan riwayat pemodelan Box Modeling.</p>
+            </div>
+          </div>
+          <div class="file-actions-row">
+            <a href="./grafkom1.blend" download class="btn-file-dl">📥 Unduh grafkom1.blend</a>
+            <button class="btn-file-info canvas-trigger-btn" data-action="step" data-step="1">🔍 Pratinjau Clay Blender</button>
+          </div>
+        </div>
+
+        <!-- GLB Runtime Card -->
+        <div class="file-card-box">
+          <div class="file-card-top">
+            <div class="file-icon-badge">⚡</div>
+            <div class="file-meta-info">
+              <h3>grafkom1.glb <span class="concept-badge cyan">Runtime WebGL</span></h3>
+              <p>Berkas biner Khronos glTF 2.0 siap GPU. Berisi 4 sub-mesh primitive terindeks yang langsung dirender secara real-time pada Canvas.</p>
+            </div>
+          </div>
+          <div class="file-actions-row">
+            <a href="./grafkom1.glb" download class="btn-file-dl">📥 Unduh grafkom1.glb</a>
+            <button class="btn-file-info" onclick="window.reloadModelAsset()">🔄 Reload di Canvas</button>
+            <button class="btn-file-info canvas-trigger-btn" data-action="step" data-step="4">✨ Render PBR Penuh</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Pipeline Stepper Bar -->
+      <div class="pipeline-stepper">
+        <div class="pipeline-stepper-title">
+          <span>Alur Pipeline: Dari Blender (.blend) ke Canvas WebGL (.glb)</span>
+          <span style="color: var(--muted); font-size: 10px;">Klik tahapan untuk mengubah tampilan Canvas secara langsung</span>
+        </div>
+        <div class="pipeline-steps-buttons">
+          <button class="step-nav-btn" data-step="1">
+            <span>1️⃣</span> <span>Tahap 1: Model Mentah Blender (Clay)</span>
+          </button>
+          <button class="step-nav-btn" data-step="2">
+            <span>2️⃣</span> <span>Tahap 2: Topologi glTF (Normals + Wire)</span>
+          </button>
+          <button class="step-nav-btn" data-step="3">
+            <span>3️⃣</span> <span>Tahap 3: Pemisahan Multi-Material (Explode)</span>
+          </button>
+          <button class="step-nav-btn active" data-step="4">
+            <span>4️⃣</span> <span>Tahap 4: Render PBR Penuh (60 FPS)</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORKSPACE (CANVAS + CONTROLS) -->
+    <div class="workspace">
+      
+      <!-- LEFT: CANVAS & INSPECTION PANEL -->
+      <section class="canvas-panel">
+        <div class="scene-wrapper">
+          
+          <!-- QUICK VIEWPORT OVERLAY TOOLS -->
+          <div class="viewport-overlay">
+            <button class="pill-tool-btn pill-view-btn active" data-view="iso" title="Isometric Perspective (Default)">🧊 Iso</button>
+            <button class="pill-tool-btn pill-view-btn" data-view="front" title="Front View (Sumbu Depan X)">📐 Front (X)</button>
+            <button class="pill-tool-btn pill-view-btn" data-view="side" title="Side View (Sumbu Samping Z)">📐 Side (Z)</button>
+            <button class="pill-tool-btn pill-view-btn" data-view="top" title="Top View (Sumbu Atas Y)">📐 Top (Y)</button>
+            <button class="pill-tool-btn" id="wireframeBtn" title="Toggle Wireframe Overlay">🕸️ Wireframe</button>
+            <button class="pill-tool-btn" id="isolateBtn" data-isolated="false" title="Isolasi Tampilan Bagian Terseleksi">🔍 Isolasi Bagian</button>
+          </div>
+
+          <div id="sceneContainer" class="scene-container"></div>
+          
+          <div class="viewport-info-tag">Drag: Orbit | Right-Click: Pan | Scroll: Zoom | Klik Bagian: Seleksi</div>
+        </div>
+
+        <!-- HUD GRID CARDS -->
+        <div class="hud-grid">
+          <div class="hud-card">
+            <span>Model Asset</span>
+            <b id="hudModel">grafkom1.glb</b>
+          </div>
+          <div class="hud-card">
+            <span>Vertices</span>
+            <b id="hudVerts">2.577 verts</b>
+          </div>
+          <div class="hud-card">
+            <span>Triangles</span>
+            <b id="hudTris">1.449 tris</b>
+          </div>
+          <div class="hud-card">
+            <span>PBR Materials</span>
+            <b id="hudMaterials">4 Slots PBR</b>
+          </div>
+          <div class="hud-card">
+            <span>Active Mode</span>
+            <b id="hudActiveMode">Shaded PBR</b>
+          </div>
+          <div class="hud-card">
+            <span>Performance</span>
+            <b id="hudFPS">60 FPS</b>
+          </div>
+        </div>
+
+        <!-- SELECTION INFORMATION PANEL -->
+        <section class="info-panel" id="selectionInfoPanel">
+          <div>
+            <span class="eyebrow">SELECTION INFORMATION · TERKONEKSI DENGAN CANVAS</span>
+            <h2 id="infoTitle">Bodi Utama (Main Body) [Material]</h2>
+            <div class="info-meta">
+              <span class="color-swatch" id="infoColorSwatch" style="background-color: #000827;"></span>
+              <span id="infoColorHex" style="font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--cyan);">#000827 | RGB(0, 2, 39)</span>
+            </div>
+          </div>
+          <div class="info-grid">
+            <span>Roughness PBR</span><b id="infoRoughness">0.50</b>
+            <span>Metalness PBR</span><b id="infoMetalness">0.00</b>
+            <span>Vertex Count</span><b id="infoVertCount">1.755 vertices</b>
+            <span>Triangle Count</span><b id="infoTriCount">1.001 faces (tris)</b>
+            <span>Bounding Box Size</span><b id="infoDimensions">X: 3.52, Y: 4.51, Z: 2.02</b>
+          </div>
+        </section>
+
+        <!-- SUB-MESH INTERACTIVE CONNECTOR GRID -->
+        <div style="margin-top: 18px;">
+          <div class="control-section-title">
+            <span>KOMPONEN MESH HASIL EKSPOR DARI BLENDER KE GLTF:</span>
+            <button class="canvas-trigger-btn" onclick="window.showAllSubmeshes()">👁️ Tampilkan Semua</button>
+          </div>
+          <div class="submesh-grid">
+            <!-- Part 0 -->
+            <div class="submesh-card active-submesh" data-submesh-index="0">
+              <div class="submesh-card-header">
+                <span class="submesh-color-pill" style="background-color: #000827;"></span>
+                <span class="submesh-card-title">Part 1: Bodi Utama</span>
+              </div>
+              <div class="submesh-card-sub">Slot: <code>Material</code> · 1.755 Verts · 1.001 Tris</div>
+              <p style="margin: 0; font-size: 11px; color: var(--muted);">Lambung bodi utama dari transformasi Default Cube di Blender.</p>
+              <div class="submesh-actions">
+                <button class="btn-submesh-action" onclick="window.highlightSubmesh(0)">🔍 Sorot di Canvas</button>
+                <button class="btn-submesh-action" onclick="window.isolateSubmesh(0)">👁️ Isolasi</button>
+              </div>
+            </div>
+
+            <!-- Part 1 -->
+            <div class="submesh-card" data-submesh-index="1">
+              <div class="submesh-card-header">
+                <span class="submesh-color-pill" style="background-color: #202020;"></span>
+                <span class="submesh-card-title">Part 2: Sasis &amp; Rangka</span>
+              </div>
+              <div class="submesh-card-sub">Slot: <code>Material.001</code> · 751 Verts · 411 Tris</div>
+              <p style="margin: 0; font-size: 11px; color: var(--muted);">Ekstrusi sisi bawah &amp; bevel tepi sambungan sasis.</p>
+              <div class="submesh-actions">
+                <button class="btn-submesh-action" onclick="window.highlightSubmesh(1)">🔍 Sorot di Canvas</button>
+                <button class="btn-submesh-action" onclick="window.isolateSubmesh(1)">👁️ Isolasi</button>
+              </div>
+            </div>
+
+            <!-- Part 2 -->
+            <div class="submesh-card" data-submesh-index="2">
+              <div class="submesh-card-header">
+                <span class="submesh-color-pill" style="background-color: #01433d;"></span>
+                <span class="submesh-card-title">Part 3: Lampu / Indikator</span>
+              </div>
+              <div class="submesh-card-sub">Slot: <code>Material.002</code> · 11 Verts · 7 Tris</div>
+              <p style="margin: 0; font-size: 11px; color: var(--muted);">Elemen aksen cyan hasil operasi Inset Face (<kbd>I</kbd>) di Blender.</p>
+              <div class="submesh-actions">
+                <button class="btn-submesh-action" onclick="window.highlightSubmesh(2)">🔍 Sorot di Canvas</button>
+                <button class="btn-submesh-action" onclick="window.isolateSubmesh(2)">👁️ Isolasi</button>
+              </div>
+            </div>
+
+            <!-- Part 3 -->
+            <div class="submesh-card" data-submesh-index="3">
+              <div class="submesh-card-header">
+                <span class="submesh-color-pill" style="background-color: #000000;"></span>
+                <span class="submesh-card-title">Part 4: Lis / Trim Interior</span>
+              </div>
+              <div class="submesh-card-sub">Slot: <code>Material.003</code> · 60 Verts · 30 Tris</div>
+              <p style="margin: 0; font-size: 11px; color: var(--muted);">Garis pembatas panel dari Loop Cut (<kbd>Ctrl+R</kbd>) di Blender.</p>
+              <div class="submesh-actions">
+                <button class="btn-submesh-action" onclick="window.highlightSubmesh(3)">🔍 Sorot di Canvas</button>
+                <button class="btn-submesh-action" onclick="window.isolateSubmesh(3)">👁️ Isolasi</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: PARAMETER CONTROLS SIDEBAR -->
+      <aside class="control-panel">
+        <span class="eyebrow">STUDIO CONTROLS</span>
+
+        <!-- Display Mode -->
+        <label class="select-row">
+          Display / Shading Mode
+          <select id="displayModeSelect">
+            <option value="pbr" selected>Realistic Shaded PBR</option>
+            <option value="wireframe">Wireframe Only (Edge Flow)</option>
+            <option value="shaded_wireframe">Shaded + Wireframe Overlay</option>
+            <option value="xray">X-Ray (Ghost Transparency)</option>
+            <option value="normals">Surface Normals (RGB Vector)</option>
+            <option value="clay">Clay Studio Matcap</option>
+          </select>
+        </label>
+
+        <!-- Exploded View Slider -->
+        <div class="range-row">
+          <span>Exploded View (Bongkar Bagian)</span>
+          <output id="explodeVal">0.00</output>
+        </div>
+        <input type="range" id="explodeControl" min="0" max="1.5" step="0.05" value="0" />
+
+        <!-- Camera Settings -->
+        <div class="control-section-title">Kamera &amp; Proyeksi</div>
+        <label class="select-row">
+          Tipe Kamera Proyeksi
+          <select id="cameraSelect">
+            <option value="perspective" selected>Perspective (Kamera Realistis)</option>
+            <option value="orthographic">Orthographic (Blender Numpad 5)</option>
+          </select>
+        </label>
+
+        <div class="range-row">
+          <span>Camera FOV (Field of View)</span>
+          <output id="fovVal">45°</output>
+        </div>
+        <input type="range" id="fovControl" min="20" max="90" step="1" value="45" />
+
+        <!-- Material Tuning -->
+        <div class="control-section-title">Material Tuning</div>
+        <div class="range-row">
+          <span>Roughness Scale</span>
+          <output id="roughnessVal">1.00x</output>
+        </div>
+        <input type="range" id="roughnessControl" min="0.1" max="2.0" step="0.05" value="1.0" />
+
+        <div class="range-row">
+          <span>Metalness Scale</span>
+          <output id="metalnessVal">1.00x</output>
+        </div>
+        <input type="range" id="metalnessControl" min="0.0" max="2.0" step="0.05" value="1.0" />
+
+        <!-- Lighting Studio -->
+        <div class="control-section-title">Tata Cahaya &amp; Studio</div>
+        <label class="select-row">
+          Lighting Preset
+          <select id="lightPresetSelect">
+            <option value="studio" selected>Studio 3-Point Light</option>
+            <option value="cyberpunk">Cyberpunk Neon (Cyan/Pink)</option>
+            <option value="sunset">Warm Sunset (Golden Hour)</option>
+            <option value="clean">Clean Minimalist White</option>
+          </select>
+        </label>
+
+        <div class="range-row">
+          <span>Key Light Intensity</span>
+          <output id="keyLightVal">1.8</output>
+        </div>
+        <input type="range" id="keyLightControl" min="0.2" max="4.0" step="0.1" value="1.8" />
+
+        <!-- Orbit Controls Fieldset -->
+        <fieldset class="orbit-settings">
+          <legend>Orbit &amp; Viewport Options</legend>
+          <label><input type="checkbox" data-orbit-setting="enableDamping" checked /> Damping Gerakan Halus</label>
+          <label><input type="checkbox" data-orbit-setting="enablePan" checked /> Izinkan Pan (Geser)</label>
+          <label><input type="checkbox" data-orbit-setting="autoRotate" id="autoRotateChk" /> Auto-Rotate Bawaan</label>
+        </fieldset>
+
+        <!-- Quick Action Buttons -->
+        <div class="button-grid">
+          <button class="action-btn active" id="autoRotateBtn">⏸️ Auto-Rotate</button>
+          <button class="action-btn active" id="toggleGridBtn">📐 Toggle Grid</button>
+        </div>
+        <button class="action-btn wide-btn" id="resetBtn">🔄 Reset All Parameters (R)</button>
+
+        <!-- Keyboard Shortcuts Help -->
+        <div class="keyboard-help">
+          <b>Pintasan Keyboard:</b>
+          <span><b>Spasi</b>: Jeda / Jalankan Auto-Rotate</span>
+          <span><b>W</b>: Toggle Wireframe Mode</span>
+          <span><b>G</b>: Toggle Grid Studio</span>
+          <span><b>C</b>: Toggle Kamera (Perspective / Orthographic)</span>
+          <span><b>X</b>: Toggle Exploded View</span>
+          <span><b>1 / 2 / 3 / 4</b>: Preset Tampilan (Front / Side / Top / Iso)</span>
+          <span><b>R</b>: Reset Seluruh Pengaturan</span>
+        </div>
+
+        <!-- Live Terminal Log -->
+        <div class="control-section-title" style="margin-top: 14px;">Studio Log Console</div>
+        <div class="log-panel" id="logPanel">
+          Menghubungkan canvas dengan berkas grafkom1.blend &amp; grafkom1.glb...
+        </div>
+      </aside>
+    </div>
+
+    <!-- COMPREHENSIVE EXPLANATION & THEORY SECTION (Directly linked to Canvas) -->
+    <section class="explanation-section" id="theorySection">
+      <h2>
+        <span>Kajian Teori &amp; Analisis: Blender Fundamental &amp; 3D Modeling Pipeline</span>
+        <span class="concept-badge cyan">Terkoneksi Interaktif ke Canvas</span>
+      </h2>
+      <p class="section-desc">
+        Bagian ini menjabarkan seluruh alur pemodelan 3D di <b>Blender</b> (<code>grafkom1.blend</code>), proses konversi dan kompresi biner <b>Khronos glTF / GLB</b> (<code>grafkom1.glb</code>), multi-material PBR, serta integrasi real-time pada <b>Canvas Three.js</b> di atas.
+      </p>
+
+      <!-- BAGIAN 1: BEDAH ASET GRAFKOM1 -->
+      <div class="concept-block">
+        <h3>
+          1. Anatomi &amp; Spesifikasi Aset: <code>grafkom1.blend</code> &amp; <code>grafkom1.glb</code>
+          <span class="concept-badge">Koneksi Geometri ke Canvas</span>
+        </h3>
+        <p>
+          Aset <b><code>grafkom1</code></b> dikonstruksi di lingkungan Blender berawal dari primitif dasar kubus (<i>Default Cube</i>), kemudian ditransformasikan melalui serangkaian teknik <i>Box Modeling</i> terarah hingga membentuk objek 3D fungsional dengan partisi multi-material.
+        </p>
+
+        <div style="margin: 10px 0;">
+          <button class="canvas-trigger-btn" data-action="explode" data-amount="0.75">💥 Buka Exploded View di Canvas</button>
+          <button class="canvas-trigger-btn" data-action="mode" data-mode="wireframe">🕸️ Tampilkan Wireframe di Canvas</button>
+          <button class="canvas-trigger-btn" data-action="reset">🔄 Reset Tampilan</button>
+        </div>
+
+        <table class="obs-table">
+          <thead>
+            <tr>
+              <th>Komponen Metrik</th>
+              <th>Nilai / Spesifikasi</th>
+              <th>Deskripsi Grafika Komputer</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Root Node &amp; Mesh Name</b></td>
+              <td><code>Cube</code></td>
+              <td>Node utama pada scene graph yang mewarisi matriks transformasi objek di ruang dunia (World Space).</td>
+            </tr>
+            <tr>
+              <td><b>Format File Sumber (Master)</b></td>
+              <td><code>grafkom1.blend</code> (145.9 KB)</td>
+              <td>Format kerja internal Blender yang menyimpan seluruh riwayat pemodelan, node tree shader, dan modifier stack.</td>
+            </tr>
+            <tr>
+              <td><b>Format Distribusi Runtime</b></td>
+              <td><code>grafkom1.glb</code> (95,1 KB)</td>
+              <td>Khronos glTF 2.0 Binary (GLB) ringkas, siap pakai (*GPU-ready*), menggabungkan JSON deskriptor dan raw binary chunk (ArrayBuffer).</td>
+            </tr>
+            <tr>
+              <td><b>Total Vertex Budget</b></td>
+              <td><b>2.577 Vertices</b></td>
+              <td>Total titik sudut 3D yang diproses oleh Vertex Shader pada GPU WebGL.</td>
+            </tr>
+            <tr>
+              <td><b>Total Poligon (Triangles)</b></td>
+              <td><b>1.449 Segitiga (Tris)</b></td>
+              <td>Polycount optimal untuk grafika real-time web 60 FPS tanpa frame drop di perangkat mobile sekalipun.</td>
+            </tr>
+            <tr>
+              <td><b>Dimensi Bounding Box</b></td>
+              <td>$\Delta X \approx 3{,}52$, $\Delta Y \approx 4{,}51$, $\Delta Z \approx 2{,}02$ unit</td>
+              <td>Rentang koordinat spasial lokal model: $X \in [-1{,}49, 2{,}02]$, $Y \in [-1{,}70, 2{,}80]$, $Z \in [-1{,}96, 0{,}06]$.</td>
+            </tr>
+            <tr>
+              <td><b>Jumlah Sub-Mesh Primitive</b></td>
+              <td>4 Primitive Terpisah</td>
+              <td>Satu mesh tunggal yang dipartisi menjadi 4 grup poligon berdasarkan Material Slot masing-masing.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Distribusi 4 Material Slots pada Model &amp; Interaksi Canvas:</h4>
+        <ol>
+          <li><b>Slot 0 — <code>Material</code> (1.755 Vertices, 1.001 Segitiga):</b><br />
+            Warna albedo: <i>Deep Navy Blue</i> (hex <code>#000827</code>), Roughness: <code>0.50</code>, Metalness: <code>0.00</code>. Berfungsi sebagai bodi utama / lambung struktur model.
+            <br /><button class="canvas-trigger-btn" data-action="highlight-part" data-target-part="0">🔍 Sorot Bodi Utama di Canvas</button>
+          </li>
+          <li><b>Slot 1 — <code>Material.001</code> (751 Vertices, 411 Segitiga):</b><br />
+            Warna albedo: <i>Dark Charcoal / Grey</i> (hex <code>#202020</code>), Roughness: <code>0.50</code>, Metalness: <code>0.00</code>. Berfungsi sebagai sasis, aksen kontras, atau elemen panel mekanikal.
+            <br /><button class="canvas-trigger-btn" data-action="highlight-part" data-target-part="1">🔍 Sorot Sasis di Canvas</button>
+          </li>
+          <li><b>Slot 2 — <code>Material.002</code> (11 Vertices, 7 Segitiga):</b><br />
+            Warna albedo: <i>Vibrant Teal / Cyan</i> (hex <code>#01433d</code>), Roughness: <code>0.50</code>, Metalness: <code>0.00</code>. Komponen bernilai aksen tinggi / indikator visual / lensa fokus.
+            <br /><button class="canvas-trigger-btn" data-action="highlight-part" data-target-part="2">🔍 Sorot Lampu / Indikator di Canvas</button>
+          </li>
+          <li><b>Slot 3 — <code>Material.003</code> (60 Vertices, 30 Segitiga):</b><br />
+            Warna albedo: <i>Obsidian Pitch Black</i> (hex <code>#000000</code>), Roughness: <code>0.50</code>, Metalness: <code>0.00</code>. Berfungsi sebagai garis pembatas trim, sambungan sasis, atau shadow trim.
+            <br /><button class="canvas-trigger-btn" data-action="highlight-part" data-target-part="3">🔍 Sorot Lis / Trim di Canvas</button>
+          </li>
+        </ol>
+      </div>
+
+      <!-- BAGIAN 2: BLENDER FUNDAMENTAL & 3D MODELING -->
+      <div class="concept-block cyan-theme" id="sec-blend-fundamentals">
+        <h3>
+          2. Blender Fundamental &amp; Prinsip 3D Modeling
+          <span class="concept-badge cyan">Modeling Core Concepts</span>
+        </h3>
+        
+        <h4>A. Ruang Cartesian 3D &amp; Mode Kerja Blender</h4>
+        <p>
+          Blender beroperasi pada sistem koordinat <b>Right-Handed Cartesian 3D</b> dengan orientasi sumbu:
+          <b>Sumbu X</b> (Merah, Kiri/Kanan), <b>Sumbu Y</b> (Hijau, Depan/Belakang), dan <b>Sumbu Z</b> (Biru, Atas/Bawah).
+          Dalam alur kerja pemodelan, pengguna berpindah antara dua mode utama melalui tombol <kbd>Tab</kbd>:
+        </p>
+        <ul>
+          <li><b>Object Mode:</b> Objek diperlakukan sebagai satu kesatuan utuh. Digunakan untuk manipulasi global (posisi dunia, rotasi keseluruhan, skala, duplikasi, dan manajemen modifier).</li>
+          <li><b>Edit Mode:</b> Memberikan akses langsung ke komponen mikroskopis geometri penyusun mesh: <b>Vertex</b> (titik sudut 3D), <b>Edge</b> (garis penghubung dua vertex), dan <b>Face</b> (bidang poligon tertutup yang dibentuk oleh minimal 3 edge).</li>
+        </ul>
+
+        <h4>B. Transformasi Mesh Esensial &amp; Hotkeys Standar di Blender</h4>
+        <div class="shortcut-grid">
+          <div class="shortcut-card">
+            <strong>G (Grab / Move)</strong>
+            <span>Mentranslasikan vertex/edge/face terpilih. Tekan sumbu (<kbd>X</kbd>/<kbd>Y</kbd>/<kbd>Z</kbd>) untuk mengunci gerakan.</span>
+          </div>
+          <div class="shortcut-card">
+            <strong>R (Rotate)</strong>
+            <span>Memutar komponen geometri relatif terhadap titik pivot (Median Point, 3D Cursor, Individual Origins).</span>
+          </div>
+          <div class="shortcut-card">
+            <strong>S (Scale)</strong>
+            <span>Menskalakan ukuran geometri lebih besar atau lebih ramping ke arah sumbu tertentu.</span>
+          </div>
+          <div class="shortcut-card">
+            <strong>E (Extrude)</strong>
+            <span>Mengekstrak geometri baru ke luar sepanjang vektor normal permukaan, membentuk volume baru.</span>
+          </div>
+          <div class="shortcut-card">
+            <strong>I (Inset Faces)</strong>
+            <span>Membuat face baru di dalam perimeter face terpilih dengan batas edge loop yang rapi untuk hard-surface.</span>
+          </div>
+          <div class="shortcut-card">
+            <strong>Ctrl + B (Bevel)</strong>
+            <span>Menumpulkan tepi tajam menjadi chamfer/fillet lengkung, krusial untuk menangkap highlight spekular cahaya.</span>
+          </div>
+          <div class="shortcut-card">
+            <strong>Ctrl + R (Loop Cut)</strong>
+            <span>Menyisipkan cincin edge melingkar (edge loop) secara merata untuk menambah kerapatan segmen.</span>
+          </div>
+          <div class="shortcut-card">
+            <strong>K (Knife Tool)</strong>
+            <span>Memotong poligon secara bebas untuk membuat topologi kustom tanpa terikat edge loop otomatis.</span>
+          </div>
+        </div>
+
+        <h4>C. Topologi Mesh: Quads, Triangles, dan N-Gons</h4>
+        <p>
+          Kualitas sebuah model 3D ditentukan oleh topologinya:
+        </p>
+        <ul>
+          <li><b>Quad (4-sided polygon):</b> Merupakan standar baku saat memodelkan di Blender. Quad memungkinkan algoritma <i>Catmull-Clark Subdivision Surface</i> menghasilkan kurvatur yang halus tanpa artefak bayangan.</li>
+          <li><b>Triangle / Tris (3-sided polygon):</b> Poligon paling mendasar yang selalu planar (selalu rata). <b>Seluruh GPU dan kartu grafis pada akhirnya hanya dapat merender segitiga</b>.</li>
+          <li><b>N-Gon (&gt; 4 sides):</b> Face dengan lima sisi atau lebih. Sangat dihindari pada permukaan yang mengalami deformasi karena menyebabkan artefak bayangan (*pinching*).</li>
+        </ul>
+        <button class="canvas-trigger-btn" data-action="mode" data-mode="shaded_wireframe">🕸️ Periksa Triangulasi di Canvas (Shaded + Wire)</button>
+
+        <h4>D. Normal Shading: Flat Shading vs Smooth Shading</h4>
+        <p>
+          Persepsi kehalusan permukaan pada grafika komputer dikontrol oleh <b>Vektor Normal Permukaan ($\vec{N}$)</b>:
+        </p>
+        <ul>
+          <li><b>Shade Flat:</b> Vektor normal dihitung seragam per bidang poligon (Face Normal). Setiap segitiga memantulkan cahaya ke arah yang sama, menghasilkan tampilan berpola faset (*faceted/low-poly look*).</li>
+          <li><b>Shade Smooth:</b> Vektor normal dihitung pada setiap vertex (Vertex Normal) dengan merata-ratakan normal dari semua face yang bertetangga. Diinterpolasi via <i>Phong Normal Interpolation</i> di Fragment Shader.</li>
+        </ul>
+        <button class="canvas-trigger-btn" data-action="mode" data-mode="normals">🌈 Tampilkan Vektor Normal RGB di Canvas</button>
+      </div>
+
+      <!-- BAGIAN 3: MATERIAL & SHADING ARCHITECTURE -->
+      <div class="concept-block emerald-theme">
+        <h3>
+          3. Arsitektur Shading &amp; Principled BSDF di Blender
+          <span class="concept-badge emerald">PBR Shading Model</span>
+        </h3>
+        <p>
+          Blender mengadopsi standar <b>Physically Based Rendering (PBR)</b> melalui shader inti <b>Principled BSDF</b> (berbasis Disney BRDF). Prinsip utama PBR adalah menjaga hukum kekekalan energi (*Energy Conservation Law*), di mana jumlah total foton cahaya yang dipantulkan tidak boleh melebihi jumlah cahaya yang datang.
+        </p>
+
+        <h4>Parameter Kunci PBR Principled BSDF:</h4>
+        <pre><code>// Parameter Konfigurasi Standar PBR Principled BSDF
+Base Color (Albedo) : Warna pantulan difus murni tanpa pengaruh pencahayaan bayangan.
+Subsurface          : Penetrasi cahaya ke dalam material semi-transparan (kulit, lilin).
+Metallic            : 0.0 (Dielektrik/Non-logam seperti plastik, kayu) s/d 1.0 (Konduktor/Logam).
+Roughness           : Tingkat kekasaran mikroskopis permukaan (0.0 = cermin jernih, 1.0 = matte/kapur).
+IOR (Index of Refraction) : Indeks bias optik Snellius (kaca = 1.52, air = 1.33).
+Transmission        : Transparansi refraksi kaca (0.0 = solid, 1.0 = tembus pandang).
+Emission            : Nilai pendaran cahaya mandiri (glow/neon effect).</code></pre>
+
+        <h4>Sistem Multi-Material Slot pada Objek Tunggal</h4>
+        <p>
+          Di Blender, sebuah objek mesh tidak terbatas pada satu material tunggal. Pengguna dapat membuat beberapa slot material pada tab <i>Material Properties</i>, memilih poligon tertentu di <i>Edit Mode</i>, lalu menekan tombol <b>Assign</b>. Pada aset <code>grafkom1</code>, teknik ini diterapkan sehingga bodi utama mendapatkan material navy, sasis mendapatkan material gelap, dan aksen mendapatkan material cyan pada mesh yang sama.
+        </p>
+        <button class="canvas-trigger-btn" data-action="explode" data-amount="1.0">💥 Pisahkan 4 Slot Material via Exploded View</button>
+        <button class="canvas-trigger-btn" data-action="mode" data-mode="pbr">🎨 Kembali ke PBR Shaded</button>
+      </div>
+
+      <!-- BAGIAN 4: PIPELINE CONVERSION .BLEND KE .GLB -->
+      <div class="concept-block amber-theme">
+        <h3>
+          4. Pipeline Konversi: Dari Master <code>.blend</code> ke Runtime Web <code>.glb</code>
+          <span class="concept-badge amber">Asset Pipeline &amp; glTF Standard</span>
+        </h3>
+        <p>
+          Mengapa file master <code>grafkom1.blend</code> tidak dapat dimuat langsung di browser oleh Three.js/WebGL?
+        </p>
+
+        <h4>A. Mengapa File .blend Bersifat Desktop-Centric:</h4>
+        <ul>
+          <li>Format <code>.blend</code> adalah dump memori internal struktur data C/C++ Blender (struktur DNA1). File ini menyimpan informasi antarmuka (window layout), riwayat undo, pohon dependensi animasi, cache simulasi fisika, dan formula modifier yang belum di-bake.</li>
+          <li>Mengurai format <code>.blend</code> di JavaScript membutuhkan mesin Blender lengkap yang berukuran ratusan megabita, tidak efisien untuk transmisi web instan.</li>
+        </ul>
+
+        <h4>B. Keunggulan Format glTF / GLB (GL Transmission Format):</h4>
+        <p>
+          Khronos Group merancang <b>glTF 2.0</b> sebagai "JPEG untuk Grafika 3D". Format binary <code>.glb</code> menyatukan struktur data menjadi berkas tunggal yang sangat efisien:
+        </p>
+        <ol>
+          <li><b>Header 12-byte:</b> Mengidentifikasi magic number <code>0x46546C67</code> (ASCII "glTF"), versi format (2), dan panjang total berkas.</li>
+          <li><b>JSON Chunk (Structured Metadata):</b> Menjelaskan hierarki node, deskripsi material PBR, kamera, animasi, serta accessor dan buffer view.</li>
+          <li><b>Binary Buffer Chunk (RAW GPU Memory):</b> Berisi koordinat posisi (<code>VEC3 FLOAT</code>), normal (<code>VEC3 FLOAT</code>), koordinat tekstur UV (<code>VEC2 FLOAT</code>), dan indeks segitiga (<code>SCALAR USHORT/UINT</code>) yang dapat langsung di-upload ke VRAM GPU melalui perintah WebGL <code>gl.bufferData()</code> tanpa pemrosesan parsing teks lambat.</li>
+        </ol>
+
+        <h4>C. Transformasi Sistem Koordinat: Blender (Z-Up) ke WebGL (Y-Up)</h4>
+        <p>
+          Blender menggunakan sistem koordinat tangan kanan dengan <b>sumbu Z mengarah ke atas (Z-Up)</b>, sedangkan WebGL, OpenGL, dan Three.js menggunakan standar <b>sumbu Y mengarah ke atas (Y-Up)</b> dengan -Z mengarah ke kedalaman layar.
+          Saat proses ekspor glTF berlangsung di Blender, eksportir secara otomatis mengalikan posisi dan normal dengan matriks rotasi $-90^\circ$ di sekitar sumbu X:
+        </p>
+        <pre><code>[ X_webgl ]   [  1    0    0  ]   [ X_blender ]
+[ Y_webgl ] = [  0    0    1  ] × [ Y_blender ]
+[ Z_webgl ]   [  0   -1    0  ]   [ Z_blender ]</code></pre>
+        <button class="canvas-trigger-btn" data-action="camera" data-view="front">📐 Tinjau Sumbu Depan di Canvas (Front X)</button>
+        <button class="canvas-trigger-btn" data-action="camera" data-view="top">📐 Tinjau Sumbu Atas di Canvas (Top Y)</button>
+      </div>
+
+      <!-- BAGIAN 5: TANYA JAWAB & PERTANYAAN ANALISIS KOMPREHENSIF (A s/d H) -->
+      <div class="concept-block">
+        <h3>
+          5. Tanya Jawab &amp; Pertanyaan Analisis Komprehensif (A s/d H)
+          <span class="concept-badge">Kajian Mendalam Grafika Komputer 3D</span>
+        </h3>
+        <dl>
+          <dt>A — Box Modeling: Mengapa pemodelan 3D di Blender hampir selalu diawali dari "Default Cube" ketimbang menyusun vertex satu demi satu?</dt>
+          <dd>
+            <b>Jawab: Karena prinsip Topology Preservation, Efisiensi Volume Spasial, dan Konsistensi Manifold 3D.</b>
+            <br /><br />
+            Menyusun titik vertex secara manual (*point-by-point modeling*) sangat rawan menghasilkan geometri <i>non-manifold</i> (seperti lubang yang tidak tertutup, tepi terbuka, atau normal face yang terbalik arah). Kubus bawaan (<i>Default Cube</i>) sudah merupakan bentuk solid 3D tertutup sempurna (*watertight volume*) dengan 8 vertex, 12 edge, dan 6 face quad yang normalnya mengarah ke luar secara konsisten. Dengan teknik <i>Box Modeling</i> melalui kombinasi <i>Extrude</i> (<kbd>E</kbd>), <i>Loop Cut</i> (<kbd>Ctrl+R</kbd>), dan <i>Scale</i> (<kbd>S</kbd>), topologi quad tertutup tetap terjaga secara alami sepanjang proses sculpting volume tanpa risiko kebocoran geometri.
+            <br /><button class="canvas-trigger-btn" data-action="step" data-step="1">🧊 Lihat Bentuk Dasar di Canvas (Clay)</button>
+          </dd>
+
+          <dt>B — Format Pipeline: Apa perbedaan mendasar antara file master .blend dan file runtime .glb?</dt>
+          <dd>
+            <b>Jawab: Perbedaan terletak pada Peran Siklus Hidup Aset: Authoring Format vs Runtime Transmission Format.</b>
+            <br /><br />
+            <ul>
+              <li><b>File .blend (Authoring):</b> Menyimpan data non-destruktif: stack modifier aktif (Subdivision, Mirror, Bevel) yang masih dapat disunting parameternya kapan saja, node tree procedural shader kompleks, struktur relasi armature animasi, hingga riwayat undo. File ini berorientasi pada kemudahan modifikasi oleh 3D artist di aplikasi desktop.</li>
+              <li><b>File .glb (Runtime):</b> Format biner terkompresi Khronos glTF yang dirancang untuk transfer jaringan web cepat dan konsumsi langsung oleh GPU. Seluruh modifier telah di-*bake* (diaplikasikan permanen), face dipecah menjadi segitiga terindeks, dan shader dipetakan ke standar PBR standar industri. File ini berorientasi pada kecepatan rendering dan efisiensi memori runtime di browser.</li>
+            </ul>
+          </dd>
+
+          <dt>C — Multi-Material Mechanism: Bagaimana cara kerja Multi-Material pada single mesh di Blender dan implementasinya di glTF/Three.js?</dt>
+          <dd>
+            <b>Jawab: Melalui pembagian poligon ke dalam Sub-Mesh Primitives yang memiliki material index berbeda.</b>
+            <br /><br />
+            Dalam struktur glTF 2.0, sebuah node mesh (seperti <code>Cube</code> pada <code>grafkom1.glb</code>) dapat memiliki array <code>primitives</code>. Setiap primitive menyimpan indeks buffer vertex dan indeks segitiganya sendiri, serta mereferensikan satu indeks material spesifik.
+            Saat <code>THREE.GLTFLoader</code> membaca file ini di WebGL:
+            <ul>
+              <li>Jika primitive diekspor sebagai sub-bagian terpisah, Three.js memetakannya menjadi beberapa objek <code>THREE.Mesh</code> di dalam satu grup, masing-masing dengan <code>THREE.MeshStandardMaterial</code> mandiri.</li>
+              <li>Atau, Three.js menggunakan satu <code>BufferGeometry</code> dengan properti <code>geometry.groups</code> (Material Groups), di mana rentang indeks segitiga tertentu di-assign ke elemen array material yang sesuai (<code>material[0]</code>, <code>material[1]</code>, dst.).</li>
+            </ul>
+            Hal ini memungkinkan GPU merender bodi mobil dan kaca depan dari satu aset dengan draw call terorganisir.
+            <br /><button class="canvas-trigger-btn" data-action="explode" data-amount="0.85">💥 Buka 4 Sub-Mesh di Canvas</button>
+          </dd>
+
+          <dt>D — Quads vs Tris: Mengapa Quads dipertahankan saat modeling di Blender, tetapi diwajibkan menjadi Segitiga (Tris) saat diekspor ke glTF/WebGL?</dt>
+          <dd>
+            <b>Jawab: Karena perbedaan kebutuhan antara Ergonomi Pemodelan Artistik dan Arsitektur Hardware Rasterizer GPU.</b>
+            <br /><br />
+            <ul>
+              <li><b>Untuk Artist (Blender):</b> Quads (segi empat) memiliki dua pasang sisi sejajar yang memungkinkan algoritma mendeteksi arah aliran garis (<i>Edge Flow</i>). Hal ini membuat fungsi <i>Loop Cut</i> dapat membelah cincin geometri secara presisi dan membuat algoritma <i>Subdivision Surface</i> menghitung pembagian permukaan lengkung tanpa melintir (*pinching*).</li>
+              <li><b>Untuk GPU (WebGL):</b> Tiga titik vertex selalu membentuk satu bidang datar sempurna (planar). Empat titik vertex (quad) di ruang 3D belum tentu datar (bisa melengkung/non-planar). Jika GPU mencoba merasterisasi poligon dengan &gt;3 vertex yang tidak planar, perhitungan barycentric coordinate dan interpolasi kedalaman Z-buffer menjadi tidak pasti (*ambiguous*). Oleh sebab itu, tahap rasterizer GPU hanya menerima segitiga primitif (<code>GL_TRIANGLES</code>). Blender secara otomatis mentriangulasi setiap quad menjadi dua segitiga saat mengekspor ke glTF.</li>
+            </ul>
+            <button class="canvas-trigger-btn" data-action="mode" data-mode="wireframe">🕸️ Periksa Triangulasi di Canvas</button>
+          </dd>
+
+          <dt>E — Coordinate Space Transformation: Mengapa sumbu Z di Blender mengarah ke atas, sedangkan di WebGL sumbu Y yang mengarah ke atas?</dt>
+          <dd>
+            <b>Jawab: Karena perbedaan warisan historis tradisi Architectural/Engineering (CAD) vs Computer Graphics / Screen Projection.</b>
+            <br /><br />
+            <ul>
+              <li><b>Blender (Z-Up):</b> Mengikuti tradisi software CAD, arsitektur, dan manufaktur mesin, di mana kertas denah/tanah berada pada bidang 2D datar $(X, Y)$ di lantai, dan ketinggian struktur menjulang ke atas pada sumbu $Z$.</li>
+              <li><b>WebGL &amp; OpenGL (Y-Up):</b> Mengikuti tradisi layar monitor 2D awal grafika komputer, di mana bidang layar adalah $(X, Y)$ dengan sumbu $Y$ mengarah ke atas layar, dan sumbu $Z$ mewakili kedalaman (*depth*) menembus ke dalam atau ke luar layar.</li>
+            </ul>
+            Konversi diselesaikan dengan mengalikan matriks transformasi rotasi $-90^\circ$ pada sumbu X saat ekspor, memetakan $(X, Y, Z)_{blender} \mapsto (X, Z, -Y)_{webgl}$.
+            <br /><button class="canvas-trigger-btn" data-action="camera" data-view="front">📐 Tinjau Sumbu Depan di Canvas</button>
+          </dd>
+
+          <dt>F — Principled BSDF &amp; glTF PBR: Bagaimana pemetaan parameter shader dari Blender ke glTF PBR Metallic-Roughness?</dt>
+          <dd>
+            <b>Jawab: Menggunakan spesifikasi universal Khronos PBR Metallic-Roughness Model.</b>
+            <br /><br />
+            Format glTF 2.0 secara resmi menstandardisasi alur kerja <i>Metallic-Roughness</i>:
+            <ul>
+              <li><code>Base Color</code> pada Principled BSDF disimpan sebagai <code>baseColorFactor</code> (vektor 4D RGBA) atau <code>baseColorTexture</code>.</li>
+              <li><code>Roughness</code> disimpan sebagai <code>roughnessFactor</code> (kanal Hijau/G pada tekstur packed).</li>
+              <li><code>Metallic</code> disimpan sebagai <code>metallicFactor</code> (kanal Biru/B pada tekstur packed).</li>
+              <li><code>Emission</code> disimpan sebagai <code>emissiveFactor</code> (vektor 3D RGB).</li>
+            </ul>
+            Karena Three.js mengimplementasikan <code>THREE.MeshStandardMaterial</code> yang sepenuhnya mematuhi standar Cook-Torrance BRDF dan glTF 2.0, tampilan pantulan cahaya, kekasaran material, dan pendaran warna di browser tampak identik dengan apa yang dilihat artist di viewport EEVEE Blender.
+            <br /><button class="canvas-trigger-btn" data-action="mode" data-mode="pbr">🎨 Uji Shading PBR di Canvas</button>
+          </dd>
+
+          <dt>G — Polycount Budget: Mengapa aset grafkom1 dengan 1.449 segitiga sangat ideal untuk grafika web interaktif?</dt>
+          <dd>
+            <b>Jawab: Karena mematuhi batasan Polycount Budget dan meminimalkan beban Vertex Processing &amp; Memory Bandwidth.</b>
+            <br /><br />
+            Pada grafika web interaktif, target performa adalah mempertahankan refresh rate konstan <b>60 Frame Per Second (16,6 milidetik per frame)</b>:
+            <ul>
+              <li>Jumlah 1.449 segitiga dan 2.577 vertex dapat diproses oleh Vertex Shader GPU modern dalam waktu kurang dari <b>0,1 milidetik</b>.</li>
+              <li>Ukuran berkas 95,1 KB dapat diunduh melalui koneksi seluler dalam hitungan milidetik, tidak membebani kuota pengguna dan memungkinkan waktu muat (*first contentful paint*) seketika.</li>
+              <li>Jumlah draw call rendah (hanya 4 primitive batch) meminimalkan overhead komunikasi antara CPU JavaScript dan GPU WebGL (*CPU-GPU context switching*).</li>
+            </ul>
+          </dd>
+
+          <dt>H — ArrayBuffer Parsing di Three.js: Bagaimana GLTFLoader membaca data biner GLB dan menyusun Scene Graph?</dt>
+          <dd>
+            <b>Jawab: Melalui parsing terstruktur dari header biner ke TypedArray JavaScript dan Three.js BufferGeometry.</b>
+            <br /><br />
+            Tahapan yang dilakukan <code>GLTFLoader</code> saat memuat <code>grafkom1.glb</code>:
+            <ol>
+              <li>Membaca 12 byte pertama untuk memvalidasi magic header <code>glTF</code> dan panjang total.</li>
+              <li>Mengekstrak JSON chunk pertama dan mem-parsingnya menjadi objek JavaScript via <code>JSON.parse()</code>.</li>
+              <li>Mengekstrak binary chunk kedua menjadi satu objek <code>ArrayBuffer</code> tunggal di memori browser.</li>
+              <li>Berdasarkan deklarasi <code>bufferViews</code> dan <code>accessors</code> di JSON, loader membuat tampilan <code>Float32Array</code> untuk posisi dan normal, serta <code>Uint16Array</code> untuk indeks segitiga tanpa perlu menyalin ulang memori.</li>
+              <li>Instansiasi objek <code>THREE.BufferGeometry</code> dan pasang atribut melalui <code>geo.setAttribute('position', new THREE.BufferAttribute(...))</code>.</li>
+              <li>Instansiasi <code>THREE.MeshStandardMaterial</code> dengan properti albedo, roughness, dan metalness yang diekstrak dari deskriptor material.</li>
+              <li>Membungkus mesh ke dalam node hierarki <code>THREE.Group</code> dan mengembalikan <code>gltf.scene</code> yang siap ditambahkan langsung ke <code>scene.add()</code>.</li>
+            </ol>
+            <button class="canvas-trigger-btn" data-action="reset">🔄 Reset Tampilan Canvas ke Standar</button>
+          </dd>
+        </dl>
+      </div>
+
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer-bar">
+      <div>
+        <strong>Praktikum Grafika Komputer A</strong> — Modul 08: Blender Fundamental &amp; 3D Asset Modeling
+      </div>
+      <div>
+        Aset Terhubung: <code>grafkom1.blend</code> &amp; <code>grafkom1.glb</code> · Engine: WebGL &amp; Three.js
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- MODULE SCRIPT -->
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
